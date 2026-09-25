@@ -47,7 +47,22 @@ OMP_NUM_THREADS=50 MKL_NUM_THREADS=50 taskset -c 0-49 /usr/bin/time -v uv run py
 
 warmup 对照实验只将 `--warmup-steps` 改为 `0`、`1`、`2` 和 `5`，并且每组都启动独立进程，避免后运行的组继承前一组的内存池和运行时状态。`xl` 使用 `--mode forward-backward`，`10b` 使用 `--mode forward`。
 
-原始 JSON 和 `/usr/bin/time -v` 输出保存在本地 `benchmark_results/cpu/`。该目录已加入 `.gitignore`，避免把机器相关的大量实验产物纳入版本控制。
+原始 JSON 和 `/usr/bin/time -v` 输出保存在本地 `benchmark_results/cpu/`。该目录已加入 `.gitignore`，避免把机器相关的大量实验产物纳入版本控制；可复现绘图脚本和报告引用的 SVG 分别保存在 `scripts/plot_cpu_benchmark.py` 与 `notes/assets/cpu_benchmark/`。
+
+### 1.4 图表生成与可视化口径
+
+运行以下命令可从原始 JSON 和 `.time` 文件重新生成报告中的三张 SVG：
+
+```bash
+uv run python scripts/plot_cpu_benchmark.py
+```
+
+图表参考 [Google Benchmark](https://google.github.io/benchmark/user_guide.html) 的重复测量与统计报告方式、[NVIDIA AIPerf](https://docs.nvidia.com/aiperf/dev/tutorials/metrics-analysis/visualization-and-plotting-with-ai-perf) 的固定配置和 warmup 对照原则，以及色觉缺陷友好的 [Okabe-Ito](https://jfly.uni-koeln.de/color/) 分类配色。具体采用以下口径：
+
+1. 延迟图保留全部 10 个原始样本，并叠加中位数、四分位距或 handout 要求的均值与总体标准差，避免只画均值柱状图而隐藏偏态和异常值。
+2. warmup 图以各模型 `w=5` 的中位数归一化并使用 log2 纵轴，使不同数量级的模型可以比较相对变化，同时在子图标题中保留原始基准值。
+3. 只有 `full` mode 的 `small/medium/large` 进入训练耗时扩展比较；`xl/10b` 只在内存图中按实际 mode 使用不同点形展示，避免混淆不可比结果。
+4. 使用 SVG 保留矢量线条和可搜索文字，并在坐标轴、图注中明确单位、样本量、统计量和“越低越好”的方向。
 
 ---
 
@@ -62,6 +77,10 @@ warmup 对照实验只将 `--warmup-steps` 改为 `0`、`1`、`2` 和 `5`，并�
 | `small` | 128.63M | 457.588 ± 121.259 | 11.567 ± 3.223 | 1853.362 ± 705.051 | 105.435 ± 111.282 | 2428.003 ± 805.802 |
 | `medium` | 423.18M | 2501.541 ± 965.578 | 15.762 ± 9.788 | 7805.593 ± 1930.809 | 708.489 ± 997.638 | 11031.438 ± 2414.980 |
 | `large` | 969.41M | 6271.720 ± 2660.195 | 31.259 ± 16.997 | 14799.688 ± 1998.194 | 1371.282 ± 1271.659 | 22474.004 ± 3991.225 |
+
+![CPU 完整训练耗时分布与阶段构成](assets/cpu_benchmark/cpu_full_training_profile.svg)
+
+*图 1：左图保留每次 measurement，并以箱线和白色菱形分别表示中位数/四分位距与均值；右图展示各阶段均值占完整 step 均值的比例。*
 
 三个配置中 backward 都是主要耗时，约为 forward 的 2.36-4.05 倍。原因是 backward 不仅要沿计算图传播激活梯度，还要为各层计算参数梯度；实际比例还受到矩阵形状、CPU kernel、内存带宽和线程调度影响。
 
@@ -79,6 +98,10 @@ warmup 对照实验只将 `--warmup-steps` 改为 `0`、`1`、`2` 和 `5`，并�
 `xl` 的 FP32 参数约占 12.69 GiB。若执行 AdamW，参数、梯度、一阶矩和二阶矩仅静态状态下界就约为 50.77 GiB，尚未包括激活、临时张量和框架开销；在 forward+backward 已达到 46.64 GiB RSS 的情况下继续创建 AdamW 状态，预计至少再增加 25.38 GiB，超过实验启动时约 65 GiB 的可用内存。
 
 `10b` 的 FP32 参数本身约占 47.81 GiB，参数加梯度约需 95.62 GiB，完整训练静态状态下界约为 191.22 GiB。因此本机不能安全执行其 backward 或 full mode。这里保留原始 batch、sequence 和模型规模，不通过缩小实验参数伪装成 handout 的正式结果。
+
+![CPU 模型规模扩展与峰值内存](assets/cpu_benchmark/cpu_scaling_and_memory.svg)
+
+*图 2：左图仅比较同口径的 `full` mode，点为单次测量，菱形和误差棒为均值 ± 总体标准差；右图按实际 mode 展示峰值 RSS，虚线是仅存放 FP32 参数所需的理论内存。*
 
 ### 2.3 进程资源记录
 
@@ -105,6 +128,10 @@ warmup 对照实验只将 `--warmup-steps` 改为 `0`、`1`、`2` 和 `5`，并�
 | `small` | 4519.810 ± 4256.830 (94.18%) | 3841.192 ± 2002.712 (52.14%) | 3309.257 ± 1137.121 (34.36%) | 2428.003 ± 805.802 (33.19%) |
 | `medium` | 19591.005 ± 10576.774 (53.99%) | 10441.322 ± 2483.813 (23.79%) | 14400.593 ± 3663.424 (25.44%) | 11031.438 ± 2414.980 (21.89%) |
 | `large` | 26481.673 ± 5770.681 (21.79%) | 29082.161 ± 5523.457 (18.99%) | 21662.672 ± 4372.051 (20.18%) | 22474.004 ± 3991.225 (17.76%) |
+
+![CPU warmup 敏感性](assets/cpu_benchmark/cpu_warmup_sensitivity.svg)
+
+*图 3：每个模型均以自身 `w=5` 中位数归一化；虚线为 1 倍基线，箱线、散点和折线分别展示四分位分布、全部样本与各组中位数。*
 
 ### 3.2 现象解释
 
