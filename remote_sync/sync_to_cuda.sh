@@ -53,6 +53,7 @@ ASSIGNMENT2_FILTERS=(
   --include='/benchmark.py'
   --include='/remote_profile/'
   --include='/remote_profile/run_small_benchmark.sh'
+  --include='/remote_profile/run_small_profile.sh'
   --exclude='*'
 )
 
@@ -80,6 +81,7 @@ Only these files are synchronized:
   assignment2-systems/cs336_systems/**
   assignment2-systems/benchmark.py
   assignment2-systems/remote_profile/run_small_benchmark.sh
+  assignment2-systems/remote_profile/run_small_profile.sh
 
 The script never installs dependencies or runs profiling commands.
 EOF

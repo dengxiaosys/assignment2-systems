@@ -158,6 +158,7 @@ cython_debug/
 
 # Local benchmark artifacts
 benchmark_results/
+profile_artifacts/
 
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can

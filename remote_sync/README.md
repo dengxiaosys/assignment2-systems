@@ -9,6 +9,7 @@ assignment1-basics/cs336_basics/**
 assignment2-systems/cs336_systems/**
 assignment2-systems/benchmark.py
 assignment2-systems/remote_profile/run_small_benchmark.sh
+assignment2-systems/remote_profile/run_small_profile.sh
 ```
 
 默认目标：
