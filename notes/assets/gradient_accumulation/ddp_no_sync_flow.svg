@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">DDP gradient accumulation with no_sync</title>
+  <desc id="desc">Two data-parallel ranks accumulate two local micro-batches without communication, then synchronize on the final backward.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#475569"/>
+    </marker>
+    <style>
+      .title { font: 700 28px Inter, sans-serif; fill: #0f172a; }
+      .subtitle { font: 400 16px Inter, sans-serif; fill: #475569; }
+      .lane { font: 700 18px Inter, sans-serif; fill: #0f172a; }
+      .box-title { font: 700 16px Inter, sans-serif; fill: #0f172a; }
+      .body { font: 400 14px Inter, sans-serif; fill: #334155; }
+      .small { font: 400 13px Inter, sans-serif; fill: #475569; }
+      .tag { font: 700 13px Inter, sans-serif; }
+    </style>
+  </defs>
+
+  <rect width="1400" height="650" fill="#f8fafc"/>
+  <text x="42" y="48" class="title">DDP gradient accumulation: synchronize only on the final micro-batch</text>
+  <text x="42" y="76" class="subtitle">Example: world size W=2 and accumulation steps A=3. Forward and backward must both be inside no_sync().</text>
+
+  <text x="42" y="160" class="lane">Rank 0</text>
+  <text x="42" y="300" class="lane">Rank 1</text>
+
+  <rect x="150" y="115" width="220" height="92" rx="6" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+  <text x="260" y="145" text-anchor="middle" class="box-title">Micro-batch 1</text>
+  <text x="260" y="170" text-anchor="middle" class="tag" fill="#475569">with ddp.no_sync()</text>
+  <text x="260" y="192" text-anchor="middle" class="small">forward + backward, local only</text>
+
+  <rect x="430" y="115" width="220" height="92" rx="6" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+  <text x="540" y="145" text-anchor="middle" class="box-title">Micro-batch 2</text>
+  <text x="540" y="170" text-anchor="middle" class="tag" fill="#475569">with ddp.no_sync()</text>
+  <text x="540" y="192" text-anchor="middle" class="small">forward + backward, local only</text>
+
+  <rect x="710" y="115" width="220" height="92" rx="6" fill="#ccfbf1" stroke="#0f766e" stroke-width="2"/>
+  <text x="820" y="145" text-anchor="middle" class="box-title">Micro-batch 3</text>
+  <text x="820" y="170" text-anchor="middle" class="tag" fill="#0f766e">normal DDP context</text>
+  <text x="820" y="192" text-anchor="middle" class="small">final backward triggers sync</text>
+
+  <rect x="150" y="255" width="220" height="92" rx="6" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+  <text x="260" y="285" text-anchor="middle" class="box-title">Micro-batch 1</text>
+  <text x="260" y="310" text-anchor="middle" class="tag" fill="#475569">with ddp.no_sync()</text>
+  <text x="260" y="332" text-anchor="middle" class="small">forward + backward, local only</text>
+
+  <rect x="430" y="255" width="220" height="92" rx="6" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+  <text x="540" y="285" text-anchor="middle" class="box-title">Micro-batch 2</text>
+  <text x="540" y="310" text-anchor="middle" class="tag" fill="#475569">with ddp.no_sync()</text>
+  <text x="540" y="332" text-anchor="middle" class="small">forward + backward, local only</text>
+
+  <rect x="710" y="255" width="220" height="92" rx="6" fill="#ccfbf1" stroke="#0f766e" stroke-width="2"/>
+  <text x="820" y="285" text-anchor="middle" class="box-title">Micro-batch 3</text>
+  <text x="820" y="310" text-anchor="middle" class="tag" fill="#0f766e">normal DDP context</text>
+  <text x="820" y="332" text-anchor="middle" class="small">final backward triggers sync</text>
+
+  <line x1="370" y1="161" x2="430" y2="161" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="650" y1="161" x2="710" y2="161" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="370" y1="301" x2="430" y2="301" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="650" y1="301" x2="710" y2="301" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <line x1="930" y1="161" x2="1020" y2="230" stroke="#0f766e" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="930" y1="301" x2="1020" y2="245" stroke="#0f766e" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="1020" y="180" width="210" height="110" rx="6" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="1125" y="212" text-anchor="middle" class="box-title">DDP gradient all-reduce</text>
+  <text x="1125" y="238" text-anchor="middle" class="body">one synchronization</text>
+  <text x="1125" y="262" text-anchor="middle" class="small">average across W ranks</text>
+
+  <line x1="1230" y1="235" x2="1270" y2="235" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="1270" y="180" width="100" height="110" rx="6" fill="#fed7aa" stroke="#c2410c" stroke-width="2"/>
+  <text x="1320" y="217" text-anchor="middle" class="box-title">step()</text>
+  <text x="1320" y="242" text-anchor="middle" class="small">once per</text>
+  <text x="1320" y="262" text-anchor="middle" class="small">rank</text>
+
+  <rect x="42" y="405" width="1328" height="150" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="64" y="438" class="box-title">Why no_sync() matters</text>
+  <text x="64" y="468" class="body">Without no_sync(), DDP all-reduces after every micro-batch: A communication rounds per optimizer update.</text>
+  <text x="64" y="496" class="body">With no_sync(), the first A-1 backward passes stay local and the final backward performs one all-reduce.</text>
+  <text x="64" y="524" class="body">Every rank must execute the same accumulation schedule; uneven token counts require globally correct loss weighting.</text>
+
+  <text x="42" y="604" class="tag" fill="#0f172a">Effective batch per update = B_micro x A x W = B_micro x 3 x 2</text>
+</svg>

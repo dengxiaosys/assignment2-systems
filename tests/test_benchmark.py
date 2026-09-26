@@ -20,6 +20,8 @@ def test_run_benchmark_reports_expected_phases(mode, expected_phases):
         device=torch.device("cpu"),
         dtype=torch.float32,
         dtype_name="float32",
+        autocast_dtype=None,
+        autocast_dtype_name=None,
         vocab_size=32,
         batch_size=2,
         context_length=8,
@@ -37,3 +39,29 @@ def test_run_benchmark_reports_expected_phases(mode, expected_phases):
         assert len(phase.samples_ms) == 2
         assert phase.mean_ms >= 0
         assert phase.std_ms >= 0
+
+
+def test_run_benchmark_supports_cpu_bfloat16_autocast():
+    result = run_benchmark(
+        model_size="test",
+        model_config=ModelConfig(d_model=16, d_ff=32, num_layers=1, num_heads=2),
+        mode="full",
+        device=torch.device("cpu"),
+        dtype=torch.float32,
+        dtype_name="float32",
+        autocast_dtype=torch.bfloat16,
+        autocast_dtype_name="bfloat16",
+        vocab_size=32,
+        batch_size=2,
+        context_length=8,
+        rope_theta=10_000.0,
+        learning_rate=1e-3,
+        weight_decay=0.01,
+        warmup_steps=1,
+        measurement_steps=2,
+        seed=0,
+    )
+
+    assert result.dtype == "float32"
+    assert result.autocast_dtype == "bfloat16"
+    assert set(result.phases) == {"forward", "loss", "backward", "optimizer", "total"}

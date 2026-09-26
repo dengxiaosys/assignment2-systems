@@ -44,6 +44,10 @@ DTYPES = {
     "bfloat16": torch.bfloat16,
     "float16": torch.float16,
 }
+AUTOCAST_DTYPES = {
+    "none": None,
+    "bfloat16": torch.bfloat16,
+}
 
 
 @dataclass(frozen=True)
@@ -67,6 +71,7 @@ class BenchmarkResult:
     device: str
     device_name: str
     dtype: str
+    autocast_dtype: str | None
     torch_version: str
     cuda_version: str | None
     num_cpu_threads: int
@@ -120,6 +125,12 @@ def _timed_call(operation: Callable[[], Tensor | None], device: torch.device) ->
     return result, timeit.default_timer() - start
 
 
+def _autocast_context(device: torch.device, dtype: torch.dtype | None):
+    if dtype is None:
+        return nullcontext()
+    return torch.autocast(device_type=device.type, dtype=dtype)
+
+
 def _run_step(
     *,
     model: nn.Module,
@@ -128,6 +139,7 @@ def _run_step(
     targets: Tensor,
     mode: str,
     device: torch.device,
+    autocast_dtype: torch.dtype | None,
     measure: bool,
 ) -> dict[str, float]:
     """Run one benchmark step and optionally return synchronized phase timings."""
@@ -142,11 +154,12 @@ def _run_step(
 
     if not measure:
         if mode == "forward":
-            with torch.inference_mode():
+            with torch.inference_mode(), _autocast_context(device, autocast_dtype):
                 model(input_ids)
         else:
-            logits = model(input_ids)
-            loss = cross_entropy(logits.reshape(-1, logits.shape[-1]), targets.reshape(-1))
+            with _autocast_context(device, autocast_dtype):
+                logits = model(input_ids)
+                loss = cross_entropy(logits.reshape(-1, logits.shape[-1]), targets.reshape(-1))
             loss.backward()
             if optimizer is not None:
                 optimizer.step()
@@ -158,17 +171,18 @@ def _run_step(
     timings: dict[str, float] = {}
 
     if mode == "forward":
-        with torch.inference_mode():
+        with torch.inference_mode(), _autocast_context(device, autocast_dtype):
             _, timings["forward"] = _timed_call(lambda: model(input_ids), device)
     else:
-        logits, timings["forward"] = _timed_call(lambda: model(input_ids), device)
-        assert logits is not None
+        with _autocast_context(device, autocast_dtype):
+            logits, timings["forward"] = _timed_call(lambda: model(input_ids), device)
+            assert logits is not None
 
-        loss, timings["loss"] = _timed_call(
-            lambda: cross_entropy(logits.reshape(-1, logits.shape[-1]), targets.reshape(-1)),
-            device,
-        )
-        assert loss is not None
+            loss, timings["loss"] = _timed_call(
+                lambda: cross_entropy(logits.reshape(-1, logits.shape[-1]), targets.reshape(-1)),
+                device,
+            )
+            assert loss is not None
         _, timings["backward"] = _timed_call(loss.backward, device)
 
         if optimizer is not None:
@@ -198,6 +212,8 @@ def run_benchmark(
     device: torch.device,
     dtype: torch.dtype,
     dtype_name: str,
+    autocast_dtype: torch.dtype | None,
+    autocast_dtype_name: str | None,
     vocab_size: int,
     batch_size: int,
     context_length: int,
@@ -217,6 +233,8 @@ def run_benchmark(
         raise ValueError("vocab_size, batch_size, context_length, and measurement_steps must be positive")
     if warmup_steps < 0:
         raise ValueError("warmup_steps must be non-negative")
+    if autocast_dtype is not None and dtype is not torch.float32:
+        raise ValueError("autocast requires float32 model parameters in this benchmark")
 
     torch.manual_seed(seed)
     if device.type == "cuda":
@@ -247,6 +265,7 @@ def run_benchmark(
             targets=targets,
             mode=mode,
             device=device,
+            autocast_dtype=autocast_dtype,
             measure=False,
         )
 
@@ -261,6 +280,7 @@ def run_benchmark(
                 targets=targets,
                 mode=mode,
                 device=device,
+                autocast_dtype=autocast_dtype,
                 measure=True,
             )
             for phase, elapsed_seconds in step_timings.items():
@@ -273,6 +293,7 @@ def run_benchmark(
         device=str(device),
         device_name=torch.cuda.get_device_name(device) if device.type == "cuda" else "cpu",
         dtype=dtype_name,
+        autocast_dtype=autocast_dtype_name,
         torch_version=str(torch.__version__),
         cuda_version=torch.version.cuda,
         num_cpu_threads=torch.get_num_threads(),
@@ -305,7 +326,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--warmup-steps", type=int, default=5)
     parser.add_argument("--measurement-steps", type=int, default=10)
     parser.add_argument("--device", default="auto", help="PyTorch device string or 'auto'")
-    parser.add_argument("--dtype", choices=DTYPES, default="float32")
+    parser.add_argument("--dtype", choices=DTYPES, default="float32", help="model parameter and buffer storage dtype")
+    parser.add_argument("--autocast-dtype", choices=AUTOCAST_DTYPES, default="none", help="optional mixed-precision compute dtype")
     parser.add_argument("--learning-rate", type=float, default=1e-3)
     parser.add_argument("--weight-decay", type=float, default=0.01)
     parser.add_argument("--seed", type=int, default=0)
@@ -340,6 +362,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         device=resolve_device(args.device),
         dtype=DTYPES[args.dtype],
         dtype_name=args.dtype,
+        autocast_dtype=AUTOCAST_DTYPES[args.autocast_dtype],
+        autocast_dtype_name=None if args.autocast_dtype == "none" else args.autocast_dtype,
         vocab_size=args.vocab_size,
         batch_size=args.batch_size,
         context_length=args.context_length,

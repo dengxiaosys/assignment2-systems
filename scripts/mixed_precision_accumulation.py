@@ -127,6 +127,7 @@ def plot_error_traces(results: list[AccumulationResult], output_path: Path) -> N
     figure.suptitle("Repeated accumulation error")
     figure.savefig(output_path, format="svg", metadata={"Date": None})
     plt.close(figure)
+    output_path.write_text("\n".join(line.rstrip() for line in output_path.read_text(encoding="utf-8").splitlines()) + "\n", encoding="utf-8")
 
 
 def parse_args() -> argparse.Namespace:

@@ -32,3 +32,5 @@
 
 1. [02_01 PyTorch autocast 与混合精度训练详解](./02_01_pytorch_autocast_mixed_precision_guide.md)：解释逐算子 dtype 决策、转换时机、weight cache、autograd 保存张量、GradScaler、手工精度控制和本项目实际 dtype 路径。
 2. [02_02 Mixed-Precision Accumulation 实验报告](./02_02_mixed_precision_accumulation_report.md)：复现四种 FP16/FP32 累加组合，分析输入量化、累加舍入、ULP、误差曲线与高精度 accumulator 的作用。
+3. [02_03 Benchmarking Mixed Precision 实验报告](./02_03_benchmarking_mixed_precision_report.md)：在本机 CPU 上用 small 模型比较 FP32 与 BF16 autocast，覆盖 ToyModel dtype、LayerNorm、完整训练 step、梯度和 AdamW 状态。
+4. [02_04 PyTorch 梯度累积详解](./02_04_gradient_accumulation_guide.md)：从 batch/sequence 维、上游梯度和 VJP 推导共享参数梯度，再解释 `.grad` 累积、大 batch 等价、AMP、DDP/FSDP 与常见错误。

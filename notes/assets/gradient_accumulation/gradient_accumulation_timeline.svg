@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="650" viewBox="0 0 1500 650" role="img" aria-labelledby="title desc">
+  <title id="title">Gradient accumulation timeline</title>
+  <desc id="desc">Four micro-batches accumulate into one gradient buffer before clipping and a single optimizer step.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#475569"/>
+    </marker>
+    <style>
+      .title { font: 700 28px Inter, sans-serif; fill: #0f172a; }
+      .subtitle { font: 400 16px Inter, sans-serif; fill: #475569; }
+      .box-title { font: 700 17px Inter, sans-serif; fill: #0f172a; }
+      .body { font: 400 14px Inter, sans-serif; fill: #334155; }
+      .small { font: 400 13px Inter, sans-serif; fill: #475569; }
+      .tag { font: 700 14px Inter, sans-serif; }
+    </style>
+  </defs>
+
+  <rect width="1500" height="650" fill="#f8fafc"/>
+  <text x="42" y="48" class="title">Gradient accumulation: one optimizer step from four micro-batches</text>
+  <text x="42" y="76" class="subtitle">A=4. Each backward adds into the same parameter .grad buffer; activation graphs are released after each micro-batch.</text>
+
+  <rect x="42" y="122" width="190" height="100" rx="6" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="137" y="156" text-anchor="middle" class="box-title">Start macro step</text>
+  <text x="137" y="184" text-anchor="middle" class="body">optimizer.zero_grad(</text>
+  <text x="137" y="204" text-anchor="middle" class="body">set_to_none=True)</text>
+
+  <line x1="232" y1="172" x2="277" y2="172" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="277" y="122" width="205" height="100" rx="6" fill="#ccfbf1" stroke="#0f766e" stroke-width="2"/>
+  <text x="379" y="152" text-anchor="middle" class="box-title">Micro-batch 1</text>
+  <text x="379" y="179" text-anchor="middle" class="body">forward</text>
+  <text x="379" y="202" text-anchor="middle" class="tag" fill="#0f766e">(loss_1 / A).backward()</text>
+
+  <line x1="482" y1="172" x2="527" y2="172" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="527" y="122" width="205" height="100" rx="6" fill="#ccfbf1" stroke="#0f766e" stroke-width="2"/>
+  <text x="629" y="152" text-anchor="middle" class="box-title">Micro-batch 2</text>
+  <text x="629" y="179" text-anchor="middle" class="body">forward</text>
+  <text x="629" y="202" text-anchor="middle" class="tag" fill="#0f766e">(loss_2 / A).backward()</text>
+
+  <line x1="732" y1="172" x2="777" y2="172" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="777" y="122" width="205" height="100" rx="6" fill="#ccfbf1" stroke="#0f766e" stroke-width="2"/>
+  <text x="879" y="152" text-anchor="middle" class="box-title">Micro-batch 3</text>
+  <text x="879" y="179" text-anchor="middle" class="body">forward</text>
+  <text x="879" y="202" text-anchor="middle" class="tag" fill="#0f766e">(loss_3 / A).backward()</text>
+
+  <line x1="982" y1="172" x2="1027" y2="172" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="1027" y="122" width="205" height="100" rx="6" fill="#ccfbf1" stroke="#0f766e" stroke-width="2"/>
+  <text x="1129" y="152" text-anchor="middle" class="box-title">Micro-batch 4</text>
+  <text x="1129" y="179" text-anchor="middle" class="body">forward</text>
+  <text x="1129" y="202" text-anchor="middle" class="tag" fill="#0f766e">(loss_4 / A).backward()</text>
+
+  <line x1="1232" y1="172" x2="1277" y2="172" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="1277" y="112" width="181" height="120" rx="6" fill="#fed7aa" stroke="#c2410c" stroke-width="2"/>
+  <text x="1367" y="143" text-anchor="middle" class="box-title">One update</text>
+  <text x="1367" y="168" text-anchor="middle" class="body">unscale if FP16</text>
+  <text x="1367" y="191" text-anchor="middle" class="body">clip accumulated grad</text>
+  <text x="1367" y="214" text-anchor="middle" class="tag" fill="#9a3412">optimizer.step()</text>
+
+  <line x1="379" y1="222" x2="379" y2="292" stroke="#0f766e" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="629" y1="222" x2="629" y2="292" stroke="#0f766e" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="879" y1="222" x2="879" y2="292" stroke="#0f766e" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="1129" y1="222" x2="1129" y2="292" stroke="#0f766e" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="277" y="300" width="955" height="112" rx="6" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="754" y="330" text-anchor="middle" class="box-title">Persistent parameter .grad buffer</text>
+  <line x1="516" y1="344" x2="516" y2="399" stroke="#93c5fd" stroke-width="2"/>
+  <line x1="754" y1="344" x2="754" y2="399" stroke="#93c5fd" stroke-width="2"/>
+  <line x1="993" y1="344" x2="993" y2="399" stroke="#93c5fd" stroke-width="2"/>
+  <text x="396" y="374" text-anchor="middle" class="tag" fill="#1d4ed8">g1 / A</text>
+  <text x="635" y="374" text-anchor="middle" class="tag" fill="#1d4ed8">+ g2 / A</text>
+  <text x="873" y="374" text-anchor="middle" class="tag" fill="#1d4ed8">+ g3 / A</text>
+  <text x="1112" y="374" text-anchor="middle" class="tag" fill="#1d4ed8">+ g4 / A</text>
+  <text x="754" y="399" text-anchor="middle" class="small">No zero_grad() between micro-batches</text>
+
+  <line x1="1232" y1="356" x2="1277" y2="232" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="42" y="460" width="1416" height="120" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="64" y="493" class="box-title">Memory and semantics</text>
+  <text x="64" y="522" class="body">Each micro-batch runs backward immediately, so its activation graph can be freed before the next forward.</text>
+  <text x="64" y="548" class="body">Parameters, optimizer states, and one accumulated .grad buffer persist. Accumulation reduces activation peak, not model-state memory.</text>
+  <text x="64" y="572" class="small">Do not sum A graph-connected loss tensors and call backward once: that retains all A activation graphs.</text>
+
+  <text x="42" y="622" class="tag" fill="#0f172a">Effective batch per update = micro-batch size x accumulation steps A x data-parallel world size</text>
+</svg>

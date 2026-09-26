@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="700" viewBox="0 0 1500 700" role="img" aria-labelledby="title desc">
+  <title id="title">Training state dtype lifecycle under BF16 autocast</title>
+  <desc id="desc">FP32 parameters produce mixed FP32 and BF16 activations, mixed backward intermediates, FP32 leaf gradients, and FP32 AdamW states.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#475569"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#2563eb"/>
+    </marker>
+    <style>
+      .title { font: 700 28px Inter, sans-serif; fill: #0f172a; }
+      .subtitle { font: 400 16px Inter, sans-serif; fill: #475569; }
+      .lane { font: 700 17px Inter, sans-serif; fill: #0f172a; }
+      .box-title { font: 700 16px Inter, sans-serif; fill: #0f172a; }
+      .body { font: 400 14px Inter, sans-serif; fill: #334155; }
+      .small { font: 400 13px Inter, sans-serif; fill: #475569; }
+      .tag { font: 700 14px Inter, sans-serif; }
+    </style>
+  </defs>
+
+  <rect width="1500" height="700" fill="#f8fafc"/>
+  <text x="42" y="48" class="title">BF16 autocast: storage, forward, backward, and optimizer dtypes</text>
+  <text x="42" y="76" class="subtitle">Observed with the project Transformer and AdamW on CPU. Autocast changes operator inputs and outputs, not persistent parameter storage.</text>
+
+  <text x="42" y="139" class="lane">Persistent state</text>
+  <rect x="190" y="102" width="255" height="76" rx="6" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="317" y="132" text-anchor="middle" class="box-title">Model parameters</text>
+  <text x="317" y="158" text-anchor="middle" class="tag" fill="#1d4ed8">FP32 throughout the step</text>
+
+  <line x1="445" y1="140" x2="1090" y2="140" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <text x="760" y="127" text-anchor="middle" class="small">same master parameters are referenced by every phase</text>
+
+  <rect x="1090" y="102" width="360" height="76" rx="6" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="1270" y="132" text-anchor="middle" class="box-title">AdamW state after first step</text>
+  <text x="1270" y="158" text-anchor="middle" class="tag" fill="#1d4ed8">m: FP32, v: FP32, updated parameter: FP32</text>
+
+  <text x="42" y="261" class="lane">Forward</text>
+  <rect x="190" y="215" width="205" height="92" rx="6" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+  <text x="292" y="246" text-anchor="middle" class="box-title">FP32 residual path</text>
+  <text x="292" y="272" text-anchor="middle" class="body">embedding + RMSNorm</text>
+  <text x="292" y="294" text-anchor="middle" class="tag" fill="#92400e">output FP32</text>
+
+  <line x1="395" y1="261" x2="440" y2="261" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="440" y="215" width="205" height="92" rx="6" fill="#ccfbf1" stroke="#0f766e" stroke-width="2"/>
+  <text x="542" y="246" text-anchor="middle" class="box-title">Matmul / Linear</text>
+  <text x="542" y="272" text-anchor="middle" class="body">temporary BF16 operands</text>
+  <text x="542" y="294" text-anchor="middle" class="tag" fill="#0f766e">output BF16</text>
+
+  <line x1="645" y1="261" x2="690" y2="261" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="690" y="205" width="270" height="112" rx="6" fill="#e9d5ff" stroke="#7e22ce" stroke-width="2"/>
+  <text x="825" y="236" text-anchor="middle" class="box-title">Mixed saved tensors</text>
+  <text x="825" y="263" text-anchor="middle" class="body">57 BF16 tensor references</text>
+  <text x="825" y="286" text-anchor="middle" class="body">46 FP32 tensor references</text>
+  <text x="825" y="307" text-anchor="middle" class="small">counts are references, not unique storage</text>
+
+  <line x1="960" y1="261" x2="1005" y2="261" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="1005" y="215" width="205" height="92" rx="6" fill="#ccfbf1" stroke="#0f766e" stroke-width="2"/>
+  <text x="1107" y="246" text-anchor="middle" class="box-title">Project logits</text>
+  <text x="1107" y="272" text-anchor="middle" class="body">lm_head matmul</text>
+  <text x="1107" y="294" text-anchor="middle" class="tag" fill="#0f766e">BF16</text>
+
+  <line x1="1210" y1="261" x2="1255" y2="261" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="1255" y="215" width="195" height="92" rx="6" fill="#ccfbf1" stroke="#0f766e" stroke-width="2"/>
+  <text x="1352" y="246" text-anchor="middle" class="box-title">Custom loss</text>
+  <text x="1352" y="272" text-anchor="middle" class="body">composite Python ops</text>
+  <text x="1352" y="294" text-anchor="middle" class="tag" fill="#0f766e">output BF16</text>
+
+  <line x1="1352" y1="307" x2="1352" y2="390" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <text x="42" y="436" class="lane">Backward</text>
+  <rect x="1120" y="398" width="330" height="92" rx="6" fill="#e9d5ff" stroke="#7e22ce" stroke-width="2"/>
+  <text x="1285" y="429" text-anchor="middle" class="box-title">loss.backward() outside autocast</text>
+  <text x="1285" y="455" text-anchor="middle" class="body">uses saved forward dtypes</text>
+  <text x="1285" y="477" text-anchor="middle" class="tag" fill="#7e22ce">mixed backward intermediates</text>
+
+  <line x1="1120" y1="444" x2="1025" y2="444" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="735" y="398" width="290" height="92" rx="6" fill="#ccfbf1" stroke="#0f766e" stroke-width="2"/>
+  <text x="880" y="429" text-anchor="middle" class="box-title">Activation gradients</text>
+  <text x="880" y="455" text-anchor="middle" class="body">BF16 activation -> BF16 grad</text>
+  <text x="880" y="477" text-anchor="middle" class="body">FP32 activation -> FP32 grad</text>
+
+  <line x1="735" y1="444" x2="640" y2="444" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="350" y="398" width="290" height="92" rx="6" fill="#fecaca" stroke="#dc2626" stroke-width="2"/>
+  <text x="495" y="429" text-anchor="middle" class="box-title">Leaf parameter .grad</text>
+  <text x="495" y="455" text-anchor="middle" class="body">cast-back nodes feed FP32 leaves</text>
+  <text x="495" y="477" text-anchor="middle" class="tag" fill="#b91c1c">all parameter grads FP32</text>
+
+  <line x1="495" y1="490" x2="495" y2="555" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <text x="42" y="594" class="lane">Optimizer</text>
+  <rect x="350" y="563" width="455" height="86" rx="6" fill="#fed7aa" stroke="#c2410c" stroke-width="2"/>
+  <text x="577" y="594" text-anchor="middle" class="box-title">AdamW optimizer.step() runs outside autocast</text>
+  <text x="577" y="620" text-anchor="middle" class="body">FP32 parameter + FP32 grad -> FP32 m/v</text>
+  <text x="577" y="641" text-anchor="middle" class="small">same optimizer dtype and nearly identical latency</text>
+
+  <path d="M350 606 L155 606 L155 190 L210 190 L210 178" fill="none" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+</svg>
