@@ -27,6 +27,7 @@
 2. [01_02 CPU 端到端 Benchmark 实验报告](./01_02_cpu_benchmark_experiment_report.md)：完整训练与 warmup 对照数据、资源边界、结果解释及 handout (b)/(c) 答案。
 3. [01_03 Nsight Systems 单 Profile 实验报告](./01_03_nsys_profile_analysis.md)：基于一个 GTX 1060 profile 回答 `nsys_profile` (a)-(e)，并记录阶段边界与 kernel 统计。
 4. [01_04 NVTX Range 与 Nsight Systems 入门](./01_04_nvtx_range_and_nsys_guide.md)：解释 `benchmark_measurement` range、CUDA 异步执行、profile 采集和分析流程。
+5. [01_05 Large 模型内存 Profiling 实验报告](./01_05_large_memory_profiling_report.md)：用 CPU RSS timeline 和 saved-tensor hooks 分析 large 模型在 `S=128/2048` 下的 forward、backward、optimizer、mixed precision、单 block residual 与 gradient 内存。
 
 ## 02 混合精度与编译
 
