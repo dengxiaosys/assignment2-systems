@@ -15,6 +15,7 @@ from torch import Tensor
 
 from cs336_basics.model import TransformerBlock
 from cs336_systems.benchmark import DTYPES, MODEL_CONFIGS
+from cs336_systems.saved_tensor_profiler import capture_saved_tensors
 
 
 def _rss_bytes() -> int:
@@ -28,15 +29,11 @@ def _autocast_context(dtype: torch.dtype | None):
     return torch.autocast(device_type="cpu", dtype=dtype)
 
 
-def _source_location() -> str:
+def _source_location(_tensor: Tensor) -> str:
     for frame in reversed(traceback.extract_stack(limit=40)):
         if frame.filename.endswith(("cs336_basics/model.py", "cs336_basics/nn_utils.py")):
             return f"{Path(frame.filename).name}:{frame.lineno}:{frame.name}"
     return "pytorch_internal"
-
-
-def _storage_key(tensor: Tensor) -> tuple[str, int]:
-    return str(tensor.device), tensor.untyped_storage().data_ptr()
 
 
 def run_profile(args: argparse.Namespace) -> dict[str, Any]:
@@ -64,39 +61,41 @@ def run_profile(args: argparse.Namespace) -> dict[str, Any]:
         dtype=model_dtype,
         requires_grad=True,
     )
-    parameter_storage_keys = {_storage_key(parameter) for parameter in block.parameters()}
-    saved_references: list[dict[str, Any]] = []
-    unique_non_parameter_storages: dict[tuple[str, int], dict[str, Any]] = {}
-
-    def pack_hook(tensor: Tensor) -> Tensor:
-        source = _source_location()
-        storage_key = _storage_key(tensor)
-        storage_nbytes = tensor.untyped_storage().nbytes()
-        is_parameter_storage = storage_key in parameter_storage_keys
-        record = {
-            "shape": list(tensor.shape),
-            "dtype": str(tensor.dtype),
-            "tensor_nbytes": tensor.numel() * tensor.element_size(),
-            "storage_nbytes": storage_nbytes,
-            "source": source,
-            "is_parameter_storage": is_parameter_storage,
-        }
-        saved_references.append(record)
-        if not is_parameter_storage and storage_key not in unique_non_parameter_storages:
-            unique_non_parameter_storages[storage_key] = record
-        return tensor
-
-    def unpack_hook(tensor: Tensor) -> Tensor:
-        return tensor
 
     rss_before_forward = _rss_bytes()
-    with torch.autograd.graph.saved_tensors_hooks(pack_hook, unpack_hook):
+    rss_after_forward: int | None = None
+
+    def forward_backward() -> None:
+        nonlocal rss_after_forward
         with _autocast_context(autocast_dtype):
             output = block(x)
             loss = output.float().square().mean()
         rss_after_forward = _rss_bytes()
         loss.backward()
+
+    _, profile = capture_saved_tensors(
+        forward_backward,
+        tensor_roles={
+            "input": (x,),
+            "parameter": tuple(block.parameters()),
+        },
+        source_resolver=_source_location,
+    )
     rss_after_backward = _rss_bytes()
+    if rss_after_forward is None:
+        raise RuntimeError("forward did not produce an RSS sample")
+
+    saved_references = [
+        {
+            "shape": list(event.shape),
+            "dtype": event.dtype,
+            "tensor_nbytes": event.tensor_nbytes,
+            "storage_nbytes": event.storage_nbytes,
+            "source": "pytorch_internal" if event.source is None else event.source,
+            "is_parameter_storage": event.role == "parameter",
+        }
+        for event in profile.saved_events
+    ]
 
     source_bytes: dict[str, int] = defaultdict(int)
     source_counts: dict[str, int] = defaultdict(int)
@@ -141,9 +140,9 @@ def run_profile(args: argparse.Namespace) -> dict[str, Any]:
         "input_gradient_bytes": 0 if x.grad is None else x.grad.numel() * x.grad.element_size(),
         "saved_tensor_reference_count": len(saved_references),
         "non_parameter_saved_tensor_reference_count": len(non_parameter_references),
-        "logical_saved_tensor_bytes_including_parameters": sum(int(record["tensor_nbytes"]) for record in saved_references),
+        "logical_saved_tensor_bytes_including_parameters": profile.metrics().logical_bytes,
         "logical_non_parameter_saved_tensor_bytes": total_logical_non_parameter_bytes,
-        "unique_non_parameter_storage_bytes": sum(int(record["storage_nbytes"]) for record in unique_non_parameter_storages.values()),
+        "unique_non_parameter_storage_bytes": profile.metrics(excluding_roles=("parameter",)).unique_storage_bytes,
         "rss_bytes": {
             "before_forward": rss_before_forward,
             "after_forward": rss_after_forward,

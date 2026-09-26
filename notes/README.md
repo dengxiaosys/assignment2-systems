@@ -35,3 +35,5 @@
 2. [02_02 Mixed-Precision Accumulation 实验报告](./02_02_mixed_precision_accumulation_report.md)：复现四种 FP16/FP32 累加组合，分析输入量化、累加舍入、ULP、误差曲线与高精度 accumulator 的作用。
 3. [02_03 Benchmarking Mixed Precision 实验报告](./02_03_benchmarking_mixed_precision_report.md)：在本机 CPU 上用 small 模型比较 FP32 与 BF16 autocast，覆盖 ToyModel dtype、LayerNorm、完整训练 step、梯度和 AdamW 状态。
 4. [02_04 PyTorch 梯度累积详解](./02_04_gradient_accumulation_guide.md)：从 batch/sequence 维、上游梯度和 VJP 推导共享参数梯度，再解释 `.grad` 累积、大 batch 等价、AMP、DDP/FSDP 与常见错误。
+5. [02_05 RMSNorm Autograd Saved Tensors 与 Operator Fusion 实验报告](./02_05_rmsnorm_autograd_saved_tensors_report.md)：使用 saved-tensor hooks 比较 eager 与 `torch.compile` RMSNorm 的保存/取回事件、logical bytes、唯一 storage、整体 VJP 和数值一致性。
+6. [02_06 PyTorch saved_tensors_hooks 机制详解](./02_06_pytorch_saved_tensors_hooks_guide.md)：解释 pack/unpack 与 `SavedVariable` 生命周期、引用和 storage 统计、RSS 边界、loss 统计范围、引用环风险以及 offload/checkpoint/compile 的关系。

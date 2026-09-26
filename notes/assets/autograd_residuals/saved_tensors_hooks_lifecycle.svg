@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="720" viewBox="0 0 1400 720">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+    </marker>
+    <style>
+      .title { font: 700 30px Arial, sans-serif; fill: #172033; }
+      .phase { font: 700 21px Arial, sans-serif; fill: #172033; }
+      .label { font: 700 16px Arial, sans-serif; fill: #172033; }
+      .body { font: 15px Arial, sans-serif; fill: #334155; }
+      .small { font: 14px Arial, sans-serif; fill: #475569; }
+      .mono { font: 14px "DejaVu Sans Mono", monospace; fill: #172033; }
+    </style>
+  </defs>
+
+  <rect width="1400" height="720" fill="#f8fafc"/>
+  <text x="48" y="52" class="title">saved_tensors_hooks lifecycle</text>
+  <text x="48" y="80" class="body">The hook pair is selected when a forward operator saves a value; unpack can run after the context exits.</text>
+
+  <rect x="40" y="108" width="1320" height="230" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="68" y="145" class="phase">Forward: save a primal value for a future VJP</text>
+
+  <rect x="76" y="178" width="190" height="86" rx="6" fill="#dbeafe" stroke="#60a5fa" stroke-width="2"/>
+  <text x="130" y="212" class="label">Operator</text>
+  <text x="102" y="238" class="mono">z = f(a, b)</text>
+
+  <line x1="266" y1="221" x2="350" y2="221" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+  <text x="278" y="204" class="small">save tensor</text>
+
+  <rect x="356" y="178" width="220" height="86" rx="6" fill="#dcfce7" stroke="#4ade80" stroke-width="2"/>
+  <text x="405" y="212" class="label">pack_hook(t)</text>
+  <text x="386" y="238" class="small">metadata / detach / offload</text>
+
+  <line x1="576" y1="221" x2="660" y2="221" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+  <text x="590" y="204" class="small">Any object</text>
+
+  <rect x="666" y="178" width="250" height="86" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+  <text x="703" y="212" class="label">Packed object in node</text>
+  <text x="696" y="238" class="small">plus the selected unpack hook</text>
+
+  <line x1="916" y1="221" x2="1000" y2="221" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+  <text x="929" y="204" class="small">retains data</text>
+
+  <rect x="1006" y="178" width="300" height="86" rx="6" fill="#ffedd5" stroke="#fb923c" stroke-width="2"/>
+  <text x="1063" y="212" class="label">Underlying storage</text>
+  <text x="1032" y="238" class="small">may be shared by several save references</text>
+
+  <rect x="40" y="370" width="1320" height="230" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="68" y="407" class="phase">Backward: recover the value when the local VJP needs it</text>
+
+  <rect x="76" y="440" width="250" height="86" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+  <text x="113" y="474" class="label">Packed object in node</text>
+  <text x="104" y="500" class="small">survives after context exit</text>
+
+  <line x1="326" y1="483" x2="410" y2="483" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="416" y="440" width="220" height="86" rx="6" fill="#ede9fe" stroke="#8b5cf6" stroke-width="2"/>
+  <text x="460" y="474" class="label">unpack_hook(p)</text>
+  <text x="451" y="500" class="small">must return equivalent Tensor</text>
+
+  <line x1="636" y1="483" x2="720" y2="483" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="726" y="440" width="210" height="86" rx="6" fill="#dbeafe" stroke="#60a5fa" stroke-width="2"/>
+  <text x="777" y="474" class="label">Recovered t</text>
+  <text x="752" y="500" class="small">same value/shape/dtype/device</text>
+
+  <line x1="936" y1="483" x2="1020" y2="483" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="1026" y="440" width="280" height="86" rx="6" fill="#fee2e2" stroke="#f87171" stroke-width="2"/>
+  <text x="1095" y="474" class="label">Local VJP</text>
+  <text x="1055" y="500" class="mono">upstream grad -> input grads</text>
+
+  <line x1="112" y1="646" x2="1288" y2="646" stroke="#94a3b8" stroke-width="2"/>
+  <circle cx="250" cy="646" r="7" fill="#4ade80"/>
+  <circle cx="704" cy="646" r="7" fill="#f59e0b"/>
+  <circle cx="1135" cy="646" r="7" fill="#8b5cf6"/>
+  <text x="185" y="680" class="label">pack during forward</text>
+  <text x="635" y="680" class="label">context may exit</text>
+  <text x="1050" y="680" class="label">unpack during backward</text>
+</svg>

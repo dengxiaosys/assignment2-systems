@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="760" viewBox="0 0 1400 760">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+    </marker>
+    <style>
+      .title { font: 700 30px Arial, sans-serif; fill: #172033; }
+      .subtitle { font: 600 20px Arial, sans-serif; fill: #334155; }
+      .label { font: 600 16px Arial, sans-serif; fill: #172033; }
+      .body { font: 15px Arial, sans-serif; fill: #334155; }
+      .small { font: 14px Arial, sans-serif; fill: #475569; }
+      .metric { font: 700 17px Arial, sans-serif; fill: #172033; }
+      .mono { font: 14px "DejaVu Sans Mono", monospace; fill: #172033; }
+    </style>
+  </defs>
+
+  <rect width="1400" height="760" fill="#f8fafc"/>
+  <text x="52" y="54" class="title">RMSNorm saved tensors: eager graph vs compiled graph</text>
+  <text x="52" y="82" class="body">Shape: (4, 512, 2560), FP32. Repeated save references may share one storage.</text>
+
+  <rect x="40" y="110" width="640" height="600" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="70" y="150" class="subtitle">Eager autograd: primitive-by-primitive</text>
+
+  <rect x="72" y="178" width="574" height="54" rx="6" fill="#e2e8f0"/>
+  <text x="92" y="211" class="mono">x -> pow -> mean -> rsqrt -> x * r -> w * normalized</text>
+
+  <text x="72" y="268" class="label">Values retained across the forward/backward boundary</text>
+
+  <rect x="72" y="290" width="574" height="62" rx="6" fill="#dbeafe" stroke="#60a5fa"/>
+  <text x="92" y="316" class="label">save #0 and #3: input x</text>
+  <text x="92" y="339" class="small">(4, 512, 2560), 20 MiB each logically, shared storage 0</text>
+
+  <rect x="72" y="366" width="574" height="62" rx="6" fill="#dcfce7" stroke="#4ade80"/>
+  <text x="92" y="392" class="label">save #1 and #2: reciprocal RMS r</text>
+  <text x="92" y="415" class="small">(4, 512, 1), 8 KiB each logically, shared storage 1</text>
+
+  <rect x="72" y="442" width="574" height="62" rx="6" fill="#ffedd5" stroke="#fb923c"/>
+  <text x="92" y="468" class="label">save #4: normalized = x * r</text>
+  <text x="92" y="491" class="small">(4, 512, 2560), 20 MiB, storage 2</text>
+
+  <rect x="72" y="518" width="574" height="62" rx="6" fill="#fef3c7" stroke="#f59e0b"/>
+  <text x="92" y="544" class="label">save #5: parameter w</text>
+  <text x="92" y="567" class="small">(2560,), 10 KiB, storage 3</text>
+
+  <line x1="90" y1="614" x2="628" y2="614" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="92" y="646" class="metric">6 logical saves / 4 unique storages</text>
+  <text x="92" y="675" class="metric">60.025 MiB logical / 40.018 MiB unique</text>
+
+  <rect x="720" y="110" width="640" height="600" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="750" y="150" class="subtitle">torch.compile: joint forward/backward view</text>
+
+  <rect x="770" y="184" width="220" height="76" rx="6" fill="#e0f2fe" stroke="#38bdf8" stroke-width="2"/>
+  <text x="805" y="215" class="label">RMSNorm forward</text>
+  <text x="801" y="240" class="small">AOTAutograd graph</text>
+
+  <line x1="990" y1="222" x2="1085" y2="222" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+  <text x="998" y="207" class="small">saved ABI</text>
+
+  <rect x="1090" y="184" width="220" height="76" rx="6" fill="#ede9fe" stroke="#8b5cf6" stroke-width="2"/>
+  <text x="1120" y="215" class="label">Generated backward</text>
+  <text x="1132" y="240" class="small">recomputes cheap work</text>
+
+  <text x="750" y="304" class="label">Only the sufficient values cross the boundary</text>
+
+  <rect x="750" y="328" width="560" height="62" rx="6" fill="#dbeafe" stroke="#60a5fa"/>
+  <text x="770" y="354" class="label">save #0: input x</text>
+  <text x="770" y="377" class="small">(4, 512, 2560), 20 MiB, storage 0</text>
+
+  <rect x="750" y="404" width="560" height="62" rx="6" fill="#fef3c7" stroke="#f59e0b"/>
+  <text x="770" y="430" class="label">save #1: parameter w</text>
+  <text x="770" y="453" class="small">(2560,), 10 KiB, storage 1</text>
+
+  <rect x="750" y="480" width="560" height="62" rx="6" fill="#dcfce7" stroke="#4ade80"/>
+  <text x="770" y="506" class="label">save #2: reciprocal RMS r</text>
+  <text x="770" y="529" class="small">(4, 512, 1), 8 KiB, storage 2</text>
+
+  <line x1="768" y1="576" x2="1292" y2="576" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="770" y="610" class="metric">3 logical saves / 3 unique storages</text>
+  <text x="770" y="639" class="metric">20.018 MiB logical / 20.018 MiB unique</text>
+  <text x="770" y="675" class="body">One full-size activation remains; normalized is recomputed.</text>
+</svg>
