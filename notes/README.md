@@ -27,3 +27,8 @@
 2. [01_02 CPU 端到端 Benchmark 实验报告](./01_02_cpu_benchmark_experiment_report.md)：完整训练与 warmup 对照数据、资源边界、结果解释及 handout (b)/(c) 答案。
 3. [01_03 Nsight Systems 单 Profile 实验报告](./01_03_nsys_profile_analysis.md)：基于一个 GTX 1060 profile 回答 `nsys_profile` (a)-(e)，并记录阶段边界与 kernel 统计。
 4. [01_04 NVTX Range 与 Nsight Systems 入门](./01_04_nvtx_range_and_nsys_guide.md)：解释 `benchmark_measurement` range、CUDA 异步执行、profile 采集和分析流程。
+
+## 02 混合精度与编译
+
+1. [02_01 PyTorch autocast 与混合精度训练详解](./02_01_pytorch_autocast_mixed_precision_guide.md)：解释逐算子 dtype 决策、转换时机、weight cache、autograd 保存张量、GradScaler、手工精度控制和本项目实际 dtype 路径。
+2. [02_02 Mixed-Precision Accumulation 实验报告](./02_02_mixed_precision_accumulation_report.md)：复现四种 FP16/FP32 累加组合，分析输入量化、累加舍入、ULP、误差曲线与高精度 accumulator 的作用。

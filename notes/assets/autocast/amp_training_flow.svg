@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="660" viewBox="0 0 1500 660" role="img" aria-labelledby="title desc">
+  <title id="title">Automatic Mixed Precision training flow</title>
+  <desc id="desc">AMP combines autocast, optional FP16 gradient scaling, mixed-precision backward, and FP32 parameter updates.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#475569"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#2563eb"/>
+    </marker>
+    <style>
+      .title { font: 700 28px Inter, sans-serif; fill: #0f172a; }
+      .subtitle { font: 400 16px Inter, sans-serif; fill: #475569; }
+      .box-title { font: 700 17px Inter, sans-serif; fill: #0f172a; }
+      .body { font: 400 14px Inter, sans-serif; fill: #334155; }
+      .small { font: 400 13px Inter, sans-serif; fill: #475569; }
+      .tag { font: 700 13px Inter, sans-serif; }
+      .phase { font: 700 15px Inter, sans-serif; fill: #ffffff; }
+    </style>
+  </defs>
+
+  <rect width="1500" height="660" fill="#f8fafc"/>
+  <text x="42" y="48" class="title">Automatic Mixed Precision (AMP) training flow</text>
+  <text x="42" y="76" class="subtitle">AMP is a training recipe: autocast chooses operator dtypes; GradScaler protects FP16 gradients; FP32 state is updated safely.</text>
+
+  <rect x="42" y="114" width="190" height="112" rx="6" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="137" y="146" text-anchor="middle" class="box-title">Inputs + state</text>
+  <text x="137" y="173" text-anchor="middle" class="body">token IDs: integer</text>
+  <text x="137" y="197" text-anchor="middle" class="body">master parameters: FP32</text>
+  <text x="137" y="217" text-anchor="middle" class="small">optimizer states: FP32</text>
+
+  <line x1="232" y1="170" x2="277" y2="170" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="277" y="102" width="490" height="212" rx="7" fill="#ffffff" stroke="#334155" stroke-width="2"/>
+  <rect x="277" y="102" width="490" height="38" rx="7" fill="#334155"/>
+  <text x="522" y="127" text-anchor="middle" class="phase">autocast forward + loss region</text>
+
+  <rect x="303" y="159" width="202" height="112" rx="5" fill="#ccfbf1" stroke="#0f766e" stroke-width="2"/>
+  <text x="404" y="190" text-anchor="middle" class="box-title">Low-precision ops</text>
+  <text x="404" y="217" text-anchor="middle" class="body">matmul / linear / conv</text>
+  <text x="404" y="242" text-anchor="middle" class="tag" fill="#0f766e">FP16 or BF16</text>
+  <text x="404" y="262" text-anchor="middle" class="small">casts at op boundary</text>
+
+  <line x1="505" y1="215" x2="539" y2="215" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="539" y="159" width="202" height="112" rx="5" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+  <text x="640" y="190" text-anchor="middle" class="box-title">Sensitive ops</text>
+  <text x="640" y="217" text-anchor="middle" class="body">norm / softmax / loss</text>
+  <text x="640" y="242" text-anchor="middle" class="tag" fill="#92400e">often FP32</text>
+  <text x="640" y="262" text-anchor="middle" class="small">policy is operator-specific</text>
+
+  <line x1="767" y1="208" x2="812" y2="208" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="812" y="151" width="156" height="114" rx="6" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+  <text x="890" y="185" text-anchor="middle" class="box-title">Loss</text>
+  <text x="890" y="213" text-anchor="middle" class="tag" fill="#92400e">usually FP32</text>
+  <text x="890" y="239" text-anchor="middle" class="small">autocast exits here</text>
+
+  <line x1="968" y1="208" x2="1013" y2="208" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="1013" y="151" width="184" height="114" rx="6" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="1105" y="181" text-anchor="middle" class="box-title">GradScaler (optional)</text>
+  <text x="1105" y="208" text-anchor="middle" class="body">scaled_loss = S * loss</text>
+  <text x="1105" y="233" text-anchor="middle" class="tag" fill="#1d4ed8">FP16: usually enabled</text>
+  <text x="1105" y="253" text-anchor="middle" class="small">BF16: usually disabled</text>
+
+  <line x1="1197" y1="208" x2="1242" y2="208" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="1242" y="151" width="208" height="114" rx="6" fill="#e9d5ff" stroke="#7e22ce" stroke-width="2"/>
+  <text x="1346" y="181" text-anchor="middle" class="box-title">backward()</text>
+  <text x="1346" y="208" text-anchor="middle" class="body">mixed intermediate dtypes</text>
+  <text x="1346" y="233" text-anchor="middle" class="body">follow forward op choices</text>
+  <text x="1346" y="253" text-anchor="middle" class="small">run outside autocast context</text>
+
+  <path d="M890 151 L890 116 L1346 116 L1346 143" fill="none" stroke="#64748b" stroke-width="2" stroke-dasharray="7 6" marker-end="url(#arrow)"/>
+  <text x="1118" y="107" text-anchor="middle" class="small">BF16 path commonly bypasses GradScaler</text>
+
+  <line x1="1346" y1="265" x2="1346" y2="354" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="1232" y="362" width="218" height="106" rx="6" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+  <text x="1341" y="393" text-anchor="middle" class="box-title">Leaf parameter grads</text>
+  <text x="1341" y="420" text-anchor="middle" class="body">FP32 for FP32 parameters</text>
+  <text x="1341" y="444" text-anchor="middle" class="body">scaled only on FP16 path</text>
+  <text x="1341" y="462" text-anchor="middle" class="small">produced by backward</text>
+
+  <line x1="1232" y1="415" x2="1157" y2="415" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="937" y="362" width="220" height="106" rx="6" fill="#fecaca" stroke="#dc2626" stroke-width="2"/>
+  <text x="1047" y="393" text-anchor="middle" class="box-title">Unscale/check</text>
+  <text x="1047" y="420" text-anchor="middle" class="tag" fill="#b91c1c">FP16: grad = grad / S</text>
+  <text x="1047" y="444" text-anchor="middle" class="small">BF16: usually bypassed</text>
+
+  <line x1="937" y1="415" x2="862" y2="415" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="642" y="362" width="220" height="106" rx="6" fill="#fed7aa" stroke="#c2410c" stroke-width="2"/>
+  <text x="752" y="393" text-anchor="middle" class="box-title">optimizer.step()</text>
+  <text x="752" y="420" text-anchor="middle" class="body">FP32 Adam math and states</text>
+  <text x="752" y="444" text-anchor="middle" class="small">only when gradients are finite</text>
+
+  <line x1="642" y1="415" x2="567" y2="415" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="347" y="362" width="220" height="106" rx="6" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="457" y="393" text-anchor="middle" class="box-title">Updated parameters</text>
+  <text x="457" y="420" text-anchor="middle" class="tag" fill="#1d4ed8">remain FP32</text>
+  <text x="457" y="444" text-anchor="middle" class="small">used by the next iteration</text>
+
+  <path d="M347 415 L137 415 L137 234" fill="none" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow-blue)"/>
+
+  <rect x="42" y="518" width="1408" height="91" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="64" y="549" class="box-title">AMP is not a dtype</text>
+  <text x="64" y="576" class="body">It coordinates several precision domains: persistent state, per-operator compute, saved activations, backward intermediates, and parameter updates.</text>
+  <text x="64" y="598" class="small">Inference uses autocast without backward or GradScaler. BF16 training usually uses autocast without loss scaling.</text>
+
+  <rect x="42" y="628" width="22" height="16" fill="#dbeafe" stroke="#2563eb"/>
+  <text x="74" y="642" class="small">FP32 persistent state / scaling control</text>
+  <rect x="358" y="628" width="22" height="16" fill="#ccfbf1" stroke="#0f766e"/>
+  <text x="390" y="642" class="small">low-precision compute</text>
+  <rect x="596" y="628" width="22" height="16" fill="#fef3c7" stroke="#b45309"/>
+  <text x="628" y="642" class="small">sensitive FP32 compute</text>
+  <rect x="847" y="628" width="22" height="16" fill="#e9d5ff" stroke="#7e22ce"/>
+  <text x="879" y="642" class="small">mixed backward</text>
+  <rect x="1045" y="628" width="22" height="16" fill="#fecaca" stroke="#dc2626"/>
+  <text x="1077" y="642" class="small">gradients / finite check</text>
+</svg>

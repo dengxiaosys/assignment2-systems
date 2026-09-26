@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">PyTorch autocast per-operator dispatch flow</title>
+  <desc id="desc">Entering autocast sets thread-local state. Dtype conversion happens at each eligible operator boundary.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#334155"/>
+    </marker>
+    <marker id="arrow-teal" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#0f766e"/>
+    </marker>
+    <style>
+      .title { font: 700 28px Inter, "Noto Sans SC", sans-serif; fill: #0f172a; }
+      .subtitle { font: 400 16px Inter, "Noto Sans SC", sans-serif; fill: #475569; }
+      .box-title { font: 700 19px Inter, "Noto Sans SC", sans-serif; fill: #0f172a; }
+      .body { font: 400 16px Inter, "Noto Sans SC", sans-serif; fill: #334155; }
+      .small { font: 400 14px Inter, "Noto Sans SC", sans-serif; fill: #475569; }
+      .chip { font: 700 14px Inter, "Noto Sans SC", sans-serif; }
+      .step { font: 700 15px Inter, "Noto Sans SC", sans-serif; fill: #ffffff; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="620" fill="#f8fafc"/>
+  <text x="48" y="48" class="title">autocast: casts happen at operator boundaries</text>
+  <text x="48" y="76" class="subtitle">Entering the context sets dispatch state. It does not scan or convert the model.</text>
+
+  <circle cx="75" cy="137" r="17" fill="#334155"/>
+  <text x="75" y="142" text-anchor="middle" class="step">1</text>
+  <rect x="48" y="165" width="220" height="132" rx="6" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+  <text x="68" y="197" class="box-title">Enter autocast</text>
+  <text x="68" y="229" class="body">Set thread-local state</text>
+  <text x="68" y="254" class="body">Target dtype = FP16</text>
+  <text x="68" y="279" class="small">No tensor is cast yet</text>
+
+  <line x1="268" y1="231" x2="325" y2="231" stroke="#334155" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <circle cx="350" cy="137" r="17" fill="#334155"/>
+  <text x="350" y="142" text-anchor="middle" class="step">2</text>
+  <rect x="323" y="165" width="220" height="132" rx="6" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+  <text x="343" y="197" class="box-title">Call an operator</text>
+  <text x="343" y="229" class="body">e.g. matmul(x, W)</text>
+  <text x="343" y="254" class="body">Inputs are FP32</text>
+  <text x="343" y="279" class="small">int / FP64 unchanged</text>
+
+  <line x1="543" y1="231" x2="600" y2="231" stroke="#334155" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <circle cx="625" cy="137" r="17" fill="#334155"/>
+  <text x="625" y="142" text-anchor="middle" class="step">3</text>
+  <rect x="598" y="107" width="342" height="258" rx="6" fill="#ffffff" stroke="#334155" stroke-width="2"/>
+  <text x="618" y="143" class="box-title">Autocast policy lookup</text>
+
+  <rect x="618" y="164" width="302" height="51" rx="4" fill="#ccfbf1" stroke="#0f766e"/>
+  <text x="634" y="187" class="chip" fill="#0f766e">lower_precision_fp</text>
+  <text x="790" y="187" class="body">matmul to FP16</text>
+  <text x="634" y="205" class="small">Cast eligible inputs before the kernel</text>
+
+  <rect x="618" y="225" width="302" height="51" rx="4" fill="#fef3c7" stroke="#b45309"/>
+  <text x="634" y="248" class="chip" fill="#92400e">fp32</text>
+  <text x="720" y="248" class="body">softmax to FP32</text>
+  <text x="634" y="266" class="small">Upcast numerically sensitive inputs</text>
+
+  <rect x="618" y="286" width="302" height="59" rx="4" fill="#f1f5f9" stroke="#64748b"/>
+  <text x="634" y="309" class="chip" fill="#334155">unlisted op</text>
+  <text x="746" y="309" class="body">follow input dtype</text>
+  <text x="634" y="329" class="small">Normal type promotion still applies</text>
+
+  <line x1="940" y1="231" x2="997" y2="231" stroke="#334155" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <circle cx="1022" cy="137" r="17" fill="#334155"/>
+  <text x="1022" y="142" text-anchor="middle" class="step">4</text>
+  <rect x="995" y="165" width="157" height="132" rx="6" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+  <text x="1015" y="197" class="box-title">Run kernel</text>
+  <text x="1015" y="229" class="body">Create output</text>
+  <text x="1015" y="254" class="body">in selected dtype</text>
+  <text x="1015" y="279" class="small">Sources intact</text>
+
+  <rect x="48" y="418" width="1104" height="151" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="70" y="451" class="box-title">Example: an FP32 parameter used by matmul</text>
+
+  <rect x="70" y="475" width="205" height="62" rx="4" fill="#dbeafe" stroke="#2563eb"/>
+  <text x="172" y="500" text-anchor="middle" class="chip" fill="#1d4ed8">FP32 parameter W</text>
+  <text x="172" y="522" text-anchor="middle" class="small">Persistent master weight</text>
+
+  <line x1="275" y1="506" x2="365" y2="506" stroke="#0f766e" stroke-width="3" marker-end="url(#arrow-teal)"/>
+  <text x="320" y="491" text-anchor="middle" class="small">boundary cast</text>
+
+  <rect x="365" y="475" width="205" height="62" rx="4" fill="#ccfbf1" stroke="#0f766e"/>
+  <text x="467" y="500" text-anchor="middle" class="chip" fill="#0f766e">Temporary FP16 copy</text>
+  <text x="467" y="522" text-anchor="middle" class="small">May enter the weight cache</text>
+
+  <line x1="570" y1="506" x2="660" y2="506" stroke="#0f766e" stroke-width="3" marker-end="url(#arrow-teal)"/>
+
+  <rect x="660" y="475" width="205" height="62" rx="4" fill="#ccfbf1" stroke="#0f766e"/>
+  <text x="762" y="500" text-anchor="middle" class="chip" fill="#0f766e">FP16 GEMM</text>
+  <text x="762" y="522" text-anchor="middle" class="small">Backend-selected accum.</text>
+
+  <line x1="865" y1="506" x2="955" y2="506" stroke="#0f766e" stroke-width="3" marker-end="url(#arrow-teal)"/>
+
+  <rect x="955" y="475" width="175" height="62" rx="4" fill="#ccfbf1" stroke="#0f766e"/>
+  <text x="1042" y="500" text-anchor="middle" class="chip" fill="#0f766e">FP16 output</text>
+  <text x="1042" y="522" text-anchor="middle" class="small">Still FP16 after context exit</text>
+</svg>

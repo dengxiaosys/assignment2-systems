@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1250" height="690" viewBox="0 0 1250 690" role="img" aria-labelledby="title desc">
+  <title id="title">GradScaler dynamic scaling and optimizer control flow</title>
+  <desc id="desc">Loss scaling, scaled backward, gradient unscaling, non-finite checks, and optimizer-step control.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#475569"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#15803d"/>
+    </marker>
+    <marker id="arrow-red" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#dc2626"/>
+    </marker>
+    <style>
+      .title { font: 700 28px Inter, "Noto Sans SC", sans-serif; fill: #0f172a; }
+      .subtitle { font: 400 16px Inter, "Noto Sans SC", sans-serif; fill: #475569; }
+      .box-title { font: 700 17px Inter, "Noto Sans SC", sans-serif; fill: #0f172a; }
+      .body { font: 400 15px Inter, "Noto Sans SC", sans-serif; fill: #334155; }
+      .small { font: 400 13px Inter, "Noto Sans SC", sans-serif; fill: #475569; }
+      .branch { font: 700 15px Inter, "Noto Sans SC", sans-serif; }
+    </style>
+  </defs>
+
+  <rect width="1250" height="690" fill="#f8fafc"/>
+  <text x="44" y="48" class="title">GradScaler: scale gradients, check them, then control the update</text>
+  <text x="44" y="76" class="subtitle">GradScaler does not choose forward dtypes. It rescales gradients and protects optimizer.step().</text>
+
+  <rect x="42" y="144" width="165" height="100" rx="6" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+  <text x="124" y="177" text-anchor="middle" class="box-title">Original loss</text>
+  <text x="124" y="203" text-anchor="middle" class="body">L, usually FP32</text>
+  <text x="124" y="226" text-anchor="middle" class="small">from autocast forward</text>
+
+  <line x1="207" y1="194" x2="265" y2="194" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="265" y="144" width="185" height="100" rx="6" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="357" y="177" text-anchor="middle" class="box-title">scale(loss)</text>
+  <text x="357" y="203" text-anchor="middle" class="body">scaled_loss = S * L</text>
+  <text x="357" y="226" text-anchor="middle" class="small">default initial S = 65536</text>
+
+  <line x1="450" y1="194" x2="508" y2="194" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="508" y="144" width="185" height="100" rx="6" fill="#ccfbf1" stroke="#0f766e" stroke-width="2"/>
+  <text x="600" y="177" text-anchor="middle" class="box-title">scaled backward</text>
+  <text x="600" y="203" text-anchor="middle" class="body">scaled_grad = S * grad</text>
+  <text x="600" y="226" text-anchor="middle" class="small">reduces gradient underflow</text>
+
+  <line x1="693" y1="194" x2="751" y2="194" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="751" y="144" width="185" height="100" rx="6" fill="#ffffff" stroke="#64748b" stroke-width="2"/>
+  <text x="843" y="177" text-anchor="middle" class="box-title">unscale_</text>
+  <text x="843" y="203" text-anchor="middle" class="body">grad / S</text>
+  <text x="843" y="226" text-anchor="middle" class="small">also check inf / NaN</text>
+
+  <line x1="936" y1="194" x2="972" y2="194" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <path d="M1062 126 L1162 194 L1062 262 L962 194 Z" fill="#fff7ed" stroke="#c2410c" stroke-width="2"/>
+  <text x="1062" y="188" text-anchor="middle" class="box-title">All gradients</text>
+  <text x="1062" y="211" text-anchor="middle" class="box-title">finite?</text>
+
+  <line x1="1117" y1="231" x2="1170" y2="309" stroke="#15803d" stroke-width="3" marker-end="url(#arrow-green)"/>
+  <text x="1155" y="269" class="branch" fill="#15803d">yes</text>
+
+  <rect x="1040" y="318" width="175" height="94" rx="6" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+  <text x="1127" y="350" text-anchor="middle" class="box-title">optimizer.step()</text>
+  <text x="1127" y="375" text-anchor="middle" class="body">apply FP32 update</text>
+  <text x="1127" y="397" text-anchor="middle" class="small">parameters change</text>
+
+  <line x1="1007" y1="231" x2="912" y2="309" stroke="#dc2626" stroke-width="3" marker-end="url(#arrow-red)"/>
+  <text x="950" y="269" class="branch" fill="#dc2626">no</text>
+
+  <rect x="735" y="318" width="205" height="94" rx="6" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+  <text x="837" y="350" text-anchor="middle" class="box-title">Skip optimizer.step()</text>
+  <text x="837" y="375" text-anchor="middle" class="body">protect parameters</text>
+  <text x="837" y="397" text-anchor="middle" class="small">no update this iteration</text>
+
+  <line x1="837" y1="412" x2="837" y2="472" stroke="#dc2626" stroke-width="3" marker-end="url(#arrow-red)"/>
+  <rect x="735" y="480" width="205" height="82" rx="6" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+  <text x="837" y="512" text-anchor="middle" class="box-title">Decrease scale</text>
+  <text x="837" y="539" text-anchor="middle" class="body">S = S * backoff_factor</text>
+
+  <line x1="1127" y1="412" x2="1127" y2="472" stroke="#15803d" stroke-width="3" marker-end="url(#arrow-green)"/>
+  <rect x="1025" y="480" width="205" height="82" rx="6" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+  <text x="1127" y="507" text-anchor="middle" class="box-title">Keep or grow scale</text>
+  <text x="1127" y="532" text-anchor="middle" class="body">after a stable interval</text>
+  <text x="1127" y="551" text-anchor="middle" class="small">S = S * growth_factor</text>
+
+  <line x1="837" y1="562" x2="837" y2="611" stroke="#475569" stroke-width="3"/>
+  <line x1="1127" y1="562" x2="1127" y2="611" stroke="#475569" stroke-width="3"/>
+  <line x1="837" y1="611" x2="1127" y2="611" stroke="#475569" stroke-width="3"/>
+  <line x1="982" y1="611" x2="982" y2="641" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+  <text x="982" y="670" text-anchor="middle" class="box-title">Next iteration</text>
+
+  <rect x="42" y="328" width="600" height="234" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="64" y="362" class="box-title">Important boundaries</text>
+  <text x="64" y="396" class="body">1. autocast chooses forward operator dtypes.</text>
+  <text x="64" y="427" class="body">2. GradScaler rescales loss; it does not alter forward policy.</text>
+  <text x="64" y="458" class="body">3. Run gradient clipping after unscale_().</text>
+  <text x="64" y="489" class="body">4. BF16 rarely needs scaling; CUDA FP16 usually does.</text>
+  <text x="64" y="520" class="body">5. scaler.step() unscales automatically unless done explicitly.</text>
+  <text x="64" y="548" class="small">Scale and growth tracker are scalars, not full gradient copies.</text>
+</svg>
