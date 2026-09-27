@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="850" viewBox="0 0 1400 850">
+  <defs>
+    <style>
+      .title { font: 700 30px Arial, sans-serif; fill: #172033; }
+      .subtitle { font: 16px Arial, sans-serif; fill: #475569; }
+      .node { font: 700 17px Arial, sans-serif; fill: #172033; }
+      .small { font: 14px Arial, sans-serif; fill: #475569; }
+      .metric { font: 700 18px Arial, sans-serif; fill: #172033; }
+      .mono { font: 15px "DejaVu Sans Mono", monospace; fill: #172033; }
+    </style>
+  </defs>
+
+  <rect width="1400" height="850" fill="#f8fafc"/>
+  <text x="48" y="50" class="title">Balanced recursive checkpointing, N = 8</text>
+  <text x="48" y="78" class="subtitle">The orange path is the only recursion path materialized while backpropagating through block 8.</text>
+
+  <rect x="930" y="34" width="26" height="18" rx="4" fill="#ffedd5" stroke="#f97316" stroke-width="2"/>
+  <text x="966" y="49" class="small">active checkpoint range</text>
+  <rect x="1168" y="34" width="26" height="18" rx="4" fill="#fee2e2" stroke="#ef4444" stroke-width="2"/>
+  <text x="1204" y="49" class="small">materialized leaf residual</text>
+
+  <g stroke="#94a3b8" stroke-width="2" fill="none">
+    <path d="M700 170 L340 218"/>
+    <path d="M700 170 L1060 218"/>
+    <path d="M340 282 L180 330"/>
+    <path d="M340 282 L500 330"/>
+    <path d="M1060 282 L900 330"/>
+    <path d="M1060 282 L1220 330"/>
+    <path d="M180 394 L125 442"/>
+    <path d="M180 394 L285 442"/>
+    <path d="M500 394 L445 442"/>
+    <path d="M500 394 L605 442"/>
+    <path d="M900 394 L765 442"/>
+    <path d="M900 394 L925 442"/>
+    <path d="M1220 394 L1085 442"/>
+    <path d="M1220 394 L1245 442"/>
+  </g>
+
+  <g stroke="#f97316" stroke-width="5" fill="none">
+    <path d="M700 170 L1060 218"/>
+    <path d="M1060 282 L1220 330"/>
+    <path d="M1220 394 L1245 442"/>
+  </g>
+
+  <rect x="580" y="114" width="240" height="56" rx="7" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="654" y="148" class="node">blocks 1-8</text>
+
+  <rect x="220" y="226" width="240" height="56" rx="7" fill="#e2e8f0" stroke="#64748b" stroke-width="2"/>
+  <text x="294" y="260" class="node">blocks 1-4</text>
+  <rect x="940" y="226" width="240" height="56" rx="7" fill="#ffedd5" stroke="#f97316" stroke-width="3"/>
+  <text x="1014" y="260" class="node">blocks 5-8</text>
+
+  <rect x="80" y="338" width="200" height="56" rx="7" fill="#e2e8f0" stroke="#64748b" stroke-width="2"/>
+  <text x="132" y="372" class="node">blocks 1-2</text>
+  <rect x="400" y="338" width="200" height="56" rx="7" fill="#e2e8f0" stroke="#64748b" stroke-width="2"/>
+  <text x="452" y="372" class="node">blocks 3-4</text>
+  <rect x="800" y="338" width="200" height="56" rx="7" fill="#e2e8f0" stroke="#64748b" stroke-width="2"/>
+  <text x="852" y="372" class="node">blocks 5-6</text>
+  <rect x="1120" y="338" width="200" height="56" rx="7" fill="#ffedd5" stroke="#f97316" stroke-width="3"/>
+  <text x="1172" y="372" class="node">blocks 7-8</text>
+
+  <g>
+    <rect x="60" y="450" width="130" height="56" rx="7" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+    <rect x="220" y="450" width="130" height="56" rx="7" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+    <rect x="380" y="450" width="130" height="56" rx="7" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+    <rect x="540" y="450" width="130" height="56" rx="7" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+    <rect x="700" y="450" width="130" height="56" rx="7" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+    <rect x="860" y="450" width="130" height="56" rx="7" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+    <rect x="1020" y="450" width="130" height="56" rx="7" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+    <rect x="1180" y="450" width="130" height="56" rx="7" fill="#fee2e2" stroke="#ef4444" stroke-width="3"/>
+    <text x="103" y="484" class="node">B1</text>
+    <text x="263" y="484" class="node">B2</text>
+    <text x="423" y="484" class="node">B3</text>
+    <text x="583" y="484" class="node">B4</text>
+    <text x="743" y="484" class="node">B5</text>
+    <text x="903" y="484" class="node">B6</text>
+    <text x="1063" y="484" class="node">B7</text>
+    <text x="1223" y="484" class="node">B8</text>
+  </g>
+
+  <circle cx="1060" cy="218" r="8" fill="#f97316"/>
+  <circle cx="1220" cy="330" r="8" fill="#f97316"/>
+  <circle cx="1245" cy="442" r="8" fill="#ef4444"/>
+
+  <rect x="48" y="556" width="1304" height="108" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="76" y="590" class="metric">Backward at B8 keeps one boundary per recursion depth</text>
+  <text x="76" y="620" class="mono">x0  ->  checkpoint[5-8]  ->  checkpoint[7-8]  ->  residual(B8)</text>
+  <text x="76" y="647" class="small">Inactive sibling subtrees are not materialized at the same time.</text>
+
+  <rect x="48" y="690" width="620" height="112" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/>
+  <text x="76" y="726" class="metric">Peak activation memory</text>
+  <text x="76" y="758" class="mono">M(N) = M(N / 2) + O(C) = O(C log N + R)</text>
+  <text x="76" y="785" class="small">O(log N) when checkpoint and block sizes are constant in N.</text>
+
+  <rect x="732" y="690" width="620" height="112" rx="8" fill="#ede9fe" stroke="#8b5cf6" stroke-width="2"/>
+  <text x="760" y="726" class="metric">Recomputation</text>
+  <text x="760" y="758" class="mono">T(N) = 2 T(N / 2) + O(N) = O(N log N)</text>
+  <text x="760" y="785" class="small">Every recursion level replays O(N) total block work.</text>
+</svg>

@@ -37,3 +37,4 @@
 4. [02_04 PyTorch 梯度累积详解](./02_04_gradient_accumulation_guide.md)：从 batch/sequence 维、上游梯度和 VJP 推导共享参数梯度，再解释 `.grad` 累积、大 batch 等价、AMP、DDP/FSDP 与常见错误。
 5. [02_05 RMSNorm Autograd Saved Tensors 与 Operator Fusion 实验报告](./02_05_rmsnorm_autograd_saved_tensors_report.md)：使用 saved-tensor hooks 比较 eager 与 `torch.compile` RMSNorm 的保存/取回事件、logical bytes、唯一 storage、整体 VJP 和数值一致性。
 6. [02_06 PyTorch saved_tensors_hooks 机制详解](./02_06_pytorch_saved_tensors_hooks_guide.md)：解释 pack/unpack 与 `SavedVariable` 生命周期、引用和 storage 统计、RSS 边界、loss 统计范围、引用环风险以及 offload/checkpoint/compile 的关系。
+7. [02_07 Memory-Optimal Gradient Checkpointing 实验报告](./02_07_gradient_checkpointing_report.md)：推导单层与递归 checkpoint 的 memory/compute 复杂度，并在 36 层 large block stack 上比较无 checkpoint 与 `k=1/2/3` 的 saved storage、RSS 峰值和运行时间。
