@@ -1,20 +1,21 @@
-# FlashAttention-2 初学者教材：从 Online Softmax 到 Triton Tile
+# FlashAttention-2 Forward 初学者教材：从 Online Softmax 到 Triton Tile
 
 ## 0. 本文目标与阅读方法
 
-本文面向第一次系统学习 FlashAttention-2（下文简称 FA2）的读者。目标不是背诵一段 kernel，而是建立一条可以独立推导、实现和验证的知识链：
+本文是 FlashAttention-2 教材的 **Forward 篇**，面向第一次系统学习 FlashAttention-2（下文简称 FA2）的读者。目标不是背诵一段 kernel，而是建立一条可以独立推导和实现 forward 的知识链：
 
 1. 先看懂普通 scaled dot-product attention 的数学和张量形状；
 2. 分清算术复杂度、显存容量与 HBM I/O 三种不同成本；
 3. 用 weighted sum 掌握 Triton 的 program、tile、stride 和 block pointer；
 4. 从一个 score 行推导 online softmax；
 5. 把推导扩展成分块 attention forward；
-6. 理解 causal mask、数值稳定性与 backward 重算；
+6. 理解 causal mask、边界处理与数值稳定性；
 7. 解释 FA2 相比 FA1 为什么更快；
-8. 建立正确性测试和可信 benchmark；
-9. 明确没有可用 GPU 时能验证什么、不能声称什么。
+8. 明确 forward 为什么要额外保存 $L$，为 backward 重算建立接口。
 
-本文讲的是 FA2 的核心算法与课程实现路线，不是某个生产库全部特性的 API 手册。Dropout、variable-length batching、MQA/GQA、KV cache 和不同 GPU 架构的专用流水线只在需要辨清边界时提及。
+Backward 推导、Triton 映射、正确性测试、benchmark 和练习已拆到 [Backward 与实现验证篇](./03_03_flash_attention_2_backward.md)。两篇沿用原来的连续章节编号，建议先读本篇第 0-8 章，再进入下篇第 9 章。
+
+本文讲的是 FA2 forward 的核心算法与课程实现路线，不是某个生产库全部特性的 API 手册。Dropout、variable-length batching、MQA/GQA、KV cache 和不同 GPU 架构的专用流水线只在需要辨清边界时提及。
 
 ### 0.1 一手资料索引
 
@@ -37,9 +38,9 @@
 
 ### 0.2 三条建议阅读路线
 
-- **先懂原理**：依次阅读第 1、2、4、5、8、9、17 节，先忽略 Triton API 细节。
-- **完成课程实现**：依次阅读第 3 至 12 节，再按第 15 节的阶段顺序实现。
-- **当前没有 GPU**：重点完成第 1 至 7、9、11、13 节的 CPU 验证；把 Triton 性能结论留到有受支持 GPU 时再验证。
+- **先懂 forward 原理**：依次阅读第 1、2、4、5、8 章，先忽略 Triton API 细节。
+- **完成课程实现**：先读本篇第 3-8 章，再读 [下篇第 9-12 章](./03_03_flash_attention_2_backward.md)。
+- **当前没有 GPU**：先完成本篇的数学推导与纯 PyTorch tiled forward，再按下篇第 13 章区分可验证与不可验证的结论。
 
 ---
 
@@ -58,6 +59,8 @@
 不需要先会手写 CUDA，但要接受一个系统事实：GPU 上“少做算术”不一定等于“更快”，数据在 HBM 与片上存储之间移动也要付出时间。FA1 的出发点正是把 attention 设计成 I/O-aware 算法，而不是把它改成近似算法。[FA1 §1、§3](https://papers.neurips.cc/paper_files/paper/2022/file/67d57c32e20fd0a7a302cb81d36e40d5-Paper-Conference.pdf)
 
 ### 1.2 本文的向量与矩阵约定
+
+**下标起点约定：** 标量数学公式中的 query、key 和特征下标 $i,j,u,r,c$ 从 1 开始；对应求和写成从 1 到维度上界。tile 与 Triton program 的循环索引 $a,b$ 从 0 开始，即 $a=0,\ldots,T_q-1$、$b=0,\ldots,T_k-1$。
 
 **数学上，所有单个向量都按列向量书写。** 对第 $i$ 个 query 和第 $j$ 个 key：
 
@@ -439,7 +442,7 @@ $$o=\sum_{j=1}^{N}p_jv_j,\quad p_j=\frac{\exp(s_j)}{\sum_{u=1}^{N}\exp(s_u)}$$
 
 为防止 $\exp(s_j)$ 上溢，先取全行最大值 $m=\max_j s_j$。给所有 scores 同时减去 $m$ 不改变 softmax：
 
-$$o=\frac{\sum_{j=1}^{N}\exp(s_j-m)v_j}{\sum_{j=1}^{N}\exp(s_j-m)}$$
+$$o=\frac{\sum_{j=1}^{N}\exp(s_j-m)v_j}{\sum_{u=1}^{N}\exp(s_u-m)}$$
 
 现在可以看出，计算输出只需要三个对象：
 
@@ -534,30 +537,6 @@ $$z_\text{new}=e^{-2}z_\text{old}+30e^{-1}+40\approx54.240960$$
 
 初始化为 $m=-\infty,\ell=0,z=0$。全部 key/value tiles 处理完后，输出为 $o=z/\ell$。
 
-概念伪代码如下：
-
-```python
-m = -inf
-l = 0
-z = zeros(d)
-
-for scores, values in tiles:
-    m_new = max(m, max(scores))
-    alpha = exp(m - m_new)
-    p_tilde = exp(scores - m_new)
-
-    l_new = alpha * l + sum(p_tilde)
-    z_new = alpha * z + values.T @ p_tilde
-
-    m, l, z = m_new, l_new, z_new
-
-output = z / l
-```
-
-实现时必须先保留旧的 $m,\ell,z$，再统一写入新状态。若过早执行 `m = m_new`，随后计算出的 `exp(m - m_new)` 会错误地恒等于 1。
-
-![一个 key/value tile 如何更新 online softmax 状态](assets/flash_attention2/online_softmax_state.svg)
-
 ### 4.6 为什么这种更新是精确的
 
 处理完任意若干个 tiles 后，状态始终满足：
@@ -573,9 +552,98 @@ $$m=\max_{t\in\text{seen}}s_t,\quad \ell=\sum_{t\in\text{seen}}\exp(s_t-m),\quad
 
 ### 4.7 为什么还要保存 logsumexp
 
-最终状态中的 $L=m+\log\ell$ 就是整行 scores 的 `logsumexp`。Backward 重新算出某个 score $s_t$ 后，可以用 $p_t=\exp(s_t-L)$ 直接恢复对应 probability，不需要保存完整 $P$，也不需要再次运行 online normalization。
+#### 4.7.1 这里的 $L$ 不是训练 loss
+
+这里把每个 query 行的 `logsumexp` 记为 $L_i$。它只是 attention forward 产生的一个行统计量，不是整个模型最终优化的训练 loss。
+
+对一个 query：
+
+- 有 $N_k$ 个 scores；
+- 只有 1 个 $L$；
+- $L$ 把这一整行 scores 的 softmax 归一化信息压缩成一个标量。
+
+若有 $N_q$ 个 queries，则 $L$ 的 shape 是 `(Nq,)`；加入 batch 和 head 后通常是 `(B,H,Nq)`。
+
+#### 4.7.2 $L=m+\log\ell$ 是怎么来的
+
+前面定义：
+
+- $m=\max_j s_j$；
+- $\ell=\sum_j\exp(s_j-m)$。
+
+把原始 softmax 分母中的 $\exp(m)$ 提出来：
+
+$$\sum_j\exp(s_j)=\exp(m)\sum_j\exp(s_j-m)=\exp(m)\ell$$
+
+对两边取对数：
+
+$$\log\left(\sum_j\exp(s_j)\right)=m+\log\ell$$
+
+因此定义 $L=m+\log\ell$。也就是说，$L$ 就是原始 softmax 分母的对数：
+
+$$L=\operatorname{logsumexp}(s)=\log\left(\sum_j\exp(s_j)\right)$$
+
+#### 4.7.3 为什么一个 $L$ 就能恢复整行 probability
+
+普通 softmax probability 是：
+
+$$p_j=\frac{\exp(s_j)}{\sum_u\exp(s_u)}$$
+
+因为分母等于 $\exp(L)$：
+
+$$p_j=\frac{\exp(s_j)}{\exp(L)}=\exp(s_j-L)$$
+
+所以 backward 只要重新算出 score $s_j$，再读取该 query 行保存的一个 $L$，就能恢复 $p_j$。不需要把 forward 中的全部 probabilities 一直保留到 backward。
+
+继续使用 `[1,2,3,4]`：
+
+- $m=4$；
+- $\ell=e^{-3}+e^{-2}+e^{-1}+1\approx1.553002$；
+- $L=4+\log(1.553002)\approx4.440190$。
+
+逐个恢复：
+
+```text
+exp(1 - L) = 0.0321
+exp(2 - L) = 0.0871
+exp(3 - L) = 0.2369
+exp(4 - L) = 0.6439
+```
+
+这正是普通 `softmax([1,2,3,4])`。而且 $L\geq\max_j s_j$，所以 $s_j-L\leq0$，指数不会因为正数过大而上溢。
+
+#### 4.7.4 为什么保存 $L$ 比保存 $P$ 小得多
+
+对每个 batch、head：
+
+| 保存对象 | Shape | 元素数 |
+|---|---|---:|
+| 完整 probability $P$ | `(Nq,Nk)` | $N_qN_k$ |
+| 行统计量 $L$ | `(Nq,)` | $N_q$ |
+
+例如 `B=1,H=32,Nq=Nk=8192`：
+
+- BF16 的完整 $P$ 为 4 GiB；
+- FP32 的 $L$ 仅为 $1\times32\times8192\times4=1$ MiB；
+- 二者相差 4096 倍。
+
+保存 $m$ 和 $\ell$ 也足以恢复归一化信息，但每个 query 需要两个标量。保存 $L=m+\log\ell$ 只需一个标量，而且重建概率时可以直接计算 $\exp(s_j-L)$。
+
+#### 4.7.5 Backward 实际怎样使用它
+
+对当前 score tile，backward 执行：
+
+1. 从保存的 $Q,K$ 重新计算当前 $S$ tile；
+2. 对 causal 或越界位置应用与 forward 完全相同的 mask；
+3. 读取每个 query 行对应的 $L_i$；
+4. 广播 $L_i$，计算 $P_{ij}=\exp(S_{ij}-L_i)$；
+5. 立即使用当前 $P$ tile 计算梯度，用完后丢弃。
+
+因此保存 $L$ 的意义不是“避免 backward 计算 score”，而是“让 backward 重算 score 后，无需再次遍历整行做 online softmax，就能直接恢复当前 probability tile”。
 
 当前 handout 要求 forward 保存 $L,Q,K,V,O$，并在 backward 中重算概率。[Handout：L1061-L1095](./cs336_assignment2_systems_extracted.md#L1061-L1095)；[Handout：L1145-L1153](./cs336_assignment2_systems_extracted.md#L1145-L1153)
+
+$L$ 如何与 $D$ 配合完成 softmax backward，将在 [Backward 与实现验证篇第 9 章](./03_03_flash_attention_2_backward.md) 中从普通 attention backward 开始推导。
 
 读完本节，至少应能独立回答：
 
@@ -598,27 +666,27 @@ $$m=\max_{t\in\text{seen}}s_t,\quad \ell=\sum_{t\in\text{seen}}\exp(s_t-m),\quad
 - query tile 大小为 $B_q$，数量 $T_q=\lceil N_q/B_q\rceil$；
 - key/value tile 大小为 $B_k$，数量 $T_k=\lceil N_k/B_k\rceil$。
 
-这里 $B_q,B_k$ 中的 $B$ 表示 block/tile size，不是 batch size；代码中通常对应 `Q_TILE_SIZE` 和 `K_TILE_SIZE`。例如 `Bq=64,Bk=64,d=128` 表示一个 query tile 含 64 个 query tokens，一个 key/value tile 含 64 个 key/value tokens，每个 token 在该 attention head 内的向量维度为 128。因此 $Q_i$ 是 `(64,128)`，$K^{(j)},V^{(j)}$ 是 `(64,128)`，两者相乘得到的当前 score tile 是 `(64,64)`。
+这里 $B_q,B_k$ 中的 $B$ 表示 block/tile size，不是 batch size；代码中通常对应 `Q_TILE_SIZE` 和 `K_TILE_SIZE`。例如 `Bq=64,Bk=64,d=128` 表示一个 query tile 含 64 个 query tokens，一个 key/value tile 含 64 个 key/value tokens，每个 token 在该 attention head 内的向量维度为 128。因此 $Q^{(a)}$ 是 `(64,128)`，$K^{(b)},V^{(b)}$ 是 `(64,128)`，两者相乘得到的当前 score tile 是 `(64,64)`。
 
-第 $i$ 个 query tile 为 $Q_i\in\mathbb{R}^{B_q\times d}$，第 $j$ 个 key/value tile 为 $K^{(j)},V^{(j)}\in\mathbb{R}^{B_k\times d}$。课程算法不沿 head dimension $d$ 分块。[Handout：L1097-L1115](./cs336_assignment2_systems_extracted.md#L1097-L1115)
+本文用 $a,b$ 表示从 0 开始的 tile 索引，用 $i,j$ 表示单个 token 的行号，即 $a\in\{0,\ldots,T_q-1\}$、$b\in\{0,\ldots,T_k-1\}$。索引为 $a$ 的 query tile 记作 $Q^{(a)}\in\mathbb{R}^{B_q\times d}$，索引为 $b$ 的 key/value tile 记作 $K^{(b)},V^{(b)}\in\mathbb{R}^{B_k\times d}$。括号上标 $(a),(b)$ 只是分块标签，不表示乘方。课程算法不沿 head dimension $d$ 分块。[Handout：L1097-L1115](./cs336_assignment2_systems_extracted.md#L1097-L1115)
 
-每个 Triton program 固定一个 `(batch/head, query_tile)`，把 $Q_i$ 留在片上，并循环全部 key/value tiles。对每个 query 行分别维护 $m_i\in\mathbb{R}^{B_q}$、$\ell_i\in\mathbb{R}^{B_q}$ 和未归一化输出 accumulator $A_i\in\mathbb{R}^{B_q\times d}$。
+每个 Triton program 固定一个 `(batch/head, query_tile)`，把 $Q^{(a)}$ 留在片上，并循环全部 key/value tiles。它维护当前 query tile 的运行状态 $m^{(a)}\in\mathbb{R}^{B_q}$、$\ell^{(a)}\in\mathbb{R}^{B_q}$ 和未归一化输出 accumulator $A^{(a)}\in\mathbb{R}^{B_q\times d}$。
 
 ### 5.2 每个 key tile 的更新
 
-初始化 $m_i=-\infty$、$\ell_i=0$、$A_i=0$。对第 $j$ 个 key tile：
+初始化 $m^{(a)}=-\infty$、$\ell^{(a)}=0$、$A^{(a)}=0$。依次处理索引为 $b=0,\ldots,T_k-1$ 的 key tiles：
 
-$$S_i^{(j)}=\frac{Q_i(K^{(j)})^\top}{\sqrt d}+M_i^{(j)}\in\mathbb{R}^{B_q\times B_k}$$
+$$S^{(a,b)}=\frac{Q^{(a)}(K^{(b)})^\top}{\sqrt d}+M^{(a,b)}\in\mathbb{R}^{B_q\times B_k}$$
 
-其中 mask $M_i^{(j)}$ 对可见位置为 0，对不可见位置为 $-\infty$ 或实现中足够小的数。逐行更新最大值 $m_i^{\mathrm{new}}=\max(m_i,\operatorname{rowmax}(S_i^{(j)}))$：
+其中 mask $M^{(a,b)}$ 对可见位置为 0，对不可见位置为 $-\infty$ 或实现中足够小的数。逐行更新最大值 $m^{(a)}_{\mathrm{new}}=\max(m^{(a)},\operatorname{rowmax}(S^{(a,b)}))$：
 
-$$\alpha_i=\exp(m_i-m_i^{\mathrm{new}}),\quad \widetilde P_i^{(j)}=\exp(S_i^{(j)}-m_i^{\mathrm{new}}[:,None])$$
+$$\alpha^{(a)}=\exp(m^{(a)}-m^{(a)}_{\mathrm{new}}),\quad \widetilde P^{(a,b)}=\exp(S^{(a,b)}-m^{(a)}_{\mathrm{new}}[:,None])$$
 
-$\ell_i^{\mathrm{new}}=\alpha_i\circ\ell_i+\operatorname{rowsum}(\widetilde P_i^{(j)})$，并更新输出 accumulator：
+$\ell^{(a)}_{\mathrm{new}}=\alpha^{(a)}\circ\ell^{(a)}+\operatorname{rowsum}(\widetilde P^{(a,b)})$，并更新输出 accumulator：
 
-$$A_i^{\mathrm{new}}=\alpha_i[:,None]\circ A_i+\widetilde P_i^{(j)}V^{(j)}$$
+$$A^{(a)}_{\mathrm{new}}=\alpha^{(a)}[:,None]\circ A^{(a)}+\widetilde P^{(a,b)}V^{(b)}$$
 
-循环结束后，$O_i=A_i/\ell_i[:,None]$，且 $L_i=m_i+\log\ell_i$。
+循环结束后，$O^{(a)}=A^{(a)}/\ell^{(a)}[:,None]$，且 $L^{(a)}=m^{(a)}+\log\ell^{(a)}$。
 
 这里 `[:, None]` 表示把行向量广播到每一列，$\circ$ 表示逐元素乘法。以上就是 handout Algorithm 1 的逐式展开。[Handout：L1111-L1132](./cs336_assignment2_systems_extracted.md#L1111-L1132)
 
@@ -655,7 +723,7 @@ parallel for batch_head in [0, B * H):
         store L[batch_head, query_tile] = logsumexp
 ```
 
-`tl.dot` 计算两个二维或三维 block 的矩阵乘，并可通过 `acc=` 累加到既有 accumulator；handout 要求片上的 $A_i,\ell_i,m_i$ 使用 FP32，并在写回前转换输出 dtype。[Triton `dot`](https://triton-lang.org/main/python-api/generated/triton.language.dot.html)；[Handout：L1209-L1215](./cs336_assignment2_systems_extracted.md#L1209-L1215)
+`tl.dot` 计算两个二维或三维 block 的矩阵乘，并可通过 `acc=` 累加到既有 accumulator；handout 要求片上的 $A^{(a)},\ell^{(a)},m^{(a)}$ 使用 FP32，并在写回前转换输出 dtype。[Triton `dot`](https://triton-lang.org/main/python-api/generated/triton.language.dot.html)；[Handout：L1209-L1215](./cs336_assignment2_systems_extracted.md#L1209-L1215)
 
 ### 5.4 它为什么不物化完整 attention matrix
 
@@ -668,54 +736,148 @@ parallel for batch_head in [0, B * H):
 - $B_q$ 个最大值与分母；
 - 一个 $B_q\times d$ 输出 accumulator。
 
-$S_i^{(j)}$ 和 $\widetilde P_i^{(j)}$ 被当前 tile 消费后即可丢弃。HBM 中保留的是 $Q,K,V,O,L$，而不是完整 $N_q\times N_k$ 的 $S$ 或 $P$。因此 attention-specific saved activations 不再包含元素数为 $N_qN_k$ 的完整矩阵，主要保存项的元素数为 $O((N_q+N_k)d)$。[FA1 §3.1 与 Theorem 1](https://papers.neurips.cc/paper_files/paper/2022/file/67d57c32e20fd0a7a302cb81d36e40d5-Paper-Conference.pdf)；[Handout：L1051-L1067](./cs336_assignment2_systems_extracted.md#L1051-L1067)
+$S^{(a,b)}$ 和 $\widetilde P^{(a,b)}$ 被当前 tile 消费后即可丢弃。HBM 中保留的是 $Q,K,V,O,L$，而不是完整 $N_q\times N_k$ 的 $S$ 或 $P$。因此 attention-specific saved activations 不再包含元素数为 $N_qN_k$ 的完整矩阵，主要保存项的元素数为 $O((N_q+N_k)d)$。[FA1 §3.1 与 Theorem 1](https://papers.neurips.cc/paper_files/paper/2022/file/67d57c32e20fd0a7a302cb81d36e40d5-Paper-Conference.pdf)；[Handout：L1051-L1067](./cs336_assignment2_systems_extracted.md#L1051-L1067)
 
 ---
 
-## 6. Causal mask 与边界
+## 6. Causal 与边界 mask：哪些 score 可以进入 softmax
 
-### 6.1 数学定义
+### 6.1 本节要解决的核心问题
 
-对方形 self-attention，位置 $r$ 只能看见位置 $c\le r$。令 query 和 key 的全局索引分别为 $r$、$c$：
+第 5 节已经说明如何按 $B_q\times B_k$ tile 计算 score 并更新 online softmax，但还没有回答一个实现正确性问题：
 
-$$M_{rc}=\begin{cases}0,&c\le r\\-\infty,&c>r\end{cases}$$
+> 当前 score tile 中，哪些 $(r,c)$ 元素是真实且可见的，因而有资格参与 row maximum、分母和输出累计？
 
-mask 必须在 row maximum 与指数运算之前加到 score 上；否则不可见位置已经参与了 softmax 的归一化。
+这里有两类原因会让一个位置无效：
 
-在 tile 内构造：
+1. **Causal 不可见**：位置 $r$ 不能读取未来位置 $c>r$；
+2. **Tensor 越界**：最后一个 tile 可能覆盖 $r\ge N_q$ 的伪 query 行或 $c\ge N_k$ 的伪 key 列。
+
+这两类位置都必须在 row maximum 和指数运算之前从 score 中排除。把无效 score 简单填成 0 并不安全，因为它会贡献 $\exp(0)=1$，从而改变 softmax 分母；如果无效 score 大于该行真实最大值，它还会污染 online softmax 保存的 $m$。
+
+对方形 causal self-attention，可以把一个位置是否有效统一写成：
+
+$$\operatorname{valid}(r,c)=(r<N_q)\land(c<N_k)\land(\lnot\text{is\_causal}\lor c\le r)$$
+
+然后只允许有效位置进入 softmax：
+
+$$S_{rc}=\begin{cases}q_r^\top k_c/\sqrt d,&\operatorname{valid}(r,c)\\-\infty,&\text{otherwise}\end{cases}$$
+
+课程 handout 要求使用 `is_causal: tl.constexpr`，并在 causal 屏蔽位置加 `-1e6`；完成作业时应以该接口和测试约定为准。[Handout：L1218-L1220](./cs336_assignment2_systems_extracted.md#L1218-L1220)
+
+### 6.2 在 tile 内构造逐元素 causal mask
+
+设当前 query tile 的起点为 `q_tile_start`，key tile 的起点为 `k_tile_start`。先构造各行、各列对应的全局 token 位置，再比较 $c\le r$：
 
 ```python
-q_pos = q_tile_start + tl.arange(0, Bq)
-k_pos = k_tile_start + tl.arange(0, Bk)
-allowed = k_pos[None, :] <= q_pos[:, None]
-scores = tl.where(allowed, scores, -float("inf"))
+q_pos = q_tile_start + tl.arange(0, Bq)  # (Bq,)
+k_pos = k_tile_start + tl.arange(0, Bk)  # (Bk,)
+
+causal_valid = k_pos[None, :] <= q_pos[:, None]  # (Bq, Bk)
+scores = tl.where(causal_valid, scores, -float("inf"))
 ```
 
-课程 handout 明确要求 `is_causal: tl.constexpr`，并要求为屏蔽位置加 `-1e6`；完成作业时应遵循该接口和测试约定。[Handout：L1218-L1220](./cs336_assignment2_systems_extracted.md#L1218-L1220)
+`q_pos[:, None]` 的 shape 是 `(Bq, 1)`，`k_pos[None, :]` 的 shape 是 `(1, Bk)`；广播比较后得到 `(Bq, Bk)` 的布尔矩阵。每个布尔值恰好对应当前 score tile 中的一个 query-key 对。
 
-### 6.2 三类 causal tiles
+mask 的位置不能晚于 online softmax 更新。正确顺序是：
 
-对一个 query tile，key tiles 可分为：
+1. 计算当前 tile 的原始 score；
+2. 把 causal 或越界位置改成 $-\infty$（作业接口使用 `-1e6`）；
+3. 对 masked score 求 `rowmax`；
+4. 计算指数、分母和输出 accumulator。
 
-1. **严格位于对角线左侧**：全部可见，不需要逐元素 causal 比较；
-2. **与对角线相交**：需要 $B_q\times B_k$ 的逐元素 mask；
-3. **严格位于对角线右侧**：全部不可见，可以直接跳过。
+如果先求 `rowmax` 或先计算指数再 mask，即使最后把 probability 清零，错误位置也可能已经改变 $m$、$\ell$ 和旧 accumulator 的缩放因子。
 
-当前 Triton fused-attention 教程把 causal 计算拆成 off-band 与 on-band 阶段，避免在所有 tiles 上都做 mask。[Triton-Attn](https://triton-lang.org/main/getting-started/tutorials/06-fused-attention.html)
+### 6.3 为什么要把 key tiles 分成三类
 
-### 6.3 非整除边界不是 causal mask
+对固定 query tile，并非每个 key tile 都需要执行 $B_qB_k$ 次逐元素比较。令 query tile 覆盖 $[q_0,q_1]$，key tile 覆盖 $[k_0,k_1]$，则有三种情况：
 
-序列长度不是 tile 大小整数倍时，还需处理越界的 query/key：
+| tile 关系 | 判断条件 | 处理 |
+|---|---|---|
+| 全部可见 | $k_1\le q_0$ | 直接计算，不需要 causal mask |
+| 部分可见 | 区间跨越 causal 对角线 | 构造 $B_q\times B_k$ 逐元素 mask |
+| 全部不可见 | $k_0>q_1$ | 整个 key tile 可以跳过 |
 
-- 越界 query 行不应 store；
-- 越界 key 列在 softmax 中必须不可见，不能像普通 weighted sum 那样把 score 补 0，因为 0 会贡献 $\exp(0)=1$；
-- 越界 value 可以在其 probability 已为 0 的前提下补 0。
+例如 $N_q=N_k=8$、$B_q=B_k=4$：
 
-因此要把“父 Tensor 越界检查”和“语义上的 causal mask”分开。block pointer 的 `boundary_check` 负责前者，score 上的布尔条件负责后者。[Triton `load`](https://triton-lang.org/main/python-api/generated/triton.language.load.html)
+- query tile $[0,3]$ 对 key tile $[0,3]$：与对角线相交，需要逐元素 mask；
+- query tile $[0,3]$ 对 key tile $[4,7]$：全部是未来位置，可以跳过；
+- query tile $[4,7]$ 对 key tile $[0,3]$：全部可见，无需比较；
+- query tile $[4,7]$ 对 key tile $[4,7]$：与对角线相交，需要逐元素 mask。
 
-### 6.4 PyTorch causal 语义的一个边界
+**为什么全不可见 tile 连 score 都不需要计算？** 若 $k_0>q_1$，则对 tile 中任意 $r\in[q_0,q_1]$ 和 $c\in[k_0,k_1]$ 都有：
 
-PyTorch SDPA 在方形矩阵下使用下三角 causal mask；当 query length 与 key length 不同，其 `is_causal=True` 使用 upper-left causal bias 对齐，并且不能同时再传 `attn_mask`。实现 cross-attention 或 KV-cache 场景时，不能未经确认就套用方形条件 $c\le r$。[SDPA `is_causal`](https://docs.pytorch.org/docs/stable/generated/torch.nn.functional.scaled_dot_product_attention.html)
+$$c\ge k_0>q_1\ge r\quad\Longrightarrow\quad c>r$$
+
+所以整个 tile 都被 causal mask 排除。按照数学定义，其 masked score 全是 $-\infty$，对应的指数权重全是 0：
+
+$$\exp(S_{rc}+M_{rc})=\exp(-\infty)=0$$
+
+假设索引为 $a$ 的 query tile 已从可见 key tiles 得到状态 $m^{(a)},\ell^{(a)},A^{(a)}$，处理索引为 $b$ 的全不可见 key tile 在数学上只会产生：
+
+$$m^{(a)}_{\mathrm{new}}=m^{(a)},\qquad \alpha^{(a)}=1,\qquad \widetilde P^{(a,b)}=0,\qquad \ell^{(a)}_{\mathrm{new}}=\ell^{(a)},\qquad A^{(a)}_{\mathrm{new}}=A^{(a)}$$
+
+也就是说，它对 row maximum、softmax 分母和输出分子都没有贡献，整个更新是恒等操作。因此实现可以在读取 $K^{(b)},V^{(b)}$ 以及计算 $Q^{(a)}(K^{(b)})^\top$ 之前，仅根据 tile 的全局位置判断 `k_tile_start > q_tile_end`，然后跳过该 tile。这同时省去 $O(B_qB_kd)$ 的两个矩阵乘相关工作、逐元素 mask/指数运算以及对应的 K/V 读取。
+
+反过来，如果真的对一个全屏蔽 tile 执行 online-softmax 公式，初始状态 $m^{(a)}=-\infty$ 时还可能遇到 $-\infty-(-\infty)$，产生 `NaN`。所以“整块跳过”既是性能优化，也避免了全屏蔽行的数值陷阱。
+
+“三类 tile”首先是一项性能优化，而不是新的数学语义。最简单且正确的实现可以对所有已访问 tiles 使用逐元素 mask；进一步优化时，再让完全可见的 tiles 走无 mask 路径，并跳过完全不可见的 tiles。
+
+当前 Triton fused-attention 教程把需要实际计算的 causal 区域拆成 `off-band` 和 `on-band` 两个阶段。这里的 `band` 指 causal 矩阵主对角线附近、边界 $c=r$ 穿过的条带，不是 HBM bandwidth：
+
+| 阶段 | 对固定 query tile 的 key 范围 | 可见性 | 处理方式 |
+|---|---|---|---|
+| `off-band` | 对角条带左侧 | 整块可见 | 计算 score，但省去逐元素 causal 比较 |
+| `on-band` | 与对角条带重合 | 部分可见 | 计算 score，并应用 $B_q\times B_k$ 逐元素 mask |
+| 未来区域 | 对角条带右侧 | 整块不可见 | 不进入 inner loop，连 score 都不计算 |
+
+因此教程中的两个阶段可以理解为：先用无 mask 的快速路径处理对角线左侧，再单独用有 mask 的路径处理对角线条带；对角线右侧根本不调度计算。若 $B_q>B_k$，一个 query tile 对应的 `on-band` 可能包含多个 key tiles，而不一定只有一个。[Triton-Attn](https://triton-lang.org/main/getting-started/tutorials/06-fused-attention.html)
+
+### 6.4 非整除边界与 causal mask 是两件事
+
+若 $N_q$ 或 $N_k$ 不是 tile 大小的整数倍，最后一个 tile 会包含超出父 Tensor 的伪位置。它们与“不能看未来”的 causal 语义不同：
+
+- **边界有效性**回答“这个全局位置是否真实存在”；
+- **causal 有效性**回答“这个真实 key 是否允许被当前 query 看见”。
+
+在通用实现中，可以组合两个条件：
+
+```python
+q_in_bounds = q_pos < Nq
+k_in_bounds = k_pos < Nk
+score_valid = (
+    q_in_bounds[:, None]
+    & k_in_bounds[None, :]
+)
+if is_causal:
+    score_valid = score_valid & (k_pos[None, :] <= q_pos[:, None])
+scores = tl.where(score_valid, scores, -float("inf"))
+```
+
+具体处理规则是：
+
+- 越界 query 行不能写回 $O$ 或 $L$；
+- 越界 key 列必须在 softmax 中不可见，不能把对应 score 当作 0；
+- 越界 value 可以补 0，但前提是对应 probability 已经被 mask 成 0；
+- 如果某个伪 query 行被全部 mask，其 $m=-\infty$、$\ell=0$，后续可能出现 $-\infty-(-\infty)$ 或 $0/0$，因此不能把该行当作正常 query 更新和写回。
+
+Triton block pointer 的 `boundary_check` 负责防止 load/store 访问父 Tensor 之外的地址；score 上的 `score_valid` 则负责保证无效位置不参与 softmax。前者不能替代后者。[Triton `load`](https://triton-lang.org/main/python-api/generated/triton.language.load.html)
+
+本作业 handout 说明测试维度是至少为 16 的 2 的幂，因此可以选择能整除测试 shape 的 tile sizes；但理解非整除边界仍然是编写通用 Triton kernel 所必需的。[Handout：L1149-L1152](./cs336_assignment2_systems_extracted.md#L1149-L1152)
+
+### 6.5 非方形 attention 不能直接套用 $c\le r$
+
+上述 $c\le r$ 默认 query 与 key 使用同一套时间坐标，适用于标准方形 causal self-attention。当 $N_q\ne N_k$ 时，“第 $r$ 个 query 对应时间轴上的哪个位置”取决于具体接口语义。
+
+PyTorch SDPA 在方形矩阵下使用下三角 causal mask；当 query length 与 key length 不同时，`is_causal=True` 使用 upper-left causal bias 对齐，并且不能同时再传 `attn_mask`。实现 cross-attention 或 KV-cache 场景时，必须先确认 query/key 的时间对齐方式，不能未经确认就套用 $c\le r$。[SDPA `is_causal`](https://docs.pytorch.org/docs/stable/generated/torch.nn.functional.scaled_dot_product_attention.html)
+
+读完本节，应能独立回答：
+
+1. 为什么无效 score 不能简单补 0；
+2. 为什么 mask 必须在 `rowmax` 和指数运算之前生效；
+3. 哪些 causal tiles 可以跳过，哪些必须逐元素比较；
+4. Triton `boundary_check` 为什么不能代替 softmax score mask；
+5. 为什么非方形 attention 需要重新确认 causal 对齐语义。
 
 ---
 
@@ -729,9 +891,45 @@ PyTorch SDPA 在方形矩阵下使用下三角 causal mask；当 query length �
 4. **mask 在 max 之前生效。** 被屏蔽的大 score 不能污染 $m$。
 5. **处理全屏蔽行。** 若一个语义允许整行没有有效 key，则 $m=-\infty$、$\ell=0$ 会导致无效运算；必须定义输出语义并显式处理。标准方形 causal self-attention 因为可见自身，正常行不会全屏蔽。
 
-### 7.2 `exp2` 与自然指数
+### 7.2 指数函数换底：`exp` 与 `exp2`
 
-GPU kernel 常用 `exp2`。因为 $\exp(x)=2^{x\log_2 e}$，可以先把 score scale 乘 $\log_2 e$，再使用 `exp2`；$L$ 的底数也必须一致换算。当前 Triton 官方教程在 forward 中把 softmax scale 乘约 `1.44269504`，并配套使用 `exp2/log2`。[Triton-Attn](https://triton-lang.org/main/getting-started/tutorials/06-fused-attention.html)
+在实数域内，只要底数 $a>0$，任意指数函数都可以换成以 2 为底：
+
+$$a^x=2^{x\log_2 a}$$
+
+自然指数只是取 $a=e$ 的特例：
+
+$$\exp(x)=e^x=2^{x\log_2 e}$$
+
+其中：
+
+$$\log_2 e=\frac{1}{\ln 2}\approx1.4426950408889634$$
+
+所以若已有 `exp2(z)`，可以用下面的数学等价式计算自然指数：
+
+```python
+exp_x = exp2(x * LOG2_E)
+```
+
+变量底数同样可以换底。对 $a>0$：
+
+$$a^x=2^{x\log_2 a}$$
+
+反方向也成立：
+
+$$2^x=\exp(x\ln2)$$
+
+对数函数也可以换底。对 $x>0$、$a>0$ 且 $a\ne1$：
+
+$$\log_a x=\frac{\log_2 x}{\log_2 a}$$
+
+因此从实数数学上说，正底数的指数与对数运算都可以统一到 `exp2` 和 `log2`。但这个结论有三个边界：
+
+1. **定义域。** 对任意实数指数 $x$，$a^x$ 的实数换底公式要求 $a>0$。负底数只在部分整数或有理指数上有实数结果，不能直接使用 $\log_2 a$。
+2. **复合表达式。** 每个指数项都能单独换底，但指数项的和通常不能合并成一个指数。例如 $\exp(x)+\exp(y)$ 不能一般性地化成单个 $2^z$。
+3. **浮点实现。** `exp(x)` 与 `exp2(x\log_2 e)` 在实数数学上相等，但由于常数舍入、指令近似、溢出和下溢，浮点结果不保证逐 bit 相同。对很小的 $x$ 计算 $\exp(x)-1$ 时，也不应机械替换专门为消除相消误差设计的 `expm1(x)`。
+
+某些 GPU 对以 2 为底的指数提供高效指令，因此 kernel 会显式使用 `exp2`；但是否更快取决于硬件、精度要求和编译器 lowering，不能仅凭换底恒等式断言所有平台上的 `exp2` 都更快。
 
 ### 7.3 “精确”不等于逐 bit 相同
 
@@ -739,7 +937,54 @@ FA2 没有稀疏化或近似掉 attention 项，数学目标与普通 dense atte
 
 ### 7.4 FP32 输入也不自动意味着 IEEE matmul
 
-当前 Triton `tl.dot` 文档说明，在支持 Tensor Core 的 NVIDIA GPU 上，FP32 输入默认 `input_precision="tf32"`；TF32 会改变输入精度。若验证要求严格 FP32 语义，应显式选择合适的 `input_precision`，并把精度策略写入实验报告。[Triton `dot`](https://triton-lang.org/main/python-api/generated/triton.language.dot.html)
+当前 Triton `tl.dot` 文档说明，在支持 Tensor Core 的 NVIDIA GPU 上，两个 FP32 输入默认使用 `input_precision="tf32"`。也就是说，即使 `q.dtype == k.dtype == tl.float32`，只写 `tl.dot(q, k)` 仍可能先把乘法输入截断到 TF32 精度。
+
+如果希望明确使用 FP32 输入值执行 dot，应同时显式控制三个层面：
+
+1. **输入 dtype**：传给 `tl.dot` 的两个 block 都是 `tl.float32`；
+2. **乘法输入精度**：设置 `input_precision="ieee"`，而不是默认的 `"tf32"`；
+3. **输出和 accumulator dtype**：使用 `out_dtype=tl.float32`，并让传入的 `acc` 也是 `tl.float32`。
+
+不带已有 accumulator 的写法是：
+
+```python
+q = tl.load(q_ptrs).to(tl.float32)
+k = tl.load(k_ptrs).to(tl.float32)
+
+scores = tl.dot(
+    q,
+    tl.trans(k),
+    input_precision="ieee",
+    out_dtype=tl.float32,
+)
+```
+
+需要累加到已有矩阵时，应把 accumulator 也显式创建为 FP32：
+
+```python
+acc = tl.zeros((Bq, Dv), dtype=tl.float32)
+
+acc = tl.dot(
+    p.to(tl.float32),
+    v.to(tl.float32),
+    acc=acc,
+    input_precision="ieee",
+    out_dtype=tl.float32,
+)
+```
+
+这里几个参数不能互相替代：
+
+- `.to(tl.float32)` 决定传入 `tl.dot` 的张量 dtype；
+- `input_precision="ieee"` 决定 FP32 乘法输入不能走默认 TF32 精度；
+- `out_dtype=tl.float32` 决定 dot 的输出 dtype；
+- FP32 `acc` 决定已有部分和以 FP32 保存并继续累加。
+
+如果源 Tensor 本来存储为 FP16 或 BF16，load 后再 `.to(tl.float32)` 只能把已经量化的数值扩展为 FP32，不能恢复存储前丢失的尾数精度。要验证真正的 FP32 输入路径，调用 kernel 的 PyTorch Tensor 本身也必须是 `torch.float32`。
+
+`input_precision="tf32x3"` 会用多次 TF32 运算提高精度，但它仍不是要求严格 FP32 输入语义时最直接的选择；此时应使用 `"ieee"`。旧参数 `allow_tf32=False` 已被弃用，新代码应使用 `input_precision="ieee"`。[Triton `dot`](https://triton-lang.org/main/python-api/generated/triton.language.dot.html)
+
+最后，`"ieee"` 只约束 `tl.dot` 的 FP32 输入精度，不保证结果与某个 CPU 或 PyTorch 实现逐 bit 相同。GPU 仍可能使用 fused multiply-add、不同的归约树和不同的运算顺序；其它 `exp`、除法和 reduction 也有各自的数值误差。这里更准确的目标是“避免 TF32 截断并保持 FP32 输入与累加”，而不是“保证跨实现 bitwise 一致”。
 
 ---
 
@@ -757,9 +1002,9 @@ Backward 使用预先计算的 $D$ 简化 softmax 梯度。论文以 A100 为例
 
 FA1 主要在 batch 和 head 上并行。当 $B\times H$ 很小而序列很长时，可调度的 thread blocks 不足，许多 SM 可能空闲。
 
-FA2 forward 把不同 query tiles 分给不同 thread blocks。每个 block 独立计算自己的 $O_i,L_i$，不需要跨 block 通信，于是并行任务数从近似 $B\times H$ 增加到 $B\times H\times T_q$。当前 handout 的简化接口使用 grid `(T_q, batch_size)`，并要求每个 program 只读写一个 batch 的一个 query tile。[FA2 §3.2](https://arxiv.org/html/2307.08691v1#S3.SS2)；[Handout：L1155-L1159](./cs336_assignment2_systems_extracted.md#L1155-L1159)
+FA2 forward 把不同 query tiles 分给不同 thread blocks。每个 block 独立计算自己的 $O^{(a)},L^{(a)}$，不需要跨 block 通信，于是并行任务数从近似 $B\times H$ 增加到 $B\times H\times T_q$。当前 handout 的简化接口使用 grid `(T_q, batch_size)`，并要求每个 program 只读写一个 batch 的一个 query tile。[FA2 §3.2](https://arxiv.org/html/2307.08691v1#S3.SS2)；[Handout：L1155-L1159](./cs336_assignment2_systems_extracted.md#L1155-L1159)
 
-从循环顺序看，这对应“query tile 在外、key/value tiles 在内”：一个 program 固定 $Q_i$，在片上完成它的全部 online softmax 状态，最后只写一次 $O_i,L_i$。
+从循环顺序看，这对应“query tile 在外、key/value tiles 在内”：一个 program 固定 $Q^{(a)}$，在片上完成它的全部 online softmax 状态，最后只写一次 $O^{(a)},L^{(a)}$。
 
 ### 8.3 改进三：thread block 内从 sliced-K 改为 sliced-Q
 
@@ -780,474 +1025,8 @@ FA2 论文报告其相对 FA1 约有 2 倍加速，在 A100 上达到理论峰�
 
 ---
 
-## 9. Backward：保存什么，重算什么
+## 继续阅读
 
-### 9.1 普通 backward 为什么依赖大矩阵
+本篇到此已经建立 $S\rightarrow P\rightarrow O$、online softmax、causal mask、数值精度和 FA2 工作划分的 forward 主线。接下来阅读：
 
-令上游梯度为 $dO\in\mathbb{R}^{N_q\times d}$。忽略 mask 的不可见位置后，标准矩阵形式是：
-
-$$dV=P^\top dO,\quad dP=dOV^\top,\quad dS=P\circ\left(dP-\operatorname{rowsum}(P\circ dP)[:,None]\right)$$
-
-其余两个输入梯度为 $dQ=dSK/\sqrt d$ 和 $dK=dS^\top Q/\sqrt d$。
-
-如果 forward 保存完整 $P$，其元素数是 $N_qN_k$；若不保存，就必须能廉价重建它。handout 的标准 backward 展开见 [L1039-L1053](./cs336_assignment2_systems_extracted.md#L1039-L1053)。
-
-### 9.2 用 $L$ 重建 $P$
-
-forward 保存每行 $L_i=\log\sum_j\exp(S_{ij})$。backward 重新计算当前 score tile 后，用 $P_i^{(j)}=\exp(S_i^{(j)}-L_i[:,None])$ 恢复概率。
-
-mask 必须与 forward 完全一致。这样每次只重建一个 $B_q\times B_k$ 的概率 tile，用完即丢弃。
-
-### 9.3 $D$ 向量消掉 softmax Jacobian 的显式构造
-
-定义 $D_i=\sum_{c=1}^{d}O_{ic}\,dO_{ic}=\operatorname{rowsum}(O\circ dO)_i$。
-
-由于 $O=PV$ 且 $dP=dOV^\top$，同一个量也等于 $\operatorname{rowsum}(P\circ dP)_i$，于是 $dS_{ij}=P_{ij}(dP_{ij}-D_i)$。
-
-整个 backward 不需要显式构造 softmax Jacobian，也不需要再运行 online softmax；它只需按 tile 重建 $P$。handout 给出了 $D$ 的等价推导和完整公式。[Handout：L1075-L1095](./cs336_assignment2_systems_extracted.md#L1075-L1095)
-
-### 9.4 保存与重算的账
-
-课程版 forward 保存：
-
-| 保存项 | 用途 | 量级 |
-|---|---|---:|
-| $Q,K,V$ | 重算 $S,P$ 并计算三个输入梯度 | $O((N_q+2N_k)d)$ |
-| $O$ | 计算 $D$ | $O(N_qd)$ |
-| $L$ | 重建 $P=\exp(S-L)$ | $O(N_q)$ |
-| causal flag | backward 重建同一 mask | 常数 |
-
-不保存完整 $S,P$，因此 attention-specific saved activations 不含 $O(N_qN_k)$ 项。代价是 backward 增加重算 FLOPs；FA1 的关键观察是，这种重算在数据已位于片上时，比从 HBM 读回巨大的 $P$ 更划算。[FA1 §3.1 Recomputation](https://papers.neurips.cc/paper_files/paper/2022/file/67d57c32e20fd0a7a302cb81d36e40d5-Paper-Conference.pdf)；[Handout：L1147-L1153](./cs336_assignment2_systems_extracted.md#L1147-L1153)
-
-若 forward 包含 dropout，还必须使 backward 能重现同一 dropout mask，通常保存随机数状态而不是完整 mask；本文和当前 handout 的核心算法不展开这部分。
-
-### 9.5 为什么 tiled backward 会计算两次 $P$
-
-梯度有两种自然所有权：
-
-- 固定 key tile，遍历 query tiles，适合累加并一次写出该 tile 的 $dK,dV$；
-- 固定 query tile，遍历 key tiles，适合累加并一次写出该 tile 的 $dQ$。
-
-若强行一次遍历同时写三者，多个 program 会更新同一梯度 tile，需要跨 block 同步或 atomic。课程的可选 Triton backward 选择两次重建 $P$：一次求 $dK,dV$，一次求 $dQ$，以额外计算换取无 atomic 的独立写入。[Handout：L1242-L1280](./cs336_assignment2_systems_extracted.md#L1242-L1280)
-
-当前作业的必做 backward 则允许先用普通 PyTorch 函数配合 `torch.compile`，不要求一开始就手写 Triton backward。[Handout：L1222-L1230](./cs336_assignment2_systems_extracted.md#L1222-L1230)
-
----
-
-## 10. 从算法 tile 映射到 Triton
-
-### 10.1 Grid
-
-完整多头实现可把第二个 grid 轴展平为 `batch_head = batch_index * H + head_index`：
-
-```python
-grid = (triton.cdiv(Nq, Bq), B * H)
-```
-
-program 内：
-
-```python
-query_tile = tl.program_id(0)
-batch_head = tl.program_id(1)
-```
-
-课程简化版没有显式 head 轴，要求 `(T_q, batch_size)`。[Handout：L1155-L1159](./cs336_assignment2_systems_extracted.md#L1155-L1159)
-
-### 10.2 指针几何
-
-以 `Q` 的逻辑 shape `(B, Nq, d)` 为例，先用 batch offset 移动 base，再创建二维 block pointer：
-
-```python
-Q_block_ptr = tl.make_block_ptr(
-    Q_ptr + batch_index * stride_qb,
-    shape=(Nq, D),
-    strides=(stride_qq, stride_qd),
-    offsets=(query_tile * Bq, 0),
-    block_shape=(Bq, D),
-    order=(1, 0),
-)
-```
-
-同理：
-
-- `K_block_ptr` 初始 `offsets=(0, 0)`，shape 为 `(Nk, D)`，block 为 `(Bk, D)`；
-- `V_block_ptr` 与 K 同步沿 key 轴移动；
-- `O_block_ptr` 指向当前 query tile；
-- `L_block_ptr` 指向当前 $B_q$ 行。
-
-每轮末尾调用 `K_block_ptr.advance((Bk, 0))` 和 `V_block_ptr.advance((Bk, 0))`。handout 提供了 Q pointer 骨架并提示在循环末移动 pointers。[Handout：L1160-L1209](./cs336_assignment2_systems_extracted.md#L1160-L1209)
-
-### 10.3 算法对象到 Triton 对象的映射
-
-| 算法对象 | Triton 中的典型表示 | 生命周期 |
-|---|---|---|
-| $Q_i$ | `tl.load(Q_block_ptr)` | 整个 program |
-| $K^{(j)},V^{(j)}$ | 当前循环的 `tl.load` | 一次 key-tile 迭代 |
-| $S_i^{(j)}$ | `tl.dot(q, tl.trans(k)) * scale` | 一次迭代 |
-| $m_i,\ell_i$ | FP32 block 向量 | 整个 program |
-| $A_i$ | FP32 block accumulator | 整个 program |
-| $O_i,L_i$ | `tl.store` 到 global memory | program 末尾 |
-
-block pointer 只描述逻辑地址区域，并不保证某个对象一定落在特定物理片上存储中；寄存器、shared memory、spill 和指令选择仍由编译器与资源约束决定。tile 过大可能造成寄存器压力或降低 occupancy，因此“能放下”不等于“最快”。FA2 论文也把 block size tuning 单独列为实现问题。[FA2 §3.3](https://arxiv.org/html/2307.08691v1#S3.SS3)
-
-### 10.4 当前官方教程与 handout 怎样一起读
-
-建议按职责对照，而不是逐行对照：
-
-| 要理解的问题 | 首选资料 |
-|---|---|
-| 为什么维护 $m,\ell,A$ | FA2 论文 §3.1、handout Algorithm 1 |
-| `tl.make_block_ptr` 每个参数是什么 | Triton-Ptr |
-| 课程 kernel 的 grid、stride、保存项是什么 | Handout-Fwd |
-| production-like causal 分段、`exp2`、autotune 怎么组织 | Triton-Attn |
-| `tl.dot(..., acc=acc)` 与输入精度是什么 | Triton-Core |
-
-官方教程会随 Triton 演进，当前版本使用 tensor descriptor；handout 的 block-pointer 写法更适合本作业。实现时以项目锁定版本和测试为准，不要把不同版本 API 拼成一段代码。
-
----
-
-## 11. 正确性验证：先证明“算对”，再讨论“算快”
-
-### 11.1 建立三层 oracle
-
-1. **小规模 FP64 naive reference**：最容易审计，适合 CPU；
-2. **纯 PyTorch tiled reference**：逐步暴露 $m,\ell,A,L$，用于定位 recurrence 错误；
-3. **Triton kernel**：只在前两层一致后接入。
-
-handout 也要求先实现慢但易调试的纯 PyTorch FA2 forward，再实现 Triton kernel，并建议逐个 Triton 操作与 tiled PyTorch 中间结果比较。[Handout：L1145-L1157](./cs336_assignment2_systems_extracted.md#L1145-L1157)
-
-一个最小 naive reference：
-
-```python
-def attention_reference(q, k, v, is_causal=False):
-    # q: (B, Sq, d), k/v: (B, Sk, d)
-    scores = q @ k.transpose(-2, -1) / math.sqrt(q.shape[-1])
-    if is_causal:
-        sq, sk = q.shape[-2], k.shape[-2]
-        allowed = torch.arange(sk)[None, :] <= torch.arange(sq)[:, None]
-        scores = scores.masked_fill(~allowed.to(scores.device), float("-inf"))
-    probs = torch.softmax(scores, dim=-1)
-    return probs @ v, torch.logsumexp(scores, dim=-1)
-```
-
-这段方形 causal 参考只适用于本文的普通 self-attention；非方形情况应按目标 API 定义构造 mask。
-
-### 11.2 Forward 测试矩阵
-
-至少覆盖：
-
-| 维度 | 建议 case |
-|---|---|
-| mask | non-causal、causal |
-| shape | 单 tile、多 tiles、非 tile 整除、$N_q\ne N_k$（若接口支持） |
-| dtype | FP32、FP16/BF16（硬件支持时） |
-| 数值 | 普通随机值、放大 logits、相等 logits、边界最大值位于后续 tile |
-| stride | contiguous；若接口承诺支持，再测转置/切片后的 non-contiguous |
-
-比较 `O` 和 `L`，不要只比较最终 loss。先用 `torch.testing.assert_close` 的 dtype-appropriate tolerance，再检查所有结果有限。浮点 fused 实现不应要求 bitwise equality。[SDPA 数值说明](https://docs.pytorch.org/docs/stable/generated/torch.nn.functional.scaled_dot_product_attention.html)
-
-### 11.3 Online softmax 的独立单元测试
-
-在写 Triton 前，用 CPU 随机生成一个 score 行并随机切成不同块，检查：
-
-1. 最终 $m$ 等于全局 `max`；
-2. $m+\log\ell$ 等于 `logsumexp`；
-3. $z/\ell$ 等于 `softmax(scores) @ V`；
-4. 改变切块方式仍在容差内一致；
-5. 后续 tile 出现极大 score 时，旧状态正确乘 $\alpha$。
-
-这能把数学 recurrence 的错误与 Triton 地址错误分离。
-
-### 11.4 Backward 测试
-
-对同一份 $Q,K,V,dO$：
-
-1. reference 和被测实现分别计算 $O$；
-2. 分别对标量 `(O * dO).sum()` 调用 backward；
-3. 比较 $dQ,dK,dV$；
-4. causal case 也必须单独比较；
-5. 额外检查 masked scores 对应路径不会影响输出和梯度。
-
-课程提供 `test_flash_forward_pass_pytorch`、`test_flash_forward_pass_triton` 和 `test_flash_backward` 三个目标，命令见 [Handout：L1147-L1153、L1216、L1226-L1230](./cs336_assignment2_systems_extracted.md#L1147-L1153)。本仓库的 [`test_attention.py:L11-L59`](../tests/test_attention.py#L11-L59) 明确比较 $O$ 与 $L$，[`test_attention.py:L66-L105`](../tests/test_attention.py#L66-L105) 分别覆盖 CUDA forward 和三个输入梯度；需要接入的两个 adapter 当前位于 [`adapters.py:L7-L33`](../tests/adapters.py#L7-L33)。
-
-PyTorch SDPA 可以作为额外参考，但它会根据输入与环境自动选择 FlashAttention-2、memory-efficient 或 math backend。若需要固定 reference，应使用 `torch.nn.attention.sdpa_kernel` 明确选择 backend，并记录选择结果。[SDPA backend 选择](https://docs.pytorch.org/docs/stable/generated/torch.nn.functional.scaled_dot_product_attention.html)
-
----
-
-## 12. 性能验证：测到的究竟是什么
-
-### 12.1 公平 benchmark 的最小规范
-
-1. 先创建输入，不把随机数生成计入 kernel 时间；
-2. warmup 到编译、cache 和频率状态稳定；
-3. 使用 `triton.testing.do_bench` 或 CUDA event，确保正确处理异步执行；
-4. forward、backward、forward+backward 分开报告；
-5. 所有实现使用相同 shape、dtype、causal 设置和梯度条件；
-6. 同时记录 latency、峰值显存、是否 OOM；
-7. 报告 GPU 型号、软件版本、tile size、`num_warps`、`num_stages`；
-8. 多次测量并报告中位数及分位数，不只给最好一次；
-9. 正确性失败的配置不得进入性能表。
-
-当前 handout 要求用 `triton.testing.do_bench` 比较 Triton FA2 和普通 PyTorch attention，并在单张 B200 上固定 batch size 1、causal mask，扫描序列长度、head dimension 和 dtype。[Handout：L1232-L1240](./cs336_assignment2_systems_extracted.md#L1232-L1240)
-
-### 12.2 推荐结果表
-
-| 实现 | $B,H,S,d$ | dtype | causal | tile $(B_q,B_k)$ | forward ms | backward ms | end-to-end ms | peak MiB | 状态 |
-|---|---|---|---|---|---:|---:|---:|---:|---|
-| naive PyTorch |  |  |  | N/A |  |  |  |  |  |
-| PyTorch SDPA |  |  |  | backend=... |  |  |  |  |  |
-| Triton FA2 |  |  |  |  |  |  |  |  |  |
-
-如果报告 TFLOP/s，必须同时写清 FLOP 计数约定，尤其是 causal attention 是否只统计下三角有效工作。否则不同报告的数字无法直接比较。
-
-### 12.3 应该期待什么趋势
-
-- naive 中间内存随 $S^2$ 增长；
-- FA2 不保存完整 $S,P$，attention-specific 中间内存应随序列长度近似线性增长；
-- 长序列通常更能显示减少 HBM I/O 的价值；
-- 小 shape 可能由 launch、调度或编译开销主导；
-- tile 增大通常减少循环和重复读取，但也会增加寄存器/片上存储压力；
-- causal kernel 若跳过严格未来 tiles，实际工作量可明显低于 non-causal。
-
-这些是应验证的假设，不是脱离硬件即可保证的结果。FA1 用 I/O 分析和 A100 实验说明 HBM 访问是其场景中的主要性能因素；FA2 的性能数字同样来自特定 A100 实验。[FA1 §3.2、§4.3](https://papers.neurips.cc/paper_files/paper/2022/file/67d57c32e20fd0a7a302cb81d36e40d5-Paper-Conference.pdf)；[FA2 §4](https://arxiv.org/html/2307.08691v1#S4)
-
----
-
-## 13. 没有 GPU 时能做什么
-
-### 13.1 可以完成的实验
-
-- 用 CPU FP64 实现并验证 naive attention；
-- 用纯 PyTorch 循环实现 tiled FA2 forward；
-- 验证 online softmax 的 $m,\ell,A,L$ 不变量；
-- 比较 naive 与 tiled 版本的 $O,L$；
-- 用 autograd reference 验证 backward 公式；
-- 测试 causal mask、非整除边界与极端 logits；
-- 静态检查 Triton grid、stride、offset、tile shape 和写入所有权；
-- 计算理论中间 Tensor 大小和复杂度；
-- 在 CPU 上调用 PyTorch SDPA 的 math backend 作为 API/结果参考。
-
-这些实验足以验证大部分数学正确性与接口设计。
-
-### 13.2 不能据此完成或声称的事情
-
-- 不能真实运行 CUDA Triton kernel；
-- 不能测 HBM 带宽、Tensor Core 利用率、occupancy、warp 同步或 shared-memory traffic；
-- 不能调出可信的 `Bq/Bk/num_warps/num_stages` 最优值；
-- 不能用 CPU latency 推断 GPU speedup；
-- 不能证明某次 PyTorch SDPA 调用了 FlashAttention backend；
-- 不能完成 handout 指定的单 B200 性能表。
-
-handout 提到 `TRITON_INTERPRET=1` 可在 CPU 上运行 Triton interpreter，但同时明确提示其可能有问题。它适合有限调试，不是 GPU 正确性和性能证据。[Handout：L1134-L1143](./cs336_assignment2_systems_extracted.md#L1134-L1143)
-
-本次编写教材时，当前环境检测结果是 `torch.cuda.is_available() == False`，虽然 Python 环境已经安装 Triton，但没有可执行 CUDA kernel 的设备。因此本仓库现在可以完成纯 PyTorch forward/backward 与公式验证，Triton correctness/performance 测试仍会按 [`test_attention.py:L66-L72`](../tests/test_attention.py#L66-L72) 的条件跳过。
-
----
-
-## 14. 常见误区
-
-### 14.1 “FlashAttention 把计算复杂度降成了线性”
-
-错。对 dense exact attention，所有 query-key 对仍要参与，主算术量仍是 $O(N^2d)$；主要变化是避免保存完整 $N\times N$ 的 $S,P$，并减少 HBM I/O。[FA1 Theorem 1、2](https://papers.neurips.cc/paper_files/paper/2022/file/67d57c32e20fd0a7a302cb81d36e40d5-Paper-Conference.pdf)
-
-### 14.2 “FlashAttention 是近似 attention”
-
-错。核心 dense 算法通过代数重排计算同一个 attention 函数；浮点舍入差异不等于算法近似。[FA1 摘要](https://openreview.net/forum?id=H4DqfPSibmx)
-
-### 14.3 “分块后对每块做 softmax，再拼起来即可”
-
-错。每块分母不同。必须维护并重标定全行的运行最大值、指数和与输出 accumulator。
-
-### 14.4 “只要不返回 $P$，就没有物化 $P$”
-
-错。框架内部仍可能为算子边界或 backward 保存 $P$。是否物化要看 kernel 边界和 autograd 保存项，而不是 Python 返回值。
-
-### 14.5 “PyTorch 的 `scaled_dot_product_attention` 一定在跑 FA2”
-
-错。PyTorch 会根据设备、dtype、shape 和限制在多个 backend 间自动选择；不满足 fused kernel 条件时会回退。[SDPA backend 选择](https://docs.pytorch.org/docs/stable/generated/torch.nn.functional.scaled_dot_product_attention.html)
-
-### 14.6 “block pointer 会自动把整个 block 放进 shared memory”
-
-错。它描述地址区域和 tile 几何；实际存储与指令映射由 Triton 编译器和目标硬件决定。[Triton `make_block_ptr` 源码](https://github.com/triton-lang/triton/blob/v3.6.0/python/triton/language/core.py#L2236-L2248)
-
-### 14.7 “`order=(1, 0)` 就是转置”
-
-错。转置改变逻辑索引关系；`order` 是布局顺序提示，地址仍由 `strides` 和 `offsets` 决定。
-
-### 14.8 “越大的 tile 一定越快”
-
-错。大 tile 可减少循环和重复读取，也会增加寄存器与 shared-memory 占用，造成 spill 或降低 occupancy。应按 shape 和硬件 benchmark。[FA2 §3.3 Tuning block sizes](https://arxiv.org/html/2307.08691v1#S3.SS3.SSS0.Px3)
-
-### 14.9 “mask 后填 0 就行”
-
-错。softmax 中 0 对应非零权重。应在 softmax 前填 $-\infty$ 或足够小的数，并保证全屏蔽行有明确定义。
-
-### 14.10 “数学中的 $q$ 是 PyTorch 的一行，所以它是行向量”
-
-错。本文数学上 $q$ 始终是列向量；PyTorch `(B,S,d)` 只是用最后一维存储 $q^\top$ 的坐标。score 仍解释为 $q^\top k$。
-
-### 14.11 “FA2 只是 FA1 换了循环顺序”
-
-不完整。FA2 的三类核心改进是减少 non-matmul FLOPs、沿序列维增加 thread-block 并行，以及将 block 内 warp 工作划分改为 sliced-Q；循环顺序是实现这些目标的一部分。[FA2 §3](https://arxiv.org/html/2307.08691v1#S3)
-
-### 14.12 “Backward 重算一定更慢”
-
-不一定。它增加算术，却避免保存和读取巨大的 $P$。在论文目标 GPU 上，减少 HBM I/O 后总时间反而下降；是否成立仍取决于具体硬件与实现。[FA1 §3.1、Figure 2](https://papers.neurips.cc/paper_files/paper/2022/file/67d57c32e20fd0a7a302cb81d36e40d5-Paper-Conference.pdf)
-
----
-
-## 15. 推荐学习路线
-
-### 阶段 1：形状与 baseline
-
-1. 手算两个 queries、三个 keys 的 attention；
-2. 写出列向量形式的 $q_i^\top k_j$ 和矩阵形式的 $QK^\top$；
-3. 用 PyTorch `(B,S,d)` 实现 naive forward；
-4. 计算不同 $B,H,S,d,\text{dtype}$ 下 $S,P$ 的字节数；
-5. 阅读 handout 的 [naive attention 问题](./cs336_assignment2_systems_extracted.md#L613-L635)。
-
-通过标准：能解释“数学列向量”和“feature-last Tensor”为什么不矛盾，并能独立核算二次内存。
-
-### 阶段 2：Triton 数据映射
-
-1. 完成 weighted sum forward；
-2. 画出每个 program 负责的行；
-3. 对每个 block pointer 写出 `shape/strides/offsets/block_shape`；
-4. 增加非整除 shape 测试；
-5. 阅读 [Handout-WS](./cs336_assignment2_systems_extracted.md#L662-L824) 与 [Triton 3.6 block-pointer 源码](https://github.com/triton-lang/triton/blob/v3.6.0/python/triton/language/core.py#L2236-L2263)。
-
-通过标准：给定一个 `pid`，能算出它会读写哪些逻辑坐标。
-
-### 阶段 3：Online softmax
-
-1. 只实现一行 scores 的 streaming softmax；
-2. 增加 value accumulator $z$；
-3. 用不同切块方式验证同一结果；
-4. 加入极端 logits；
-5. 推导并验证 $L=m+\log\ell$。
-
-通过标准：不看资料也能写出 $m,\alpha,\ell,z$ 四个更新式并证明不变量。
-
-### 阶段 4：纯 PyTorch tiled FA2
-
-1. 扩展到 $B_q\times B_k$；
-2. 增加 batch；
-3. 增加 causal mask；
-4. 返回 $O,L$；
-5. 与 naive reference 比较。
-
-通过标准：每个中间 tile 都可与 naive attention 的对应切片核对。
-
-### 阶段 5：Triton forward
-
-1. 建立 `(T_q,B)` grid；
-2. 固定 query tile，循环 key/value tiles；
-3. 先支持整除、FP32、non-causal；
-4. 再加低精度、边界与 causal；
-5. 最后才 autotune。
-
-通过标准：所有正确性 case 通过，且 profiler/benchmark 显示没有完整 $S,P$ allocation。
-
-### 阶段 6：Backward 与性能
-
-1. 用 $L$ 重建 $P$；
-2. 推导并验证 $D$；
-3. 先用 PyTorch/`torch.compile` 完成 backward；
-4. 再理解 key-major 与 query-major 两遍 tiled backward；
-5. 最后做统一 benchmark。
-
-通过标准：$dQ,dK,dV$ 均与 reference 一致，并能解释为什么两次重算 $P$ 可以避免 atomic。
-
----
-
-## 16. 练习
-
-### 练习 1：shape 检查
-
-给定列向量 $q_i,k_j,v_j\in\mathbb{R}^{64}$，$N_q=128$、$N_k=256$。写出 $Q,K,V,S,P,O,L$ 的 shape，并写出 PyTorch batch size 4 时的 shape。
-
-提示：数学矩阵把 $q_i^\top$ 堆成行；PyTorch 单头 feature-last 布局为 `(B,S,d)`。
-
-### 练习 2：内存核算
-
-计算 $B=2,H=16,S=4096$、BF16 下一个 `(B,H,S,S)` Tensor 的大小。再估算同时存在 $S$ 与 $P$ 时仅这两项需要多少 GiB。
-
-### 练习 3：两块 online softmax
-
-取 scores `[1, 2 | 10, 11]`，按两个块手算每轮的 $m,\alpha,\ell$。解释第二块到来时若不重标定第一块，为什么结果错误。
-
-### 练习 4：证明 accumulator 不变量
-
-用数学归纳法证明第 4.6 节的 $\ell$ 与 $z$ 不变量，并由此推出最终 $z/\ell$ 等于普通 attention 输出。
-
-### 练习 5：block pointer 审计
-
-对 `shape=(100, 64)`、`strides=(64, 1)`、`Br=16`、`Bd=32`、`pid=6` 的 `X` block pointer，写出第一次与 `advance((0, 32))` 后覆盖的逻辑坐标，并指出哪些行越界。
-
-### 练习 6：causal tile 分类
-
-设 $B_q=B_k=64$，query tile 覆盖全局位置 `[128, 191]`。把 key tiles `[0,63]`、`[64,127]`、`[128,191]`、`[192,255]` 分类为全可见、对角 tile 或全不可见。
-
-### 练习 7：推导 $D$
-
-从 $O=PV$ 和 $dP=dOV^\top$ 出发，证明 $\operatorname{rowsum}(O\circ dO)=\operatorname{rowsum}(P\circ dP)$，再推出 $dS=P\circ(dP-D[:,None])$。
-
-### 练习 8：找出错误
-
-下面更新缺了什么？
-
-```python
-m_new = maximum(m, rowmax(scores))
-p = exp(scores - m_new[:, None])
-l = l + rowsum(p)
-acc = acc + p @ v
-```
-
-答案方向：旧的 $\ell$ 和 `acc` 仍以旧最大值为基准，必须乘 $\exp(m-m_\text{new})$。
-
-### 练习 9：设计测试
-
-设计一个最小输入，使最大 score 只在第二个 key tile 出现，并让两个 value tiles 差异明显。该 case 应能捕获“忘记缩放旧 accumulator”的 bug。
-
-### 练习 10：设计 benchmark
-
-固定一张 GPU，设计一个扫描 $S,d,\text{dtype},\text{causal}$ 的 benchmark 表。写清 warmup、重复次数、同步方式、backend 固定方式、OOM 记录方式和 peak-memory 测量边界。
-
-### 练习 11：解释 sliced-Q
-
-画出 4 个 warps 在 sliced-K 与 sliced-Q 下分别拥有哪部分 $Q,K,V,O$。指出哪一种需要对同一输出做 warp 间归约，以及为什么。
-
-### 练习 12：无 GPU 研究报告
-
-只用 CPU 完成 online softmax、纯 PyTorch tiled forward 与 backward 公式验证。报告中分成“已验证的数学/接口性质”和“尚未验证的 GPU 性能性质”两栏，禁止用 CPU 时间推断 GPU speedup。
-
----
-
-## 17. 一页复习表
-
-| 问题 | 最短答案 |
-|---|---|
-| FA2 算的还是普通 attention 吗？ | 是，dense exact attention；浮点结果不保证逐 bit 相同 |
-| 为什么 naive attention 容易 OOM？ | $S,P$ 的 shape 含 $S_qS_k$，训练还要保存/重用大中间量 |
-| FlashAttention 的核心目标是什么？ | 减少 HBM 与片上存储之间的 I/O，不物化完整 $S,P$ |
-| softmax 为什么可以分块？ | 保存运行最大值 $m$、指数和 $\ell$，并按新最大值重标定旧状态 |
-| 为什么还要保存输出 accumulator？ | 直接流式累计 $\widetilde P V$，无需保存 $\widetilde P$ |
-| forward 最终保存什么统计量？ | $L=m+\log\ell$ |
-| backward 怎样恢复概率？ | $P=\exp(S-L)$，逐 tile 重算 |
-| $D$ 是什么？ | $D=\operatorname{rowsum}(O\circ dO)=\operatorname{rowsum}(P\circ dP)$ |
-| FA2 对 FA1 的三项改进？ | 少做 non-matmul、沿序列并行 thread blocks、block 内采用 sliced-Q |
-| Triton program 对应什么算法任务？ | 一个 batch/head 的一个 query tile，内部循环 key/value tiles |
-| block pointer 解决什么？ | 用 shape、stride、offset 和 block shape 描述规则 tile 地址 |
-| 没有 GPU 能学到哪一步？ | 数学、PyTorch tiled reference、mask、backward 与静态映射；不能验证 GPU 性能 |
-
----
-
-## 18. 参考资料
-
-1. Tri Dao, Daniel Y. Fu, Stefano Ermon, Atri Rudra, Christopher Ré. [FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness](https://openreview.net/forum?id=H4DqfPSibmx). NeurIPS 2022.
-2. Tri Dao. [FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning](https://arxiv.org/abs/2307.08691). 2023.
-3. Maxim Milakov, Natalia Gimelshein. [Online normalizer calculation for softmax](https://arxiv.org/abs/1805.02867). 2018.
-4. Triton. [Fused Attention Tutorial](https://triton-lang.org/main/getting-started/tutorials/06-fused-attention.html).
-5. Triton. [`make_block_ptr` 与 `advance` 3.6 源码](https://github.com/triton-lang/triton/blob/v3.6.0/python/triton/language/core.py#L2236-L2263), [`load`](https://triton-lang.org/main/python-api/generated/triton.language.load.html), [`program_id`](https://triton-lang.org/main/python-api/generated/triton.language.program_id.html), [`dot`](https://triton-lang.org/main/python-api/generated/triton.language.dot.html).
-6. PyTorch. [`torch.nn.functional.scaled_dot_product_attention`](https://docs.pytorch.org/docs/stable/generated/torch.nn.functional.scaled_dot_product_attention.html).
-7. CS336 Spring 2026 Assignment 2 handout：[`4.2.1 Example - Weighted Sum`](./cs336_assignment2_systems_extracted.md#L662-L1021)、[`4.2.2 FlashAttention-2 Forward Pass`](./cs336_assignment2_systems_extracted.md#L1023-L1240)、[`4.2.3 OPTIONAL: Triton Backward Pass`](./cs336_assignment2_systems_extracted.md#L1242-L1280)。
+- [FlashAttention-2 Backward 与实现验证](./03_03_flash_attention_2_backward.md)：从第 9 章开始推导 $dO\rightarrow dV,dP\rightarrow dS\rightarrow dQ,dK$，并继续讲 Triton 映射、测试、benchmark 和练习。

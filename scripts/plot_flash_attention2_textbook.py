@@ -215,86 +215,6 @@ def plot_io_comparison(path: Path) -> None:
     _save(figure, path)
 
 
-def plot_online_softmax(path: Path) -> None:
-    figure, axis = plt.subplots(figsize=(12.5, 5.2))
-    _prepare_axis(axis, xlim=(0, 12), ylim=(0, 6.5))
-    axis.set_title(
-        "Online softmax: one key/value tile updates a row-wise invariant",
-        loc="left",
-        fontsize=14,
-        fontweight="bold",
-    )
-
-    _box(
-        axis,
-        0.2,
-        4.25,
-        2.0,
-        1.2,
-        "Old state\nm_old, l_old,\nO_tilde_old",
-        color=BLUE,
-    )
-    _box(axis, 0.2, 1.35, 2.0, 1.2, "New tile\nS_j, V_j", color=PURPLE)
-    _box(
-        axis,
-        3.0,
-        3.55,
-        2.15,
-        1.5,
-        "New maximum\nm_new = max(\nm_old, rowmax(S_j))",
-        color=ORANGE,
-    )
-    _box(
-        axis,
-        5.95,
-        4.25,
-        2.05,
-        1.2,
-        "Rescale old state\nalpha = exp(\nm_old - m_new)",
-        color=VERMILLION,
-    )
-    _box(
-        axis,
-        5.95,
-        1.35,
-        2.05,
-        1.2,
-        "Local weights\nP_tilde_j = exp(\nS_j - m_new)",
-        color=GREEN,
-    )
-    _box(
-        axis,
-        8.8,
-        3.05,
-        2.8,
-        1.95,
-        "Updated invariant\nl_new = alpha l_old + rowsum(P_tilde_j)\nO_tilde_new = alpha O_tilde_old + P_tilde_j V_j",
-        color=BLUE,
-        fontsize=9.5,
-    )
-    for start, end in (
-        ((2.2, 4.85), (3.0, 4.55)),
-        ((2.2, 1.95), (3.0, 3.8)),
-        ((5.15, 4.3), (5.95, 4.75)),
-        ((5.15, 4.0), (5.95, 1.95)),
-        ((8.0, 4.85), (8.8, 4.35)),
-        ((8.0, 1.95), (8.8, 3.45)),
-    ):
-        _arrow(axis, start, end)
-
-    axis.text(
-        6.0,
-        0.35,
-        "After the last tile:  O = O_tilde / l,    L = m + log(l)",
-        ha="center",
-        fontsize=11,
-        fontweight="bold",
-        color="#202124",
-    )
-    figure.tight_layout()
-    _save(figure, path)
-
-
 def _warp_row(
     axis: Axes,
     y: float,
@@ -381,7 +301,6 @@ def main() -> int:
     args = build_parser().parse_args()
     _configure_style()
     plot_io_comparison(args.output_dir / f"naive_vs_flash_io.{args.format}")
-    plot_online_softmax(args.output_dir / f"online_softmax_state.{args.format}")
     plot_work_partition(args.output_dir / f"fa1_vs_fa2_work_partition.{args.format}")
     return 0
 

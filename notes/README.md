@@ -42,4 +42,5 @@
 ## 03 Triton 与 FlashAttention
 
 1. [03_01 PyTorch Attention CPU Benchmark 实验报告](./03_01_pytorch_attention_cpu_benchmark_report.md)：在 20 GiB 地址空间限制下完成 naive attention 的 20 组 CPU benchmark，分析 forward/backward 耗时、OOM 边界、Autograd saved storage 的 $S^2$ 增长及 FlashAttention 的消除方法。
-2. [03_02 FlashAttention-2 初学者教材](./03_02_flash_attention_2_beginner_textbook.md)：从 weighted sum、Triton block pointer 和 online softmax 开始，系统推导 FA2 forward/backward、causal mask、FA1 到 FA2 的工作划分改进，并给出 CPU 学习路线、测试方法与练习。
+2. [03_02 FlashAttention-2 Forward 初学者教材](./03_02_flash_attention_2_beginner_textbook.md)：从 weighted sum、Triton block pointer 和 online softmax 开始，系统推导 FA2 forward、causal mask、数值稳定性以及 FA1 到 FA2 的工作划分改进。
+3. [03_03 FlashAttention-2 Backward 与实现验证](./03_03_flash_attention_2_backward.md)：从普通 attention backward 和 Softmax VJP 开始，推导 $L$ 重建、$D$ 行归约、tile 梯度与两遍调度，并继续说明 Triton 映射、测试、benchmark 和练习。
