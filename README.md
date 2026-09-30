@@ -39,6 +39,13 @@ If you would like to use your own implementation of assignment 1, replace the `c
 directory with your own implementation, or edit the outer `pyproject.toml` file to point to your
 own implementation.
 
+## Standalone CUDA FlashAttention
+
+[`cuda_flash_attention`](./cuda_flash_attention) contains modular FP32 naive and
+tiled CUDA forward/backward implementations for correctness and performance
+experiments on Pascal GPUs. It is intentionally independent of the Python
+environment so it can be built with CUDA 11.8 for `sm_61`.
+
 0. We use `uv` to manage dependencies. You can verify that the code from the `cs336-basics`
 package is accessible by running:
 
