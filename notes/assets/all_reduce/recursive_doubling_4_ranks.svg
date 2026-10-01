@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680" width="1200" height="680" role="img" aria-labelledby="title desc">
+  <title id="title">Recursive doubling all-reduce with four ranks</title>
+  <desc id="desc">Round one exchanges full accumulators between ranks zero and one and between ranks two and three. Round two exchanges between ranks zero and two and between ranks one and three. All ranks finish with the complete reduction.</desc>
+  <style>
+    .bg { fill: #ffffff; }
+    .panel { fill: #f7f7f8; stroke: #d3d4da; stroke-width: 1.5; }
+    .node { fill: #ffffff; stroke: #d3d4da; stroke-width: 1.5; }
+    .final { fill: #e5fff2; stroke: #0fdc78; stroke-width: 2.5; }
+    .title { fill: #171717; font: 600 26px/1.2 "Source Han Sans SC", "Droid Sans Fallback", system-ui, sans-serif; }
+    .subtitle { fill: #52525b; font: 400 15px/1.3 "Source Han Sans SC", "Droid Sans Fallback", system-ui, sans-serif; }
+    .panel-title { fill: #171717; font: 600 20px/1.2 "Source Han Sans SC", "Droid Sans Fallback", system-ui, sans-serif; }
+    .node-title { fill: #171717; font: 600 17px/1.2 "Source Han Sans SC", "Droid Sans Fallback", system-ui, sans-serif; }
+    .final-title { fill: #004d26; font: 600 17px/1.2 "Source Han Sans SC", "Droid Sans Fallback", system-ui, sans-serif; }
+    .state { fill: #52525b; font: 500 14px/1.2 ui-monospace, "SFMono-Regular", Consolas, monospace; }
+    .final-state { fill: #004d26; font: 600 14px/1.2 ui-monospace, "SFMono-Regular", Consolas, monospace; }
+    .label { fill: #52525b; font: 500 13px/1.2 ui-monospace, "SFMono-Regular", Consolas, monospace; }
+    .arrow-one { fill: none; stroke: #0fdc78; stroke-width: 2.8; stroke-linecap: round; marker-end: url(#arrow-one); }
+    .arrow-two { fill: none; stroke: #80c1ff; stroke-width: 2.8; stroke-linecap: round; marker-end: url(#arrow-two); }
+  </style>
+  <defs>
+    <marker id="arrow-one" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M1 1 L7 4 L1 7 Z" fill="#0fdc78"/>
+    </marker>
+    <marker id="arrow-two" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M1 1 L7 4 L1 7 Z" fill="#80c1ff"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1200" height="680"/>
+  <text class="title" x="600" y="40" text-anchor="middle">Recursive doubling all-reduce（P=4）</text>
+  <text class="subtitle" x="600" y="68" text-anchor="middle">伙伴为 rank XOR 2^j；每轮交换完整的 S byte accumulator</text>
+
+  <rect class="panel" x="40" y="95" width="1120" height="105" rx="12"/>
+  <text class="panel-title" x="68" y="128">初始状态</text>
+  <text class="state" x="68" y="168">r0: x0</text>
+  <text class="state" x="330" y="168">r1: x1</text>
+  <text class="state" x="592" y="168">r2: x2</text>
+  <text class="state" x="854" y="168">r3: x3</text>
+
+  <g transform="translate(40 225)">
+    <rect class="panel" x="0" y="0" width="535" height="390" rx="12"/>
+    <text class="panel-title" x="28" y="38">Round 1：距离 1</text>
+    <text class="subtitle" x="28" y="64">伙伴：r0 ↔ r1，r2 ↔ r3</text>
+
+    <g transform="translate(36 105)">
+      <rect class="node" width="180" height="72" rx="8"/>
+      <text class="node-title" x="90" y="27" text-anchor="middle">r0</text>
+      <text class="state" x="90" y="52" text-anchor="middle">x0+x1</text>
+    </g>
+    <g transform="translate(319 105)">
+      <rect class="node" width="180" height="72" rx="8"/>
+      <text class="node-title" x="90" y="27" text-anchor="middle">r1</text>
+      <text class="state" x="90" y="52" text-anchor="middle">x0+x1</text>
+    </g>
+    <path class="arrow-one" d="M216 126 H319"/>
+    <path class="arrow-one" d="M319 157 H216"/>
+    <text class="label" x="267" y="116" text-anchor="middle">x0 / x1 · S</text>
+
+    <g transform="translate(36 255)">
+      <rect class="node" width="180" height="72" rx="8"/>
+      <text class="node-title" x="90" y="27" text-anchor="middle">r2</text>
+      <text class="state" x="90" y="52" text-anchor="middle">x2+x3</text>
+    </g>
+    <g transform="translate(319 255)">
+      <rect class="node" width="180" height="72" rx="8"/>
+      <text class="node-title" x="90" y="27" text-anchor="middle">r3</text>
+      <text class="state" x="90" y="52" text-anchor="middle">x2+x3</text>
+    </g>
+    <path class="arrow-one" d="M216 276 H319"/>
+    <path class="arrow-one" d="M319 307 H216"/>
+    <text class="label" x="267" y="266" text-anchor="middle">x2 / x3 · S</text>
+    <text class="subtitle" x="267" y="363" text-anchor="middle">每个 accumulator 已包含 2 个来源</text>
+  </g>
+
+  <g transform="translate(625 225)">
+    <rect class="panel" x="0" y="0" width="535" height="390" rx="12"/>
+    <text class="panel-title" x="28" y="38">Round 2：距离 2</text>
+    <text class="subtitle" x="28" y="64">伙伴：r0 ↔ r2，r1 ↔ r3</text>
+
+    <g transform="translate(36 105)">
+      <rect class="final" width="180" height="72" rx="8"/>
+      <text class="final-title" x="90" y="27" text-anchor="middle">r0</text>
+      <text class="final-state" x="90" y="52" text-anchor="middle">y=x0+x1+x2+x3</text>
+    </g>
+    <g transform="translate(319 105)">
+      <rect class="final" width="180" height="72" rx="8"/>
+      <text class="final-title" x="90" y="27" text-anchor="middle">r2</text>
+      <text class="final-state" x="90" y="52" text-anchor="middle">y=x0+x1+x2+x3</text>
+    </g>
+    <path class="arrow-two" d="M216 126 H319"/>
+    <path class="arrow-two" d="M319 157 H216"/>
+    <text class="label" x="267" y="116" text-anchor="middle">S byte</text>
+
+    <g transform="translate(36 255)">
+      <rect class="final" width="180" height="72" rx="8"/>
+      <text class="final-title" x="90" y="27" text-anchor="middle">r1</text>
+      <text class="final-state" x="90" y="52" text-anchor="middle">y=x0+x1+x2+x3</text>
+    </g>
+    <g transform="translate(319 255)">
+      <rect class="final" width="180" height="72" rx="8"/>
+      <text class="final-title" x="90" y="27" text-anchor="middle">r3</text>
+      <text class="final-state" x="90" y="52" text-anchor="middle">y=x0+x1+x2+x3</text>
+    </g>
+    <path class="arrow-two" d="M216 276 H319"/>
+    <path class="arrow-two" d="M319 307 H216"/>
+    <text class="label" x="267" y="266" text-anchor="middle">S byte</text>
+    <text class="subtitle" x="267" y="363" text-anchor="middle">每个 rank 都得到完整归约结果 y</text>
+  </g>
+
+  <text class="subtitle" x="600" y="655" text-anchor="middle">共 log2(P)=2 轮；每轮每 rank 发送 S，累计发送 S log2(P)=2S</text>
+</svg>

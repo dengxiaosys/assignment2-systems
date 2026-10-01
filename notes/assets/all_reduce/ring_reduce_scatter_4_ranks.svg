@@ -1,0 +1,195 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 1120" width="1440" height="1120" role="img" aria-labelledby="title desc">
+  <title id="title">4-rank ring reduce-scatter complete three-round schedule</title>
+  <desc id="desc">Three round panels show every direct-neighbor transfer. Chunk zero is highlighted from rank 1 to rank 2, then rank 2 to rank 3, then rank 3 to rank 0.</desc>
+  <style>
+    .bg { fill: #ffffff; }
+    .panel { fill: #f7f7f8; stroke: #d3d4da; stroke-width: 1.5; }
+    .rank { fill: #ffffff; stroke: #d3d4da; stroke-width: 1.5; }
+    .rank-focus { fill: #e5fff2; stroke: #0fdc78; stroke-width: 2.5; }
+    .title { fill: #171717; font: 600 26px/1.2 "Source Han Sans SC", "Droid Sans Fallback", system-ui, sans-serif; }
+    .subtitle { fill: #52525b; font: 400 15px/1.3 "Source Han Sans SC", "Droid Sans Fallback", system-ui, sans-serif; }
+    .panel-title { fill: #171717; font: 600 19px/1.2 "Source Han Sans SC", "Droid Sans Fallback", system-ui, sans-serif; }
+    .rank-title { fill: #171717; font: 600 17px/1.2 "Source Han Sans SC", "Droid Sans Fallback", system-ui, sans-serif; }
+    .rank-focus-title { fill: #004d26; font: 600 17px/1.2 "Source Han Sans SC", "Droid Sans Fallback", system-ui, sans-serif; }
+    .state { fill: #171717; font: 500 14px/1.2 ui-monospace, "SFMono-Regular", Consolas, monospace; }
+    .state-focus { fill: #004d26; font: 600 14px/1.2 ui-monospace, "SFMono-Regular", Consolas, monospace; }
+    .label { fill: #52525b; font: 500 13px/1.2 ui-monospace, "SFMono-Regular", Consolas, monospace; }
+    .label-focus { fill: #004d26; font: 600 13px/1.2 ui-monospace, "SFMono-Regular", Consolas, monospace; }
+    .arrow { fill: none; stroke: #52525b; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; marker-end: url(#arrow-neutral); }
+    .arrow-focus { fill: none; stroke: #0fdc78; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; marker-end: url(#arrow-brand); }
+    .label-bg { fill: #f7f7f8; }
+    .label-bg-focus { fill: #e5fff2; stroke: #0fdc78; stroke-width: 1; }
+    .legend-line { stroke: #0fdc78; stroke-width: 3; stroke-linecap: round; }
+  </style>
+  <defs>
+    <marker id="arrow-neutral" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M1 1 L7 4 L1 7 Z" fill="#52525b"/>
+    </marker>
+    <marker id="arrow-brand" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M1 1 L7 4 L1 7 Z" fill="#0fdc78"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1440" height="1120"/>
+  <text class="title" x="720" y="42" text-anchor="middle">4-rank ring reduce-scatter：三轮完整通信</text>
+  <text class="subtitle" x="720" y="70" text-anchor="middle">逻辑环固定为 r0 → r1 → r2 → r3 → r0；每条箭头只连接直接邻居</text>
+
+  <rect class="panel" x="40" y="92" width="1360" height="126" rx="12"/>
+  <text class="panel-title" x="68" y="122">初始输入：每个 rank 持有完整的 4 个 chunk</text>
+  <g transform="translate(72 140)">
+    <rect class="rank" x="0" y="0" width="286" height="52" rx="8"/>
+    <text class="rank-title" x="18" y="22">r0</text>
+    <text class="state" x="58" y="22">[a0, a1, a2, a3]</text>
+  </g>
+  <g transform="translate(408 140)">
+    <rect class="rank" x="0" y="0" width="286" height="52" rx="8"/>
+    <text class="rank-title" x="18" y="22">r1</text>
+    <text class="state" x="58" y="22">[b0, b1, b2, b3]</text>
+  </g>
+  <g transform="translate(744 140)">
+    <rect class="rank" x="0" y="0" width="286" height="52" rx="8"/>
+    <text class="rank-title" x="18" y="22">r2</text>
+    <text class="state" x="58" y="22">[c0, c1, c2, c3]</text>
+  </g>
+  <g transform="translate(1080 140)">
+    <rect class="rank" x="0" y="0" width="286" height="52" rx="8"/>
+    <text class="rank-title" x="18" y="22">r3</text>
+    <text class="state" x="58" y="22">[d0, d1, d2, d3]</text>
+  </g>
+
+  <!-- Round 1 -->
+  <g transform="translate(40 244)">
+    <rect class="panel" x="0" y="0" width="660" height="380" rx="12"/>
+    <text class="panel-title" x="28" y="34">Round 1</text>
+    <text class="subtitle" x="632" y="34" text-anchor="end">每条消息大小均为 S/4</text>
+
+    <g transform="translate(42 66)">
+      <rect class="rank" x="0" y="0" width="220" height="72" rx="8"/>
+      <text class="rank-title" x="16" y="25">r0</text>
+      <text class="state" x="16" y="51">new: a2 + d2</text>
+    </g>
+    <g transform="translate(398 66)">
+      <rect class="rank" x="0" y="0" width="220" height="72" rx="8"/>
+      <text class="rank-title" x="16" y="25">r1</text>
+      <text class="state" x="16" y="51">new: b3 + a3</text>
+    </g>
+    <g transform="translate(398 266)">
+      <rect class="rank-focus" x="0" y="0" width="220" height="72" rx="8"/>
+      <text class="rank-focus-title" x="16" y="25">r2 · chunk 0</text>
+      <text class="state-focus" x="16" y="51">new: c0 + b0</text>
+    </g>
+    <g transform="translate(42 266)">
+      <rect class="rank" x="0" y="0" width="220" height="72" rx="8"/>
+      <text class="rank-title" x="16" y="25">r3</text>
+      <text class="state" x="16" y="51">new: d1 + c1</text>
+    </g>
+
+    <path class="arrow" d="M262 102 H398"/>
+    <rect class="label-bg" x="297" y="80" width="66" height="24" rx="8"/>
+    <text class="label" x="330" y="97" text-anchor="middle">a3</text>
+
+    <path class="arrow-focus" d="M508 138 V266"/>
+    <rect class="label-bg-focus" x="520" y="190" width="66" height="24" rx="8"/>
+    <text class="label-focus" x="553" y="207" text-anchor="middle">b0</text>
+
+    <path class="arrow" d="M398 302 H262"/>
+    <rect class="label-bg" x="297" y="310" width="66" height="24" rx="8"/>
+    <text class="label" x="330" y="327" text-anchor="middle">c1</text>
+
+    <path class="arrow" d="M152 266 V138"/>
+    <rect class="label-bg" x="74" y="190" width="66" height="24" rx="8"/>
+    <text class="label" x="107" y="207" text-anchor="middle">d2</text>
+  </g>
+
+  <!-- Round 2 -->
+  <g transform="translate(740 244)">
+    <rect class="panel" x="0" y="0" width="660" height="380" rx="12"/>
+    <text class="panel-title" x="28" y="34">Round 2</text>
+    <text class="subtitle" x="632" y="34" text-anchor="end">partial sum 大小仍为 S/4</text>
+
+    <g transform="translate(42 66)">
+      <rect class="rank" x="0" y="0" width="220" height="72" rx="8"/>
+      <text class="rank-title" x="16" y="25">r0</text>
+      <text class="state" x="16" y="51">new: a1 + d1 + c1</text>
+    </g>
+    <g transform="translate(398 66)">
+      <rect class="rank" x="0" y="0" width="220" height="72" rx="8"/>
+      <text class="rank-title" x="16" y="25">r1</text>
+      <text class="state" x="16" y="51">new: b2 + a2 + d2</text>
+    </g>
+    <g transform="translate(398 266)">
+      <rect class="rank" x="0" y="0" width="220" height="72" rx="8"/>
+      <text class="rank-title" x="16" y="25">r2</text>
+      <text class="state" x="16" y="51">new: c3 + b3 + a3</text>
+    </g>
+    <g transform="translate(42 266)">
+      <rect class="rank-focus" x="0" y="0" width="220" height="72" rx="8"/>
+      <text class="rank-focus-title" x="16" y="25">r3 · chunk 0</text>
+      <text class="state-focus" x="16" y="51">new: d0 + c0 + b0</text>
+    </g>
+
+    <path class="arrow" d="M262 102 H398"/>
+    <rect class="label-bg" x="278" y="80" width="104" height="24" rx="8"/>
+    <text class="label" x="330" y="97" text-anchor="middle">a2+d2</text>
+
+    <path class="arrow" d="M508 138 V266"/>
+    <rect class="label-bg" x="520" y="190" width="94" height="24" rx="8"/>
+    <text class="label" x="567" y="207" text-anchor="middle">b3+a3</text>
+
+    <path class="arrow-focus" d="M398 302 H262"/>
+    <rect class="label-bg-focus" x="278" y="310" width="104" height="24" rx="8"/>
+    <text class="label-focus" x="330" y="327" text-anchor="middle">c0+b0</text>
+
+    <path class="arrow" d="M152 266 V138"/>
+    <rect class="label-bg" x="48" y="190" width="92" height="24" rx="8"/>
+    <text class="label" x="94" y="207" text-anchor="middle">d1+c1</text>
+  </g>
+
+  <!-- Round 3 -->
+  <g transform="translate(390 650)">
+    <rect class="panel" x="0" y="0" width="660" height="380" rx="12"/>
+    <text class="panel-title" x="28" y="34">Round 3 · reduce-scatter 完成</text>
+    <text class="subtitle" x="632" y="34" text-anchor="end">每个 rank 最终拥有一个完整归约 chunk</text>
+
+    <g transform="translate(42 66)">
+      <rect class="rank-focus" x="0" y="0" width="220" height="72" rx="8"/>
+      <text class="rank-focus-title" x="16" y="25">r0 owns y0</text>
+      <text class="state-focus" x="16" y="51">a0+b0+c0+d0</text>
+    </g>
+    <g transform="translate(398 66)">
+      <rect class="rank" x="0" y="0" width="220" height="72" rx="8"/>
+      <text class="rank-title" x="16" y="25">r1 owns y1</text>
+      <text class="state" x="16" y="51">a1+b1+c1+d1</text>
+    </g>
+    <g transform="translate(398 266)">
+      <rect class="rank" x="0" y="0" width="220" height="72" rx="8"/>
+      <text class="rank-title" x="16" y="25">r2 owns y2</text>
+      <text class="state" x="16" y="51">a2+b2+c2+d2</text>
+    </g>
+    <g transform="translate(42 266)">
+      <rect class="rank" x="0" y="0" width="220" height="72" rx="8"/>
+      <text class="rank-title" x="16" y="25">r3 owns y3</text>
+      <text class="state" x="16" y="51">a3+b3+c3+d3</text>
+    </g>
+
+    <path class="arrow" d="M262 102 H398"/>
+    <rect class="label-bg" x="270" y="80" width="120" height="24" rx="8"/>
+    <text class="label" x="330" y="97" text-anchor="middle">a1+d1+c1</text>
+
+    <path class="arrow" d="M508 138 V266"/>
+    <rect class="label-bg" x="514" y="190" width="116" height="24" rx="8"/>
+    <text class="label" x="572" y="207" text-anchor="middle">b2+a2+d2</text>
+
+    <path class="arrow" d="M398 302 H262"/>
+    <rect class="label-bg" x="260" y="310" width="140" height="24" rx="8"/>
+    <text class="label" x="330" y="327" text-anchor="middle">c3+b3+a3</text>
+
+    <path class="arrow-focus" d="M152 266 V138"/>
+    <rect class="label-bg-focus" x="30" y="190" width="114" height="24" rx="8"/>
+    <text class="label-focus" x="87" y="207" text-anchor="middle">d0+c0+b0</text>
+  </g>
+
+  <line class="legend-line" x1="70" y1="1069" x2="118" y2="1069"/>
+  <text class="subtitle" x="132" y="1075">绿色路径：chunk 0 的 partial sum（r1 → r2 → r3 → r0）</text>
+  <text class="subtitle" x="1370" y="1075" text-anchor="end">每轮每 rank 发送 S/4；3 轮合计 3S/4</text>
+</svg>

@@ -44,3 +44,11 @@
 1. [03_01 PyTorch Attention CPU Benchmark 实验报告](./03_01_pytorch_attention_cpu_benchmark_report.md)：在 20 GiB 地址空间限制下完成 naive attention 的 20 组 CPU benchmark，分析 forward/backward 耗时、OOM 边界、Autograd saved storage 的 $S^2$ 增长及 FlashAttention 的消除方法。
 2. [03_02 FlashAttention-2 Forward 初学者教材](./03_02_flash_attention_2_beginner_textbook.md)：从 weighted sum、Triton block pointer 和 online softmax 开始，系统推导 FA2 forward、causal mask、数值稳定性以及 FA1 到 FA2 的工作划分改进。
 3. [03_03 FlashAttention-2 Backward 与实现验证](./03_03_flash_attention_2_backward.md)：从普通 attention backward 和 Softmax VJP 开始，推导 $L$ 重建、$D$ 行归约、tile 梯度与两遍调度，并继续说明 Triton 映射、测试、benchmark 和练习。
+4. [03_04 从 FlashAttention-1 到 FlashAttention-2](./03_04_flash_attention_1_to_2_evolution.md)：从 FA1 的 I/O-aware 基线出发，详解 FA2 的 non-matmul 优化、序列维并行、sliced-Q、前后向调度差异与性能边界。
+5. [03_05 从 FlashAttention-2 到 FlashAttention-3](./03_05_flash_attention_2_to_3_evolution.md)：详解 Hopper 的 TMA/WGMMA、producer-consumer 与两级 GEMM-softmax overlap、FP8 布局和数值误差控制。
+
+## 04 分布式通信与训练
+
+1. [04_01 PyTorch All-Reduce 本地实验报告](./04_01_pytorch_all_reduce_demo_report.md)：用 4 个本地 CPU worker 和 Gloo 验证 `SUM all_reduce` 的原地更新与全 rank 一致性，并解释进程组、rank、collective、Gloo/NCCL、同步语义以及与 DDP 梯度同步的关系。
+2. [04_02 All-Reduce 底层通信背景](./04_02_all_reduce_communication_background.md)：从 collective 语义、$\alpha$-$\beta$ 模型和 ring/tree 算法继续深入到 Gloo/NCCL 源码边界、PCIe/NVLink/RDMA 数据路径、DDP/FSDP 调度与 benchmark 方法。
+3. [04_03 单机 All-Reduce Benchmark 实验报告](./04_03_single_node_all_reduce_benchmark_report.md)：完成 CPU/Gloo 下 1 MB–1 GB、2/4/6 进程的三轮实验，报告逐次最慢 rank 延迟、波动、带宽与资源占用，并提供 GPU/NCCL 复跑入口。

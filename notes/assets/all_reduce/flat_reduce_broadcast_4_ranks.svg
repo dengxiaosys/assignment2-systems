@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 650" width="1200" height="650" role="img" aria-labelledby="title desc">
+  <title id="title">Flat reduce followed by flat broadcast with four ranks</title>
+  <desc id="desc">Three non-root ranks send complete S-byte inputs directly to rank zero, then rank zero sends the complete reduced result directly to all three ranks.</desc>
+  <style>
+    .bg { fill: #ffffff; }
+    .panel { fill: #f7f7f8; stroke: #d3d4da; stroke-width: 1.5; }
+    .node { fill: #ffffff; stroke: #d3d4da; stroke-width: 1.5; }
+    .root { fill: #e5fff2; stroke: #0fdc78; stroke-width: 2.5; }
+    .title { fill: #171717; font: 600 26px/1.2 "Source Han Sans SC", "Droid Sans Fallback", system-ui, sans-serif; }
+    .subtitle { fill: #52525b; font: 400 15px/1.3 "Source Han Sans SC", "Droid Sans Fallback", system-ui, sans-serif; }
+    .panel-title { fill: #171717; font: 600 20px/1.2 "Source Han Sans SC", "Droid Sans Fallback", system-ui, sans-serif; }
+    .node-title { fill: #171717; font: 600 17px/1.2 "Source Han Sans SC", "Droid Sans Fallback", system-ui, sans-serif; }
+    .root-title { fill: #004d26; font: 600 17px/1.2 "Source Han Sans SC", "Droid Sans Fallback", system-ui, sans-serif; }
+    .state { fill: #52525b; font: 500 14px/1.2 ui-monospace, "SFMono-Regular", Consolas, monospace; }
+    .root-state { fill: #004d26; font: 600 14px/1.2 ui-monospace, "SFMono-Regular", Consolas, monospace; }
+    .label { fill: #52525b; font: 500 13px/1.2 ui-monospace, "SFMono-Regular", Consolas, monospace; }
+    .emphasis { fill: #004d26; font: 600 15px/1.2 "Source Han Sans SC", "Droid Sans Fallback", system-ui, sans-serif; }
+    .arrow { fill: none; stroke: #52525b; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; marker-end: url(#arrow); }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M1 1 L7 4 L1 7 Z" fill="#52525b"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1200" height="650"/>
+  <text class="title" x="600" y="40" text-anchor="middle">朴素 flat reduce + flat broadcast（P=4）</text>
+  <text class="subtitle" x="600" y="68" text-anchor="middle">每条消息都是完整的 S byte tensor；所有流量集中到 root r0</text>
+
+  <g transform="translate(35 95)">
+    <rect class="panel" x="0" y="0" width="545" height="490" rx="12"/>
+    <text class="panel-title" x="28" y="38">阶段 1：flat reduce</text>
+    <text class="subtitle" x="28" y="64">r1、r2、r3 直接向 r0 发送完整输入</text>
+
+    <g transform="translate(172 90)">
+      <rect class="root" x="0" y="0" width="200" height="76" rx="8"/>
+      <text class="root-title" x="100" y="29" text-anchor="middle">r0 · root</text>
+      <text class="root-state" x="100" y="55" text-anchor="middle">y = x0+x1+x2+x3</text>
+    </g>
+    <g transform="translate(32 330)">
+      <rect class="node" x="0" y="0" width="140" height="66" rx="8"/>
+      <text class="node-title" x="70" y="27" text-anchor="middle">r1</text>
+      <text class="state" x="70" y="49" text-anchor="middle">x1 · S byte</text>
+    </g>
+    <g transform="translate(202 330)">
+      <rect class="node" x="0" y="0" width="140" height="66" rx="8"/>
+      <text class="node-title" x="70" y="27" text-anchor="middle">r2</text>
+      <text class="state" x="70" y="49" text-anchor="middle">x2 · S byte</text>
+    </g>
+    <g transform="translate(372 330)">
+      <rect class="node" x="0" y="0" width="140" height="66" rx="8"/>
+      <text class="node-title" x="70" y="27" text-anchor="middle">r3</text>
+      <text class="state" x="70" y="49" text-anchor="middle">x3 · S byte</text>
+    </g>
+
+    <path class="arrow" d="M102 330 C115 250 170 205 222 166"/>
+    <path class="arrow" d="M272 330 V166"/>
+    <path class="arrow" d="M442 330 C429 250 374 205 322 166"/>
+    <text class="label" x="116" y="248">S</text>
+    <text class="label" x="282" y="248">S</text>
+    <text class="label" x="418" y="248">S</text>
+    <text class="emphasis" x="272" y="440" text-anchor="middle">root 接收 (P−1)S = 3S</text>
+  </g>
+
+  <g transform="translate(620 95)">
+    <rect class="panel" x="0" y="0" width="545" height="490" rx="12"/>
+    <text class="panel-title" x="28" y="38">阶段 2：flat broadcast</text>
+    <text class="subtitle" x="28" y="64">r0 再把完整归约结果 y 直接发给所有 rank</text>
+
+    <g transform="translate(172 90)">
+      <rect class="root" x="0" y="0" width="200" height="76" rx="8"/>
+      <text class="root-title" x="100" y="29" text-anchor="middle">r0 · root</text>
+      <text class="root-state" x="100" y="55" text-anchor="middle">result y · S byte</text>
+    </g>
+    <g transform="translate(32 330)">
+      <rect class="node" x="0" y="0" width="140" height="66" rx="8"/>
+      <text class="node-title" x="70" y="27" text-anchor="middle">r1</text>
+      <text class="state" x="70" y="49" text-anchor="middle">receives y</text>
+    </g>
+    <g transform="translate(202 330)">
+      <rect class="node" x="0" y="0" width="140" height="66" rx="8"/>
+      <text class="node-title" x="70" y="27" text-anchor="middle">r2</text>
+      <text class="state" x="70" y="49" text-anchor="middle">receives y</text>
+    </g>
+    <g transform="translate(372 330)">
+      <rect class="node" x="0" y="0" width="140" height="66" rx="8"/>
+      <text class="node-title" x="70" y="27" text-anchor="middle">r3</text>
+      <text class="state" x="70" y="49" text-anchor="middle">receives y</text>
+    </g>
+
+    <path class="arrow" d="M222 166 C170 205 115 250 102 330"/>
+    <path class="arrow" d="M272 166 V330"/>
+    <path class="arrow" d="M322 166 C374 205 429 250 442 330"/>
+    <text class="label" x="116" y="248">S</text>
+    <text class="label" x="282" y="248">S</text>
+    <text class="label" x="418" y="248">S</text>
+    <text class="emphasis" x="272" y="440" text-anchor="middle">root 发送 (P−1)S = 3S</text>
+  </g>
+
+  <text class="subtitle" x="600" y="625" text-anchor="middle">root 总收发量：2(P−1)S；其他每个 rank 发送 S、接收 S</text>
+</svg>
