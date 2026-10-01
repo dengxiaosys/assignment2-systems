@@ -14,8 +14,9 @@ namespace {
 constexpr int kFeatureSlots = detail::kMaxHeadDim / detail::kWarpSize;
 
 std::size_t forward_shared_memory_bytes(const AttentionShape& shape) {
-    const std::size_t query_values = static_cast<std::size_t>(detail::kQueriesPerTile) * shape.head_dim;
-    const std::size_t key_value_values = 2ULL * detail::kKeysPerTile * shape.head_dim;
+    const int shared_stride = detail::shared_row_stride(shape.head_dim);
+    const std::size_t query_values = static_cast<std::size_t>(detail::kQueriesPerTile) * shared_stride;
+    const std::size_t key_value_values = 2ULL * detail::kKeysPerTile * shared_stride;
     return (query_values + key_value_values) * sizeof(float);
 }
 
@@ -33,9 +34,10 @@ __global__ void tiled_forward_kernel(
     float scale,
     bool causal) {
     extern __shared__ float shared[];
+    const int shared_stride = detail::shared_row_stride(head_dim);
     float* shared_query = shared;
-    float* shared_key = shared_query + detail::kQueriesPerTile * head_dim;
-    float* shared_value = shared_key + detail::kKeysPerTile * head_dim;
+    float* shared_key = shared_query + detail::kQueriesPerTile * shared_stride;
+    float* shared_value = shared_key + detail::kKeysPerTile * shared_stride;
 
     const int thread_index = threadIdx.x;
     const int warp_index = thread_index / detail::kWarpSize;
@@ -48,7 +50,7 @@ __global__ void tiled_forward_kernel(
         const int local_query = index / head_dim;
         const int feature = index % head_dim;
         const int global_query = query_start + local_query;
-        shared_query[index] =
+        shared_query[local_query * shared_stride + feature] =
             global_query < query_count ? query[static_cast<std::size_t>(global_query) * head_dim + feature] : 0.0F;
     }
     __syncthreads();
@@ -66,8 +68,8 @@ __global__ void tiled_forward_kernel(
                 global_key < key_count ? key[static_cast<std::size_t>(global_key) * head_dim + feature] : 0.0F;
             const float loaded_value =
                 global_key < key_count ? value[static_cast<std::size_t>(global_key) * head_dim + feature] : 0.0F;
-            shared_key[index] = loaded_key;
-            shared_value[index] = loaded_value;
+            shared_key[local_key * shared_stride + feature] = loaded_key;
+            shared_value[local_key * shared_stride + feature] = loaded_value;
         }
         __syncthreads();
 
@@ -79,8 +81,8 @@ __global__ void tiled_forward_kernel(
             if (visible) {
                 score = 0.0F;
                 for (int feature = 0; feature < head_dim; ++feature) {
-                    score += shared_query[warp_index * head_dim + feature] *
-                             shared_key[lane_index * head_dim + feature];
+                    score += shared_query[warp_index * shared_stride + feature] *
+                             shared_key[lane_index * shared_stride + feature];
                 }
                 score *= scale;
             }
@@ -93,18 +95,23 @@ __global__ void tiled_forward_kernel(
 
 #pragma unroll
             for (int slot = 0; slot < kFeatureSlots; ++slot) {
-                const int feature = lane_index + slot * detail::kWarpSize;
-                float tile_output = 0.0F;
+                const int feature_base = slot * detail::kWarpSize;
+                if (feature_base < head_dim) {
+                    const int feature = lane_index + feature_base;
+                    float tile_output = 0.0F;
 #pragma unroll
-                for (int source_lane = 0; source_lane < detail::kWarpSize; ++source_lane) {
-                    const float source_probability =
-                        __shfl_sync(detail::kFullWarpMask, probability_numerator, source_lane);
-                    if (feature < head_dim) {
-                        tile_output += source_probability * shared_value[source_lane * head_dim + feature];
+                    for (int source_lane = 0; source_lane < detail::kWarpSize; ++source_lane) {
+                        const float source_probability =
+                            __shfl_sync(detail::kFullWarpMask, probability_numerator, source_lane);
+                        if (feature < head_dim) {
+                            tile_output +=
+                                source_probability * shared_value[source_lane * shared_stride + feature];
+                        }
                     }
-                }
-                if (feature < head_dim) {
-                    output_accumulators[slot] = old_scale * output_accumulators[slot] + tile_output;
+                    if (feature < head_dim) {
+                        output_accumulators[slot] =
+                            old_scale * output_accumulators[slot] + tile_output;
+                    }
                 }
             }
             running_sum = old_scale * running_sum + tile_sum;

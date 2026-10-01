@@ -15,8 +15,9 @@ constexpr int kOwnedRowsPerBlock = detail::kWarpsPerBlock;
 constexpr int kStreamedRowsPerTile = detail::kWarpSize;
 
 std::size_t backward_shared_memory_bytes(const AttentionShape& shape) {
-    const std::size_t owned_values = 2ULL * kOwnedRowsPerBlock * shape.head_dim;
-    const std::size_t streamed_values = 2ULL * kStreamedRowsPerTile * shape.head_dim;
+    const int shared_stride = detail::shared_row_stride(shape.head_dim);
+    const std::size_t owned_values = 2ULL * kOwnedRowsPerBlock * shared_stride;
+    const std::size_t streamed_values = 2ULL * kStreamedRowsPerTile * shared_stride;
     return (owned_values + streamed_values) * sizeof(float);
 }
 
@@ -55,10 +56,11 @@ __global__ void tiled_grad_query_kernel(
     float scale,
     bool causal) {
     extern __shared__ float shared[];
+    const int shared_stride = detail::shared_row_stride(head_dim);
     float* shared_query = shared;
-    float* shared_grad_output = shared_query + detail::kQueriesPerTile * head_dim;
-    float* shared_key = shared_grad_output + detail::kQueriesPerTile * head_dim;
-    float* shared_value = shared_key + detail::kKeysPerTile * head_dim;
+    float* shared_grad_output = shared_query + detail::kQueriesPerTile * shared_stride;
+    float* shared_key = shared_grad_output + detail::kQueriesPerTile * shared_stride;
+    float* shared_value = shared_key + detail::kKeysPerTile * shared_stride;
 
     const int thread_index = threadIdx.x;
     const int warp_index = thread_index / detail::kWarpSize;
@@ -71,11 +73,13 @@ __global__ void tiled_grad_query_kernel(
         const int local_query = index / head_dim;
         const int feature = index % head_dim;
         const int global_query = query_start + local_query;
-        shared_query[index] =
+        const int shared_index = local_query * shared_stride + feature;
+        shared_query[shared_index] =
             global_query < query_count ? query[static_cast<std::size_t>(global_query) * head_dim + feature] : 0.0F;
-        shared_grad_output[index] = global_query < query_count
-                                            ? grad_output[static_cast<std::size_t>(global_query) * head_dim + feature]
-                                            : 0.0F;
+        shared_grad_output[shared_index] =
+            global_query < query_count
+                ? grad_output[static_cast<std::size_t>(global_query) * head_dim + feature]
+                : 0.0F;
     }
     __syncthreads();
 
@@ -88,9 +92,10 @@ __global__ void tiled_grad_query_kernel(
             const int local_key = index / head_dim;
             const int feature = index % head_dim;
             const int global_key = key_start + local_key;
-            shared_key[index] =
+            const int shared_index = local_key * shared_stride + feature;
+            shared_key[shared_index] =
                 global_key < key_count ? key[static_cast<std::size_t>(global_key) * head_dim + feature] : 0.0F;
-            shared_value[index] =
+            shared_value[shared_index] =
                 global_key < key_count ? value[static_cast<std::size_t>(global_key) * head_dim + feature] : 0.0F;
         }
         __syncthreads();
@@ -105,10 +110,10 @@ __global__ void tiled_grad_query_kernel(
                 float score = 0.0F;
                 float grad_probability = 0.0F;
                 for (int feature = 0; feature < head_dim; ++feature) {
-                    score += shared_query[warp_index * head_dim + feature] *
-                             shared_key[lane_index * head_dim + feature];
-                    grad_probability += shared_grad_output[warp_index * head_dim + feature] *
-                                        shared_value[lane_index * head_dim + feature];
+                    score += shared_query[warp_index * shared_stride + feature] *
+                             shared_key[lane_index * shared_stride + feature];
+                    grad_probability += shared_grad_output[warp_index * shared_stride + feature] *
+                                        shared_value[lane_index * shared_stride + feature];
                 }
                 score *= scale;
                 probability = expf(score - row_logsumexp);
@@ -117,17 +122,22 @@ __global__ void tiled_grad_query_kernel(
 
 #pragma unroll
             for (int slot = 0; slot < kFeatureSlots; ++slot) {
-                const int feature = lane_index + slot * detail::kWarpSize;
-                float tile_contribution = 0.0F;
+                const int feature_base = slot * detail::kWarpSize;
+                if (feature_base < head_dim) {
+                    const int feature = lane_index + feature_base;
+                    float tile_contribution = 0.0F;
 #pragma unroll
-                for (int source_lane = 0; source_lane < detail::kWarpSize; ++source_lane) {
-                    const float source_grad_score = __shfl_sync(detail::kFullWarpMask, grad_score, source_lane);
-                    if (feature < head_dim) {
-                        tile_contribution += source_grad_score * shared_key[source_lane * head_dim + feature];
+                    for (int source_lane = 0; source_lane < detail::kWarpSize; ++source_lane) {
+                        const float source_grad_score =
+                            __shfl_sync(detail::kFullWarpMask, grad_score, source_lane);
+                        if (feature < head_dim) {
+                            tile_contribution +=
+                                source_grad_score * shared_key[source_lane * shared_stride + feature];
+                        }
                     }
-                }
-                if (feature < head_dim) {
-                    grad_query_accumulators[slot] += tile_contribution * scale;
+                    if (feature < head_dim) {
+                        grad_query_accumulators[slot] += tile_contribution * scale;
+                    }
                 }
             }
         }
@@ -164,10 +174,11 @@ __global__ void tiled_grad_key_value_kernel(
     float scale,
     bool causal) {
     extern __shared__ float shared[];
+    const int shared_stride = detail::shared_row_stride(head_dim);
     float* shared_key = shared;
-    float* shared_value = shared_key + kOwnedRowsPerBlock * head_dim;
-    float* shared_query = shared_value + kOwnedRowsPerBlock * head_dim;
-    float* shared_grad_output = shared_query + kStreamedRowsPerTile * head_dim;
+    float* shared_value = shared_key + kOwnedRowsPerBlock * shared_stride;
+    float* shared_query = shared_value + kOwnedRowsPerBlock * shared_stride;
+    float* shared_grad_output = shared_query + kStreamedRowsPerTile * shared_stride;
 
     const int thread_index = threadIdx.x;
     const int warp_index = thread_index / detail::kWarpSize;
@@ -180,9 +191,10 @@ __global__ void tiled_grad_key_value_kernel(
         const int local_key = index / head_dim;
         const int feature = index % head_dim;
         const int global_key = key_start + local_key;
-        shared_key[index] =
+        const int shared_index = local_key * shared_stride + feature;
+        shared_key[shared_index] =
             global_key < key_count ? key[static_cast<std::size_t>(global_key) * head_dim + feature] : 0.0F;
-        shared_value[index] =
+        shared_value[shared_index] =
             global_key < key_count ? value[static_cast<std::size_t>(global_key) * head_dim + feature] : 0.0F;
     }
     __syncthreads();
@@ -195,11 +207,13 @@ __global__ void tiled_grad_key_value_kernel(
             const int local_query = index / head_dim;
             const int feature = index % head_dim;
             const int global_query = query_start + local_query;
-            shared_query[index] =
+            const int shared_index = local_query * shared_stride + feature;
+            shared_query[shared_index] =
                 global_query < query_count ? query[static_cast<std::size_t>(global_query) * head_dim + feature] : 0.0F;
-            shared_grad_output[index] = global_query < query_count
-                                                ? grad_output[static_cast<std::size_t>(global_query) * head_dim + feature]
-                                                : 0.0F;
+            shared_grad_output[shared_index] =
+                global_query < query_count
+                    ? grad_output[static_cast<std::size_t>(global_query) * head_dim + feature]
+                    : 0.0F;
         }
         __syncthreads();
 
@@ -212,10 +226,10 @@ __global__ void tiled_grad_key_value_kernel(
                 float score = 0.0F;
                 float grad_probability = 0.0F;
                 for (int feature = 0; feature < head_dim; ++feature) {
-                    score += shared_query[lane_index * head_dim + feature] *
-                             shared_key[warp_index * head_dim + feature];
-                    grad_probability += shared_grad_output[lane_index * head_dim + feature] *
-                                        shared_value[warp_index * head_dim + feature];
+                    score += shared_query[lane_index * shared_stride + feature] *
+                             shared_key[warp_index * shared_stride + feature];
+                    grad_probability += shared_grad_output[lane_index * shared_stride + feature] *
+                                        shared_value[warp_index * shared_stride + feature];
                 }
                 score *= scale;
                 probability = expf(score - logsumexp[query_index]);
@@ -224,22 +238,28 @@ __global__ void tiled_grad_key_value_kernel(
 
 #pragma unroll
             for (int slot = 0; slot < kFeatureSlots; ++slot) {
-                const int feature = lane_index + slot * detail::kWarpSize;
-                float key_contribution = 0.0F;
-                float value_contribution = 0.0F;
+                const int feature_base = slot * detail::kWarpSize;
+                if (feature_base < head_dim) {
+                    const int feature = lane_index + feature_base;
+                    float key_contribution = 0.0F;
+                    float value_contribution = 0.0F;
 #pragma unroll
-                for (int source_lane = 0; source_lane < detail::kWarpSize; ++source_lane) {
-                    const float source_grad_score = __shfl_sync(detail::kFullWarpMask, grad_score, source_lane);
-                    const float source_probability = __shfl_sync(detail::kFullWarpMask, probability, source_lane);
-                    if (feature < head_dim) {
-                        key_contribution += source_grad_score * shared_query[source_lane * head_dim + feature];
-                        value_contribution +=
-                            source_probability * shared_grad_output[source_lane * head_dim + feature];
+                    for (int source_lane = 0; source_lane < detail::kWarpSize; ++source_lane) {
+                        const float source_grad_score =
+                            __shfl_sync(detail::kFullWarpMask, grad_score, source_lane);
+                        const float source_probability =
+                            __shfl_sync(detail::kFullWarpMask, probability, source_lane);
+                        if (feature < head_dim) {
+                            key_contribution +=
+                                source_grad_score * shared_query[source_lane * shared_stride + feature];
+                            value_contribution +=
+                                source_probability * shared_grad_output[source_lane * shared_stride + feature];
+                        }
                     }
-                }
-                if (feature < head_dim) {
-                    grad_key_accumulators[slot] += key_contribution * scale;
-                    grad_value_accumulators[slot] += value_contribution;
+                    if (feature < head_dim) {
+                        grad_key_accumulators[slot] += key_contribution * scale;
+                        grad_value_accumulators[slot] += value_contribution;
+                    }
                 }
             }
         }

@@ -5,6 +5,9 @@ FlashAttention algorithm on Pascal GPUs such as the GTX 1060. It does not depend
 on the repository's PyTorch CUDA build, so it can be compiled with a separate
 CUDA 11.8 toolchain targeting compute capability 6.1.
 
+Measured GTX 1060 results and optimization findings are in
+[`PERFORMANCE.md`](./PERFORMANCE.md).
+
 ## Scope
 
 - Single attention head with contiguous row-major FP32 tensors.
@@ -30,6 +33,9 @@ single-head algorithm.
 | `src/tiled_forward.cu` | Online-softmax forward without quadratic HBM workspace |
 | `src/tiled_backward.cu` | Query-owner and key-owner backward without quadratic HBM workspace |
 | `app/benchmark.cu` | Correctness comparison and CUDA-Event benchmark |
+| `app/pytorch_benchmark.py` | PyTorch SDPA/eager CUDA-Event comparison |
+| `scripts/run_benchmark_suite.sh` | Reproducible sequence-length sweep |
+| `scripts/summarize_benchmarks.py` | Markdown summary for C++ and PyTorch results |
 | `tests/reference_test.cpp` | CPU finite-difference test |
 
 Both CUDA implementations use the same public interface. The caller allocates
@@ -48,8 +54,12 @@ cmake -S cuda_flash_attention -B cuda_flash_attention/build \
 cmake --build cuda_flash_attention/build -j
 ```
 
+`FA_USE_FAST_MATH=ON` is available as an explicitly opt-in performance
+experiment. The default remains IEEE-oriented CUDA math so correctness runs do
+not silently change numerical behavior.
+
 The generated CUDA code uses ordinary FP32 CUDA cores, warp shuffles, and at
-most 36 KiB of dynamic shared memory per block. It does not use BF16, Tensor
+most 41 KiB of dynamic shared memory per block. It does not use BF16, Tensor
 Cores, `cp.async`, cooperative groups, or architecture-specific asynchronous
 pipelines.
 
@@ -104,6 +114,18 @@ The executable:
 Use `--no-verify` for large performance-only cases to avoid the CPU reference
 cost.
 
+Compare against PyTorch SDPA across `N=128..2048`, with and without causal
+masking:
+
+```bash
+FA_PYTHON=/path/to/python \
+  cuda_flash_attention/scripts/run_benchmark_suite.sh /path/to/results
+```
+
+The PyTorch benchmark reports default, forced memory-efficient, forced math, and
+explicit eager attention. Backend availability depends on the GPU and PyTorch
+build; Flash SDPA requires newer architectures than the GTX 1060.
+
 ## Memory model
 
 For FP32:
@@ -131,8 +153,10 @@ key-owner passes independently reconstruct local scores and probabilities.
 | tiled `dK/dV` | one warp per key row | all query tiles | same correction buffer |
 
 The tiled output ownership makes every final gradient write race-free without
-atomics. At `head_dim=128`, forward uses 34 KiB and backward uses 36 KiB of
-dynamic shared memory per block, within the GTX 1060's 48 KiB limit.
+atomics. At `head_dim=128`, forward uses about 36.3 KiB and backward uses about
+40.3 KiB of dynamic shared memory per block, within the GTX 1060's 48 KiB limit.
+Shared-memory rows use an odd stride to avoid bank conflicts at common even head
+dimensions such as 64 and 128.
 
 ## Interpreting results
 

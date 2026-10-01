@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.21)
 project(cuda_flash_attention LANGUAGES CXX)
 
 option(FA_ENABLE_CUDA "Build CUDA kernels and the GPU benchmark" ON)
+option(FA_USE_FAST_MATH "Use CUDA fast approximate math in CUDA kernels" OFF)
 set(FA_CUDA_ARCHITECTURE "61" CACHE STRING "CUDA architecture used for compilation")
 
 add_library(fa_reference STATIC src/reference.cpp)
@@ -43,6 +44,9 @@ if(FA_ENABLE_CUDA)
         CUDA_STANDARD_REQUIRED ON
     )
     target_compile_options(fa_cuda PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-lineinfo>)
+    if(FA_USE_FAST_MATH)
+        target_compile_options(fa_cuda PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:--use_fast_math>)
+    endif()
     target_link_libraries(fa_cuda PUBLIC CUDA::cudart)
 
     add_executable(fa_benchmark app/benchmark.cu)

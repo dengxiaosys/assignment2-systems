@@ -12,12 +12,16 @@
 namespace fa::detail {
 
 constexpr int kWarpSize = 32;
-constexpr int kWarpsPerBlock = 4;
+constexpr int kWarpsPerBlock = 8;
 constexpr int kThreadsPerBlock = kWarpSize * kWarpsPerBlock;
 constexpr int kKeysPerTile = 32;
 constexpr int kQueriesPerTile = kWarpsPerBlock;
 constexpr int kMaxHeadDim = 128;
 constexpr unsigned kFullWarpMask = 0xffffffffu;
+
+__host__ __device__ constexpr int shared_row_stride(int head_dim) {
+    return head_dim + ((head_dim & 1) == 0 ? 1 : 0);
+}
 
 inline int ceil_div(int numerator, int denominator) {
     return (numerator + denominator - 1) / denominator;
