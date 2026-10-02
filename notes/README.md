@@ -55,3 +55,4 @@
 4. [04_04 Naive DDP 正确性实验报告](./04_04_naive_ddp_experiment_report.md)：实现初始化状态广播与 backward 后逐参数梯度平均，在 2-rank CPU/Gloo 环境连续五轮对比全局 batch 基线，并推导等价条件、通信复杂度和适用边界。
 5. [04_05 Naive DDP Benchmark 实验报告](./04_05_naive_ddp_benchmark_report.md)：实现 naive DDP benchmark，记录逐参数同步的计时语义、CPU/Gloo smoke、`xl` 静态规模和双 GPU/NCCL 复跑边界。
 6. [04_06 Flat Gradient Minimal DDP Benchmark 实验报告](./04_06_flat_gradient_ddp_benchmark_report.md)：实现单 flat buffer all-reduce 与 copy-back，对比 collective 固定成本、额外内存流量、正确性和 CPU/Gloo 实测。
+7. [04_07 逐参数通信与反向计算重叠的 DDP 实验报告](./04_07_overlapped_individual_parameter_ddp_report.md)：实现 post-accumulate hook、异步 Work 与 finish 协议，推导正确性、collective 顺序和支持边界。

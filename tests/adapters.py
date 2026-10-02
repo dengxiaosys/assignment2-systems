@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import torch
 
-from cs336_systems.ddp import NaiveDistributedDataParallel
+from cs336_systems.ddp import OverlappedDistributedDataParallel
 
 
 def get_flashattention_autograd_function_pytorch() -> type:
@@ -40,8 +40,8 @@ def get_ddp(module: torch.nn.Module) -> torch.nn.Module:
     parameter broadcasting and gradient synchronization for
     distributed data parallel training.
 
-    This implementation synchronizes each parameter gradient
-    after the backward pass.
+    This implementation asynchronously communicates each parameter gradient
+    when it becomes ready during the backward pass.
 
     Args:
         module: torch.nn.Module
@@ -49,7 +49,7 @@ def get_ddp(module: torch.nn.Module) -> torch.nn.Module:
     Returns:
         Instance of a DDP class.
     """
-    return NaiveDistributedDataParallel(module)
+    return OverlappedDistributedDataParallel(module)
 
 
 def ddp_on_after_backward(ddp_model: torch.nn.Module, optimizer: torch.optim.Optimizer):
@@ -64,8 +64,8 @@ def ddp_on_after_backward(ddp_model: torch.nn.Module, optimizer: torch.optim.Opt
             Optimizer being used with the DDP-wrapped model.
     """
     del optimizer
-    if not isinstance(ddp_model, NaiveDistributedDataParallel):
-        raise TypeError("ddp_model must be a NaiveDistributedDataParallel instance")
+    if not isinstance(ddp_model, OverlappedDistributedDataParallel):
+        raise TypeError("ddp_model must be an OverlappedDistributedDataParallel instance")
     ddp_model.finish_gradient_synchronization()
 
 
