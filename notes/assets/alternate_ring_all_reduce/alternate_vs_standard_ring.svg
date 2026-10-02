@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" width="1200" height="720" role="img" aria-labelledby="title desc">
+  <title id="title">Alternate versus standard ring all-reduce</title>
+  <desc id="desc">For four ranks, alternate ring sends three full-size messages while standard ring sends six quarter-size messages.</desc>
+  <style>
+    .bg { fill: #ffffff; }
+    .header { fill: #171717; font-family: "DejaVu Sans", Arial, sans-serif; font-size: 28px; font-weight: 700; }
+    .sub { fill: #52525b; font-family: "DejaVu Sans", Arial, sans-serif; font-size: 15px; font-weight: 400; }
+    .panel { fill: #fafafa; stroke: #d4d4d8; stroke-width: 1.5; }
+    .panel-title { fill: #171717; font-family: "DejaVu Sans", Arial, sans-serif; font-size: 21px; font-weight: 700; }
+    .label { fill: #3f3f46; font-family: "DejaVu Sans", Arial, sans-serif; font-size: 14px; font-weight: 600; }
+    .mono { fill: #27272a; font-family: "DejaVu Sans Mono", monospace; font-size: 15px; font-weight: 650; }
+    .full { fill: #f3b34c; stroke: #a96306; stroke-width: 1.5; }
+    .chunk-rs { fill: #53a6d8; stroke: #146794; stroke-width: 1.5; }
+    .chunk-ag { fill: #54bd78; stroke: #16723a; stroke-width: 1.5; }
+    .formula { fill: #171717; font-family: "DejaVu Sans Mono", monospace; font-size: 21px; font-weight: 700; }
+    .callout { fill: #fff2f0; stroke: #c94a34; stroke-width: 1.5; }
+    .callout-text { fill: #8b2c1c; font-family: "DejaVu Sans", Arial, sans-serif; font-size: 18px; font-weight: 700; }
+    .axis { stroke: #a1a1aa; stroke-width: 1.5; }
+  </style>
+
+  <rect class="bg" x="0" y="0" width="1200" height="720"/>
+  <text class="header" x="600" y="48" text-anchor="middle">Payload comparison for N = 4</text>
+  <text class="sub" x="600" y="78" text-anchor="middle">Bar width represents bytes sent by one rank in one serial round.</text>
+
+  <!-- Alternate -->
+  <rect class="panel" x="50" y="108" width="1100" height="240" rx="8"/>
+  <text class="panel-title" x="82" y="145">Alternate ring · N - 1 rounds</text>
+  <text class="sub" x="1118" y="145" text-anchor="end">one complete tensor per round</text>
+  <line class="axis" x1="190" y1="300" x2="1090" y2="300"/>
+
+  <text class="label" x="82" y="198">Round 1</text>
+  <rect class="full" x="190" y="174" width="840" height="34" rx="6"/>
+  <text class="mono" x="610" y="197" text-anchor="middle">S bytes</text>
+
+  <text class="label" x="82" y="244">Round 2</text>
+  <rect class="full" x="190" y="220" width="840" height="34" rx="6"/>
+  <text class="mono" x="610" y="243" text-anchor="middle">S bytes</text>
+
+  <text class="label" x="82" y="290">Round 3</text>
+  <rect class="full" x="190" y="266" width="840" height="34" rx="6"/>
+  <text class="mono" x="610" y="289" text-anchor="middle">S bytes</text>
+
+  <text class="formula" x="1080" y="328" text-anchor="end">T = 3S/W</text>
+
+  <!-- Standard -->
+  <rect class="panel" x="50" y="374" width="1100" height="244" rx="8"/>
+  <text class="panel-title" x="82" y="411">Standard ring · 2(N - 1) rounds</text>
+  <text class="sub" x="1118" y="411" text-anchor="end">one of N equal chunks per round</text>
+
+  <text class="label" x="82" y="469">reduce-scatter</text>
+  <g transform="translate(230 444)">
+    <rect class="chunk-rs" x="0" y="0" width="210" height="38" rx="6"/>
+    <rect class="chunk-rs" x="230" y="0" width="210" height="38" rx="6"/>
+    <rect class="chunk-rs" x="460" y="0" width="210" height="38" rx="6"/>
+    <text class="mono" x="105" y="25" text-anchor="middle">S/4</text>
+    <text class="mono" x="335" y="25" text-anchor="middle">S/4</text>
+    <text class="mono" x="565" y="25" text-anchor="middle">S/4</text>
+  </g>
+
+  <text class="label" x="82" y="535">all-gather</text>
+  <g transform="translate(230 510)">
+    <rect class="chunk-ag" x="0" y="0" width="210" height="38" rx="6"/>
+    <rect class="chunk-ag" x="230" y="0" width="210" height="38" rx="6"/>
+    <rect class="chunk-ag" x="460" y="0" width="210" height="38" rx="6"/>
+    <text class="mono" x="105" y="25" text-anchor="middle">S/4</text>
+    <text class="mono" x="335" y="25" text-anchor="middle">S/4</text>
+    <text class="mono" x="565" y="25" text-anchor="middle">S/4</text>
+  </g>
+
+  <text class="formula" x="1080" y="507" text-anchor="end">T = 6(S/4)/W</text>
+  <text class="formula" x="1080" y="540" text-anchor="end">= 1.5S/W</text>
+
+  <rect class="callout" x="300" y="646" width="600" height="48" rx="8"/>
+  <text class="callout-text" x="600" y="677" text-anchor="middle">Alternate / standard = N/2 = 2× for N = 4</text>
+</svg>
