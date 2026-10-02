@@ -1,4 +1,4 @@
-"""Single-node benchmarks for the Assignment 2 naive and flat DDP implementations."""
+"""Single-node benchmarks for the Assignment 2 DDP implementations."""
 
 from __future__ import annotations
 
@@ -87,6 +87,7 @@ def _run_training_step(
     input_ids: Tensor,
     targets: Tensor,
     device: torch.device,
+    variant: DDPVariant,
     measure: bool,
 ) -> dict[str, float]:
     model.zero_grad(set_to_none=True)
@@ -103,7 +104,8 @@ def _run_training_step(
     with _nvtx_range(device, "backward"):
         loss.backward()
 
-    _synchronize(device)
+    if variant != "overlap":
+        _synchronize(device)
     sync_start = time.perf_counter_ns()
     with _nvtx_range(device, "finish_gradient_synchronization"):
         model.finish_gradient_synchronization()
@@ -176,6 +178,7 @@ def _worker(rank: int, config: DDPBenchmarkConfig, port: int, output_path: str) 
                 input_ids=input_ids,
                 targets=targets,
                 device=device,
+                variant=config.variant,
                 measure=False,
             )
 
@@ -188,6 +191,7 @@ def _worker(rank: int, config: DDPBenchmarkConfig, port: int, output_path: str) 
                     input_ids=input_ids,
                     targets=targets,
                     device=device,
+                    variant=config.variant,
                     measure=True,
                 )
                 for name, value in step.items():
@@ -296,7 +300,9 @@ def _build_result(
         "rank_max_samples": rank_max_samples,
         "rank_max_summaries": summaries,
         "gradient_sync_wait_fraction_percent": 100 * sync_mean / step_mean,
-        "gradient_sync_timing_semantics": "complete post-backward gradient synchronization",
+        "gradient_sync_timing_semantics": (
+            "complete post-backward gradient synchronization" if config.variant in ("naive", "flat") else "post-backward tail wait only; all-reduces are launched during backward"
+        ),
         "ranks": rank_results,
     }
 
