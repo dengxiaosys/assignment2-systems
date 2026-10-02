@@ -53,3 +53,4 @@
 2. [04_02 All-Reduce 底层通信背景](./04_02_all_reduce_communication_background.md)：从 collective 语义、$\alpha$-$\beta$ 模型和 ring/tree 算法继续深入到 Gloo/NCCL 源码边界、PCIe/NVLink/RDMA 数据路径、DDP/FSDP 调度与 benchmark 方法。
 3. [04_03 单机 All-Reduce Benchmark 实验报告](./04_03_single_node_all_reduce_benchmark_report.md)：完成 CPU/Gloo 下 1 MB–1 GB、2/4/6 进程的三轮实验，报告逐次最慢 rank 延迟、波动、带宽与资源占用，并提供 GPU/NCCL 复跑入口。
 4. [04_04 Naive DDP 正确性实验报告](./04_04_naive_ddp_experiment_report.md)：实现初始化状态广播与 backward 后逐参数梯度平均，在 2-rank CPU/Gloo 环境连续五轮对比全局 batch 基线，并推导等价条件、通信复杂度和适用边界。
+5. [04_05 Naive DDP Benchmark 实验报告](./04_05_naive_ddp_benchmark_report.md)：实现 naive DDP benchmark，记录逐参数同步的计时语义、CPU/Gloo smoke、`xl` 静态规模和双 GPU/NCCL 复跑边界。
