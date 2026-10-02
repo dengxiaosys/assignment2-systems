@@ -54,3 +54,4 @@
 3. [04_03 单机 All-Reduce Benchmark 实验报告](./04_03_single_node_all_reduce_benchmark_report.md)：完成 CPU/Gloo 下 1 MB–1 GB、2/4/6 进程的三轮实验，报告逐次最慢 rank 延迟、波动、带宽与资源占用，并提供 GPU/NCCL 复跑入口。
 4. [04_04 Naive DDP 正确性实验报告](./04_04_naive_ddp_experiment_report.md)：实现初始化状态广播与 backward 后逐参数梯度平均，在 2-rank CPU/Gloo 环境连续五轮对比全局 batch 基线，并推导等价条件、通信复杂度和适用边界。
 5. [04_05 Naive DDP Benchmark 实验报告](./04_05_naive_ddp_benchmark_report.md)：实现 naive DDP benchmark，记录逐参数同步的计时语义、CPU/Gloo smoke、`xl` 静态规模和双 GPU/NCCL 复跑边界。
+6. [04_06 Flat Gradient Minimal DDP Benchmark 实验报告](./04_06_flat_gradient_ddp_benchmark_report.md)：实现单 flat buffer all-reduce 与 copy-back，对比 collective 固定成本、额外内存流量、正确性和 CPU/Gloo 实测。

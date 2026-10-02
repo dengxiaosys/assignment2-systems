@@ -1,4 +1,4 @@
-"""Single-node benchmark for the Assignment 2 naive DDP implementation."""
+"""Single-node benchmarks for the Assignment 2 naive and flat DDP implementations."""
 
 from __future__ import annotations
 
@@ -292,7 +292,7 @@ def _build_result(
         "parameter_count": sum(parameter.numel() for parameter in parameters),
         "trainable_parameter_tensors": len(trainable),
         "gradient_payload_bytes": sum(parameter.numel() * parameter.element_size() for parameter in trainable),
-        "collective_calls_per_step": len(trainable),
+        "collective_calls_per_step": 1 if config.variant == "flat" else len(trainable),
         "rank_max_samples": rank_max_samples,
         "rank_max_summaries": summaries,
         "gradient_sync_wait_fraction_percent": 100 * sync_mean / step_mean,

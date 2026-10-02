@@ -17,16 +17,16 @@ from .common import (
     validate_ddp_net_equivalence,
 )
 
-VARIANTS: tuple[DDPVariant, ...] = ("naive",)
+VARIANTS: tuple[DDPVariant, ...] = ("naive", "flat")
 MODEL_TYPES = (ToyModel, ToyModelWithTiedWeights)
 
 
-def test_naive_ddp_matches_the_global_batch_baseline():
+def test_naive_and_flat_ddp_match_the_global_batch_baseline():
     world_size = 2
-    mp.spawn(_test_naive_ddp, args=(world_size,), nprocs=world_size, join=True)
+    mp.spawn(_test_naive_and_flat_ddp, args=(world_size,), nprocs=world_size, join=True)
 
 
-def _test_naive_ddp(rank: int, world_size: int) -> None:
+def _test_naive_and_flat_ddp(rank: int, world_size: int) -> None:
     device = _setup_process_group(rank=rank, world_size=world_size, backend="gloo")
     all_x = torch.load(FIXTURES_PATH / "ddp_test_data.pt").to(device)
     all_y = torch.load(FIXTURES_PATH / "ddp_test_labels.pt").to(device)

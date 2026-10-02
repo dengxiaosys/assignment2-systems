@@ -1,4 +1,4 @@
-"""Run isolated naive DDP benchmark cases."""
+"""Run isolated naive and flat-gradient DDP benchmark cases."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
 
-VARIANTS = ("naive",)
+VARIANTS = ("naive", "flat")
 
 
 def build_parser() -> argparse.ArgumentParser:
