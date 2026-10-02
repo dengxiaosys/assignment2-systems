@@ -1,0 +1,169 @@
+{
+  "status": "passed",
+  "generated_at_utc": "2026-10-02T18:20:21.157217+00:00",
+  "command": [
+    "scripts/benchmark_fsdp.py",
+    "--backend",
+    "gloo",
+    "--world-size",
+    "2",
+    "--compute-dtypes",
+    "float32",
+    "float16",
+    "--model-size",
+    "xl",
+    "--d-model",
+    "64",
+    "--d-ff",
+    "128",
+    "--num-layers",
+    "2",
+    "--num-heads",
+    "4",
+    "--vocab-size",
+    "256",
+    "--global-batch-size",
+    "4",
+    "--context-length",
+    "32",
+    "--warmup-steps",
+    "3",
+    "--measurement-steps",
+    "10",
+    "--repeats",
+    "3",
+    "--num-threads",
+    "1",
+    "--output-dir",
+    "benchmark_results/fsdp/cpu_gloo_decoupled_final_20261003"
+  ],
+  "schedule": [
+    {
+      "repeat": 1,
+      "compute_dtype": "float32"
+    },
+    {
+      "repeat": 1,
+      "compute_dtype": "float16"
+    },
+    {
+      "repeat": 0,
+      "compute_dtype": "float16"
+    },
+    {
+      "repeat": 2,
+      "compute_dtype": "float16"
+    },
+    {
+      "repeat": 2,
+      "compute_dtype": "float32"
+    },
+    {
+      "repeat": 0,
+      "compute_dtype": "float32"
+    }
+  ],
+  "cases": [
+    {
+      "file": "repeat1_float32.json",
+      "repeat": 1,
+      "compute_dtype": "float32",
+      "status": "passed",
+      "case_wall_seconds": 3.950286779552698
+    },
+    {
+      "file": "repeat1_float16.json",
+      "repeat": 1,
+      "compute_dtype": "float16",
+      "status": "passed",
+      "case_wall_seconds": 4.131190821528435
+    },
+    {
+      "file": "repeat0_float16.json",
+      "repeat": 0,
+      "compute_dtype": "float16",
+      "status": "passed",
+      "case_wall_seconds": 4.123260580003262
+    },
+    {
+      "file": "repeat2_float16.json",
+      "repeat": 2,
+      "compute_dtype": "float16",
+      "status": "passed",
+      "case_wall_seconds": 4.238781239837408
+    },
+    {
+      "file": "repeat2_float32.json",
+      "repeat": 2,
+      "compute_dtype": "float32",
+      "status": "passed",
+      "case_wall_seconds": 3.9687353894114494
+    },
+    {
+      "file": "repeat0_float32.json",
+      "repeat": 0,
+      "compute_dtype": "float32",
+      "status": "passed",
+      "case_wall_seconds": 3.942180898040533
+    }
+  ],
+  "aggregate": {
+    "float32": {
+      "repeat_count": 3,
+      "step_mean_ms": 23.518976966666667,
+      "step_repeat_std_ms": 1.0369204287739244,
+      "forward_mean_ms": 7.653944533333333,
+      "forward_repeat_std_ms": 0.4653031092193367,
+      "forward_exposed_all_gather_wait_mean_ms": 1.8928710666666666,
+      "forward_exposed_all_gather_wait_repeat_std_ms": 0.2912682616947972,
+      "backward_exposed_all_gather_wait_mean_ms": 4.1556526,
+      "forward_ready_before_use_fraction": 0.65,
+      "forward_communicated_full_bytes_per_step": 458752.0
+    },
+    "float16": {
+      "repeat_count": 3,
+      "step_mean_ms": 39.884994766666665,
+      "step_repeat_std_ms": 1.298447188587892,
+      "forward_mean_ms": 12.9872565,
+      "forward_repeat_std_ms": 0.18250306915032005,
+      "forward_exposed_all_gather_wait_mean_ms": 2.6293421,
+      "forward_exposed_all_gather_wait_repeat_std_ms": 0.14324633134690284,
+      "backward_exposed_all_gather_wait_mean_ms": 2.7444744666666665,
+      "forward_ready_before_use_fraction": 0.7312500000000001,
+      "forward_communicated_full_bytes_per_step": 229376.0
+    }
+  },
+  "xl_reference_accounting": {
+    "model_config": {
+      "d_model": 2560,
+      "d_ff": 10240,
+      "num_layers": 32,
+      "num_heads": 32
+    },
+    "vocab_size": 10000,
+    "context_length": 512,
+    "world_size": 2,
+    "dtype": "torch.float32",
+    "parameter_count": 3406809600,
+    "parameter_tensors": 291,
+    "shardable_parameter_tensors": 226,
+    "replicated_parameter_tensors": 65,
+    "full_parameter_bytes": 13627238400,
+    "shardable_full_parameter_bytes": 13626572800,
+    "replicated_parameter_bytes": 665600,
+    "sharded_storage_bytes_per_rank_including_padding": 6813286400,
+    "fsdp_local_parameter_bytes_per_rank": 6813952000,
+    "fsdp_local_gradient_bytes_per_rank": 6813952000,
+    "fsdp_local_adamw_moment_bytes_per_rank": 13627904000,
+    "fsdp_persistent_parameter_gradient_moment_bytes_per_rank": 27255808000,
+    "optimizer_sharding_persistent_bytes_by_rank": [
+      40881704960,
+      40881725440
+    ],
+    "peak_savings_vs_optimizer_sharding_rank_max_bytes": 13625917440,
+    "peak_savings_vs_optimizer_sharding_rank_max_percent": 33.33009380926951,
+    "persistent_savings_vs_replicated_ddp_bytes": 27253145600,
+    "persistent_savings_vs_replicated_ddp_percent": 49.99755783240719
+  },
+  "suite_wall_seconds": 25.872588254511356
+}

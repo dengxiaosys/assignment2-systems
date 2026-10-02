@@ -1,0 +1,36 @@
+{
+  "generated_at_utc": "2026-10-02T18:20:21.157217+00:00",
+  "source_directory": "benchmark_results/fsdp/cpu_gloo_decoupled_final_20261003",
+  "source_sha256": {
+    "cs336_systems/fsdp.py": "95ac27e87f5702940e1475707e1a950d24b8c3ecf5785c02e681a539b7707c84",
+    "cs336_systems/fsdp_observer.py": "b343405187acc40bb07730f36479f647ebf25e6d631d408194baed57d0c24e1f",
+    "cs336_systems/fsdp_accounting.py": "732634aa6a23760211d175efb5b13563fc7d964a03b1028cfad0e9dbe243c3a4",
+    "scripts/benchmark_fsdp.py": "484c7fae3165e28ca9397dce6b5e38100365419288318cbc15ddb9e9f6f06f6f",
+    "tests/test_fsdp_variants.py": "11bfee8c96d8d92a9dea0a9b229d6aa3e783001c16f4f98cba363da436a994ed",
+    "tests/test_fsdp_accounting.py": "73f01aca39a1414cb103e5e0005c04166496e44987cff979a6d7af6f2d04031b",
+    "tests/adapters.py": "df75f6cf3127c1bbebf323cd5afcb2493246492ff2421bd457ec51f8895fc2c5",
+    "notes/assets/fsdp/cpu_gloo_summary.json": "d934996ca7f05ca14ad46dbb5b0b860324aa841c1dcaf1d60f2bc52fdd980fd4"
+  },
+  "environment": {
+    "cpu": "Intel(R) Xeon(R) Platinum 8336C CPU @ 2.30GHz",
+    "cpu_count": 56,
+    "python_version": "3.13.12",
+    "torch_version": "2.11.0+cu130",
+    "cuda_available": false,
+    "cuda_device_count": 0,
+    "backend": "gloo",
+    "world_size": 2,
+    "threads_per_worker": 1
+  },
+  "measurement_semantics": {
+    "timing": "per-sample maximum across ranks; mean per repeat; mean and population standard deviation across three isolated repeats",
+    "ready_before_use": "host-observed Work.is_completed before wait on CPU/Gloo; not proof of CUDA stream overlap",
+    "communicated_full_bytes": "sum of reconstructed full tensor bytes per all-gather call, not physical link traffic",
+    "cuda": "not measured because no CUDA devices were visible"
+  },
+  "nccl_fail_fast": {
+    "command": "CUDA_VISIBLE_DEVICES='' uv run python scripts/benchmark_fsdp.py --backend nccl --world-size 2 --compute-dtypes float16 --model-size xl --repeats 1 --output-dir /tmp/fsdp_nccl_unavailable",
+    "exit_status": 1,
+    "error": "RuntimeError: NCCL requires 2 distinct visible CUDA devices"
+  }
+}

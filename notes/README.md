@@ -63,3 +63,6 @@
 
 1. [05_01 Optimizer State Sharding 实验报告](./05_01_optimizer_state_sharding_report.md)：实现参数 owner、本地 optimizer state 分片和更新后 broadcast，覆盖动态参数组、scheduler、rank-local checkpoint、复杂度以及 2-rank CPU/Gloo 正确性与状态字节实验。
 2. [05_02 Optimizer State Sharding Accounting 实验报告](./05_02_optimizer_state_sharding_accounting_report.md)：记录初始化后、optimizer step 前后的内存组成，比较 baseline/sharded 稳态速度，核算 `xl` 静态下界，并分析与 ZeRO Stage 1 的通信差异。
+3. [05_03 Fully Sharded Data Parallel 实验报告](./05_03_fully_sharded_data_parallel_report.md)：实现 Linear/Embedding weight 分片、两层 lookahead all-gather、gradient reduce-scatter、mixed precision master weight 和完整参数重建。
+4. [05_03 FSDP 代码阅读指南](./05_03_fsdp_code_walkthrough.md)：沿初始化、forward、backward 和 optimizer step 跟踪 shard/full weight 切换、collective 调度、真实执行顺序与内存生命周期。
+5. [05_04 FSDP Accounting 实验报告](./05_04_fsdp_accounting_report.md)：核算 `xl` persistent state 节省，测量 CPU/Gloo all-gather readiness 与 exposed wait，并给出正式 NCCL/Nsight 复跑和证据标准。
