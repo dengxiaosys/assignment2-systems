@@ -1,0 +1,96 @@
+{
+  "generated_at_utc": "2026-10-02T15:57:33.998193+00:00",
+  "source_command": [
+    "scripts/experiment_sharded_optimizer.py",
+    "--world-size",
+    "2",
+    "--steps",
+    "10",
+    "--width",
+    "64",
+    "--batch-size",
+    "8",
+    "--num-threads",
+    "1",
+    "--output",
+    "benchmark_results/sharded_optimizer/cpu_gloo_correctness.json"
+  ],
+  "source_sha256": {
+    "benchmark_results/sharded_optimizer/cpu_gloo_correctness.json": "0badb53c783555fd554a74771b169076aca698f16300be6951d62f2e94abc908",
+    "cs336_systems/sharded_optimizer.py": "5e09dce4ef118cf9a795d643dfda87ff77dc450f13087890b01ca2f89b9b3dff",
+    "scripts/experiment_sharded_optimizer.py": "b5cd302a8599ece0f441ea2e9921124143ba7b68ff6dab9dc4b1337bbc6db9e2",
+    "tests/test_sharded_optimizer_variants.py": "bf7a38bfe54fea6d9955cbd9b3184943a333c6fc71acbe351feb9c516fb57b9c"
+  },
+  "environment": {
+    "python_version": "3.13.12",
+    "torch_version": "2.11.0+cu130",
+    "platform": "Linux-5.4.143.bsk.8-amd64-x86_64-with-glibc2.31",
+    "backend": "gloo",
+    "cuda_available": false,
+    "cpu_model": "Intel(R) Xeon(R) Platinum 8336C CPU @ 2.30GHz",
+    "cpu_affinity_count": 56
+  },
+  "config": {
+    "world_size": 2,
+    "steps": 10,
+    "width": 64,
+    "batch_size": 8,
+    "learning_rate": 0.001,
+    "weight_decay": 0.01,
+    "seed": 20261002,
+    "num_threads_per_worker": 1
+  },
+  "model": {
+    "parameter_count": 4,
+    "parameter_elements": 16384,
+    "parameter_bytes_per_rank": 65536
+  },
+  "baseline": {
+    "optimizer_state_entries_per_rank": 4,
+    "optimizer_state_tensor_bytes_per_rank": 131088
+  },
+  "sharded": {
+    "broadcasts_per_step": 4,
+    "broadcast_payload_bytes_per_step": 65536,
+    "ranks": [
+      {
+        "rank": 0,
+        "owner_sequence": [
+          0,
+          1,
+          0,
+          1
+        ],
+        "owned_parameter_count": 2,
+        "owned_parameter_elements": 8192,
+        "owned_parameter_bytes": 32768,
+        "optimizer_state_entries": 2,
+        "optimizer_state_tensor_bytes": 65544,
+        "maximum_baseline_parameter_error": 0.0,
+        "maximum_cross_rank_parameter_error": 0.0
+      },
+      {
+        "rank": 1,
+        "owner_sequence": [
+          0,
+          1,
+          0,
+          1
+        ],
+        "owned_parameter_count": 2,
+        "owned_parameter_elements": 8192,
+        "owned_parameter_bytes": 32768,
+        "optimizer_state_entries": 2,
+        "optimizer_state_tensor_bytes": 65544,
+        "maximum_baseline_parameter_error": 0.0,
+        "maximum_cross_rank_parameter_error": 0.0
+      }
+    ],
+    "total_optimizer_state_tensor_bytes_across_ranks": 131088
+  },
+  "correctness": {
+    "global_maximum_baseline_parameter_error": 0.0,
+    "global_maximum_cross_rank_parameter_error": 0.0
+  },
+  "status": "passed"
+}

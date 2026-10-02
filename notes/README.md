@@ -11,7 +11,7 @@
 | `02` | 混合精度与编译 |
 | `03` | Triton 与 FlashAttention |
 | `04` | 分布式通信与训练 |
-| `05` | FSDP 与并行策略 |
+| `05` | Optimizer State Sharding 与 FSDP |
 | `90` | 独立运维附录 |
 
 后续笔记按 handout 的依赖顺序继续编号。
@@ -20,6 +20,7 @@
 
 1. [Assignment 2 handout 提取稿](./cs336_assignment2_systems_extracted.md)：题目原文与接口要求，作为索引和参考。
 2. [00_01 NVIDIA GeForce GTX 1060 6GB 硬件性能参考](./00_01_gtx_1060_6gb_hardware_reference.md)：仅介绍标准 6GB GDDR5 版本的架构、算力、显存、精度支持、功耗和硬件瓶颈。
+3. [分布式训练原始论文](./references/distributed_training/README.md)：ZeRO、Megatron-LM 和 GPipe 的原始 PDF、arXiv 版本、校验和及可检索文本提取稿。
 
 ## 01 单卡性能测量
 
@@ -57,3 +58,7 @@
 6. [04_06 Flat Gradient Minimal DDP Benchmark 实验报告](./04_06_flat_gradient_ddp_benchmark_report.md)：实现单 flat buffer all-reduce 与 copy-back，对比 collective 固定成本、额外内存流量、正确性和 CPU/Gloo 实测。
 7. [04_07 逐参数通信与反向计算重叠的 DDP 实验报告](./04_07_overlapped_individual_parameter_ddp_report.md)：实现 post-accumulate hook、异步 Work 与 finish 协议，推导正确性、collective 顺序和支持边界。
 8. [04_08 Overlapped DDP Benchmark 实验报告](./04_08_overlapped_ddp_benchmark_report.md)：比较 naive、flat、overlap 三种策略，说明 exposed tail、CUDA/NCCL stream 证据标准、Nsight 复跑命令和硬件阻塞。
+
+## 05 Optimizer State Sharding 与 FSDP
+
+1. [05_01 Optimizer State Sharding 实验报告](./05_01_optimizer_state_sharding_report.md)：实现参数 owner、本地 optimizer state 分片和更新后 broadcast，覆盖动态参数组、scheduler、rank-local checkpoint、复杂度以及 2-rank CPU/Gloo 正确性与状态字节实验。
