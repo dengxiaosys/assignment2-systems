@@ -1,0 +1,32 @@
+{
+  "generated_at_utc": "2026-10-02T17:34:52.838688+00:00",
+  "source_directory": "benchmark_results/optimizer_sharding_accounting/cpu_gloo_final_20261003",
+  "source_sha256": {
+    "cs336_systems/sharded_optimizer.py": "5e09dce4ef118cf9a795d643dfda87ff77dc450f13087890b01ca2f89b9b3dff",
+    "cs336_systems/optimizer_sharding_accounting.py": "c3da3e9abf85314a0d251e8d899b523138397c72b55162e33687afd0bd9c8caa",
+    "scripts/benchmark_optimizer_sharding.py": "bf1f3fe8393884803464696260926c101b93e3f78951e246b6013936f8dd8e52",
+    "tests/test_optimizer_sharding_accounting.py": "0ac99b943ecca74ec603339a47ee475164c35e3a13cfce99f627888e6969ac25",
+    "notes/assets/optimizer_sharding_accounting/cpu_gloo_summary.json": "453d4aed3e066cc931ac5bff29b8765f55a23ed906e1b54fe9bf1e308990ebb8"
+  },
+  "environment": {
+    "cpu": "Intel(R) Xeon(R) Platinum 8336C CPU @ 2.30GHz",
+    "cpu_count": 56,
+    "python_version": "3.13.12",
+    "torch_version": "2.11.0+cu130",
+    "cuda_available": false,
+    "cuda_device_count": 0,
+    "backend": "gloo",
+    "world_size": 2,
+    "threads_per_worker": 1
+  },
+  "measurement_semantics": {
+    "memory": "rank-max mean across three isolated repeats; RSS is process memory, tensor-byte fields are exact live tensor accounting at each checkpoint",
+    "timing": "per-sample maximum across ranks, then mean per repeat and mean/population-standard-deviation across three repeats",
+    "cuda": "not measured because no CUDA devices were visible"
+  },
+  "nccl_fail_fast": {
+    "command": "uv run python scripts/benchmark_optimizer_sharding.py --backend nccl --world-size 2 --model-size xl --repeats 1 --output-dir /tmp/optimizer_sharding_nccl_unavailable",
+    "exit_status": 1,
+    "error": "RuntimeError: NCCL requires 2 distinct visible CUDA devices"
+  }
+}

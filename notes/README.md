@@ -62,3 +62,4 @@
 ## 05 Optimizer State Sharding 与 FSDP
 
 1. [05_01 Optimizer State Sharding 实验报告](./05_01_optimizer_state_sharding_report.md)：实现参数 owner、本地 optimizer state 分片和更新后 broadcast，覆盖动态参数组、scheduler、rank-local checkpoint、复杂度以及 2-rank CPU/Gloo 正确性与状态字节实验。
+2. [05_02 Optimizer State Sharding Accounting 实验报告](./05_02_optimizer_state_sharding_accounting_report.md)：记录初始化后、optimizer step 前后的内存组成，比较 baseline/sharded 稳态速度，核算 `xl` 静态下界，并分析与 ZeRO Stage 1 的通信差异。

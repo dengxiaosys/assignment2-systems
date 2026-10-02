@@ -1,0 +1,249 @@
+{
+  "status": "passed",
+  "generated_at_utc": "2026-10-02T17:34:52.838688+00:00",
+  "command": [
+    "scripts/benchmark_optimizer_sharding.py",
+    "--backend",
+    "gloo",
+    "--world-size",
+    "2",
+    "--ddp-variant",
+    "flat",
+    "--model-size",
+    "xl",
+    "--d-model",
+    "64",
+    "--d-ff",
+    "128",
+    "--num-layers",
+    "2",
+    "--num-heads",
+    "4",
+    "--vocab-size",
+    "256",
+    "--global-batch-size",
+    "4",
+    "--context-length",
+    "32",
+    "--warmup-steps",
+    "3",
+    "--measurement-steps",
+    "10",
+    "--repeats",
+    "3",
+    "--num-threads",
+    "1",
+    "--xl-reference-vocab-size",
+    "10000",
+    "--xl-reference-context-length",
+    "512",
+    "--output-dir",
+    "benchmark_results/optimizer_sharding_accounting/cpu_gloo_final_20261003"
+  ],
+  "schedule": [
+    {
+      "repeat": 1,
+      "optimizer_variant": "baseline"
+    },
+    {
+      "repeat": 1,
+      "optimizer_variant": "sharded"
+    },
+    {
+      "repeat": 0,
+      "optimizer_variant": "sharded"
+    },
+    {
+      "repeat": 2,
+      "optimizer_variant": "sharded"
+    },
+    {
+      "repeat": 2,
+      "optimizer_variant": "baseline"
+    },
+    {
+      "repeat": 0,
+      "optimizer_variant": "baseline"
+    }
+  ],
+  "cases": [
+    {
+      "file": "repeat1_baseline.json",
+      "repeat": 1,
+      "optimizer_variant": "baseline",
+      "status": "passed",
+      "case_wall_seconds": 3.5887160524725914
+    },
+    {
+      "file": "repeat1_sharded.json",
+      "repeat": 1,
+      "optimizer_variant": "sharded",
+      "status": "passed",
+      "case_wall_seconds": 3.7324392423033714
+    },
+    {
+      "file": "repeat0_sharded.json",
+      "repeat": 0,
+      "optimizer_variant": "sharded",
+      "status": "passed",
+      "case_wall_seconds": 3.801596410572529
+    },
+    {
+      "file": "repeat2_sharded.json",
+      "repeat": 2,
+      "optimizer_variant": "sharded",
+      "status": "passed",
+      "case_wall_seconds": 3.703824572265148
+    },
+    {
+      "file": "repeat2_baseline.json",
+      "repeat": 2,
+      "optimizer_variant": "baseline",
+      "status": "passed",
+      "case_wall_seconds": 3.6620300114154816
+    },
+    {
+      "file": "repeat0_baseline.json",
+      "repeat": 0,
+      "optimizer_variant": "baseline",
+      "status": "passed",
+      "case_wall_seconds": 3.6982453987002373
+    }
+  ],
+  "aggregate": {
+    "baseline": {
+      "repeat_count": 3,
+      "step_mean_ms": 8.492642133333334,
+      "step_repeat_std_ms": 0.13536928489987024,
+      "optimizer_step_mean_ms": 1.5385805333333333,
+      "optimizer_step_repeat_std_ms": 0.024787799954054394,
+      "memory_rank_max_mean_by_phase": {
+        "after_model_initialization": {
+          "rss_bytes": 628426069.3333334,
+          "max_rss_bytes": 628426069.3333334,
+          "cuda_allocated_bytes": null,
+          "cuda_reserved_bytes": null,
+          "cuda_phase_peak_allocated_bytes": null,
+          "cuda_phase_peak_reserved_bytes": null,
+          "parameter_bytes": 460032.0,
+          "gradient_bytes": 0.0,
+          "optimizer_state_tensor_bytes_total": 0.0,
+          "owned_parameter_bytes": 460032.0
+        },
+        "before_optimizer_step": {
+          "rss_bytes": 640137898.6666666,
+          "max_rss_bytes": 640137898.6666666,
+          "cuda_allocated_bytes": null,
+          "cuda_reserved_bytes": null,
+          "cuda_phase_peak_allocated_bytes": null,
+          "cuda_phase_peak_reserved_bytes": null,
+          "parameter_bytes": 460032.0,
+          "gradient_bytes": 460032.0,
+          "optimizer_state_tensor_bytes_total": 0.0,
+          "owned_parameter_bytes": 460032.0
+        },
+        "after_optimizer_step": {
+          "rss_bytes": 640636245.3333334,
+          "max_rss_bytes": 640636245.3333334,
+          "cuda_allocated_bytes": null,
+          "cuda_reserved_bytes": null,
+          "cuda_phase_peak_allocated_bytes": null,
+          "cuda_phase_peak_reserved_bytes": null,
+          "parameter_bytes": 460032.0,
+          "gradient_bytes": 460032.0,
+          "optimizer_state_tensor_bytes_total": 920148.0,
+          "owned_parameter_bytes": 460032.0
+        }
+      }
+    },
+    "sharded": {
+      "repeat_count": 3,
+      "step_mean_ms": 11.6258306,
+      "step_repeat_std_ms": 0.5807703239492584,
+      "optimizer_step_mean_ms": 4.2983182,
+      "optimizer_step_repeat_std_ms": 0.2529463647997469,
+      "memory_rank_max_mean_by_phase": {
+        "after_model_initialization": {
+          "rss_bytes": 626414933.3333334,
+          "max_rss_bytes": 626414933.3333334,
+          "cuda_allocated_bytes": null,
+          "cuda_reserved_bytes": null,
+          "cuda_phase_peak_allocated_bytes": null,
+          "cuda_phase_peak_reserved_bytes": null,
+          "parameter_bytes": 460032.0,
+          "gradient_bytes": 0.0,
+          "optimizer_state_tensor_bytes_total": 0.0,
+          "owned_parameter_bytes": 246528.0
+        },
+        "before_optimizer_step": {
+          "rss_bytes": 638169088.0,
+          "max_rss_bytes": 638169088.0,
+          "cuda_allocated_bytes": null,
+          "cuda_reserved_bytes": null,
+          "cuda_phase_peak_allocated_bytes": null,
+          "cuda_phase_peak_reserved_bytes": null,
+          "parameter_bytes": 460032.0,
+          "gradient_bytes": 460032.0,
+          "optimizer_state_tensor_bytes_total": 0.0,
+          "owned_parameter_bytes": 246528.0
+        },
+        "after_optimizer_step": {
+          "rss_bytes": 638567765.3333334,
+          "max_rss_bytes": 638567765.3333334,
+          "cuda_allocated_bytes": null,
+          "cuda_reserved_bytes": null,
+          "cuda_phase_peak_allocated_bytes": null,
+          "cuda_phase_peak_reserved_bytes": null,
+          "parameter_bytes": 460032.0,
+          "gradient_bytes": 460032.0,
+          "optimizer_state_tensor_bytes_total": 493108.0,
+          "owned_parameter_bytes": 246528.0
+        }
+      }
+    },
+    "comparison": {
+      "sharded_to_baseline_step_ratio": 1.3689297650220074,
+      "sharded_step_overhead_percent": 36.892976502200746
+    }
+  },
+  "xl_reference_accounting": {
+    "model_config": {
+      "d_model": 2560,
+      "d_ff": 10240,
+      "num_layers": 32,
+      "num_heads": 32
+    },
+    "vocab_size": 10000,
+    "context_length": 512,
+    "world_size": 2,
+    "dtype": "torch.float32",
+    "parameter_tensors": 291,
+    "parameter_count": 3406809600,
+    "parameter_bytes_per_rank": 13627238400,
+    "gradient_bytes_per_rank": 13627238400,
+    "baseline_per_rank": {
+      "adamw_moment_bytes": 27254476800,
+      "adamw_step_scalar_bytes": 1164,
+      "persistent_parameter_gradient_moment_bytes": 54508953600
+    },
+    "sharded_ranks": [
+      {
+        "rank": 0,
+        "owned_parameter_tensors": 97,
+        "owned_parameter_bytes": 6813614080,
+        "adamw_moment_bytes": 13627228160,
+        "adamw_step_scalar_bytes": 388,
+        "persistent_parameter_gradient_moment_bytes": 40881704960
+      },
+      {
+        "rank": 1,
+        "owned_parameter_tensors": 194,
+        "owned_parameter_bytes": 6813624320,
+        "adamw_moment_bytes": 13627248640,
+        "adamw_step_scalar_bytes": 776,
+        "persistent_parameter_gradient_moment_bytes": 40881725440
+      }
+    ]
+  },
+  "suite_wall_seconds": 23.712301570922136
+}
