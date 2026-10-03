@@ -1,0 +1,260 @@
+{
+  "status": "passed",
+  "generated_at_utc": "2026-10-02T19:52:57.440088+00:00",
+  "command": [
+    "scripts/benchmark_pipeline_parallel.py",
+    "--backend",
+    "gloo",
+    "--world-size",
+    "2",
+    "--model-size",
+    "small",
+    "--d-model",
+    "64",
+    "--d-ff",
+    "128",
+    "--num-layers",
+    "4",
+    "--num-heads",
+    "4",
+    "--vocab-size",
+    "256",
+    "--global-batch-size",
+    "8",
+    "--context-length",
+    "32",
+    "--microbatches",
+    "1",
+    "2",
+    "4",
+    "8",
+    "--warmup-steps",
+    "3",
+    "--measurement-steps",
+    "10",
+    "--repeats",
+    "3",
+    "--num-threads",
+    "1",
+    "--output-dir",
+    "benchmark_results/pipeline_parallel/cpu_gloo_final2_20261003"
+  ],
+  "schedule": [
+    {
+      "repeat": 2,
+      "num_microbatches": 1
+    },
+    {
+      "repeat": 0,
+      "num_microbatches": 2
+    },
+    {
+      "repeat": 1,
+      "num_microbatches": 1
+    },
+    {
+      "repeat": 2,
+      "num_microbatches": 4
+    },
+    {
+      "repeat": 1,
+      "num_microbatches": 8
+    },
+    {
+      "repeat": 0,
+      "num_microbatches": 8
+    },
+    {
+      "repeat": 1,
+      "num_microbatches": 4
+    },
+    {
+      "repeat": 0,
+      "num_microbatches": 4
+    },
+    {
+      "repeat": 1,
+      "num_microbatches": 2
+    },
+    {
+      "repeat": 2,
+      "num_microbatches": 8
+    },
+    {
+      "repeat": 2,
+      "num_microbatches": 2
+    },
+    {
+      "repeat": 0,
+      "num_microbatches": 1
+    }
+  ],
+  "cases": [
+    {
+      "file": "repeat2_microbatches1.json",
+      "repeat": 2,
+      "num_microbatches": 1,
+      "status": "passed",
+      "case_wall_seconds": 4.030369304120541
+    },
+    {
+      "file": "repeat0_microbatches2.json",
+      "repeat": 0,
+      "num_microbatches": 2,
+      "status": "passed",
+      "case_wall_seconds": 3.9344503208994865
+    },
+    {
+      "file": "repeat1_microbatches1.json",
+      "repeat": 1,
+      "num_microbatches": 1,
+      "status": "passed",
+      "case_wall_seconds": 3.866987805813551
+    },
+    {
+      "file": "repeat2_microbatches4.json",
+      "repeat": 2,
+      "num_microbatches": 4,
+      "status": "passed",
+      "case_wall_seconds": 4.082141853868961
+    },
+    {
+      "file": "repeat1_microbatches8.json",
+      "repeat": 1,
+      "num_microbatches": 8,
+      "status": "passed",
+      "case_wall_seconds": 4.3386686109006405
+    },
+    {
+      "file": "repeat0_microbatches8.json",
+      "repeat": 0,
+      "num_microbatches": 8,
+      "status": "passed",
+      "case_wall_seconds": 4.419041816145182
+    },
+    {
+      "file": "repeat1_microbatches4.json",
+      "repeat": 1,
+      "num_microbatches": 4,
+      "status": "passed",
+      "case_wall_seconds": 4.155464127659798
+    },
+    {
+      "file": "repeat0_microbatches4.json",
+      "repeat": 0,
+      "num_microbatches": 4,
+      "status": "passed",
+      "case_wall_seconds": 4.148509059101343
+    },
+    {
+      "file": "repeat1_microbatches2.json",
+      "repeat": 1,
+      "num_microbatches": 2,
+      "status": "passed",
+      "case_wall_seconds": 3.9673979356884956
+    },
+    {
+      "file": "repeat2_microbatches8.json",
+      "repeat": 2,
+      "num_microbatches": 8,
+      "status": "passed",
+      "case_wall_seconds": 4.489542108029127
+    },
+    {
+      "file": "repeat2_microbatches2.json",
+      "repeat": 2,
+      "num_microbatches": 2,
+      "status": "passed",
+      "case_wall_seconds": 4.0091565027832985
+    },
+    {
+      "file": "repeat0_microbatches1.json",
+      "repeat": 0,
+      "num_microbatches": 1,
+      "status": "passed",
+      "case_wall_seconds": 3.9498833641409874
+    }
+  ],
+  "aggregate": {
+    "1": {
+      "repeat_count": 3,
+      "microbatch_size": 8,
+      "step_mean_ms": 21.412683,
+      "step_repeat_std_ms": 1.1753055240010084,
+      "tokens_per_second": 11955.531214841221,
+      "ideal_fill_drain_efficiency": 0.5,
+      "bidirectional_boundary_bytes_per_batch": 131072
+    },
+    "2": {
+      "repeat_count": 3,
+      "microbatch_size": 4,
+      "step_mean_ms": 24.090708333333335,
+      "step_repeat_std_ms": 0.44547964999714235,
+      "tokens_per_second": 10626.503648536693,
+      "ideal_fill_drain_efficiency": 0.6666666666666666,
+      "bidirectional_boundary_bytes_per_batch": 131072
+    },
+    "4": {
+      "repeat_count": 3,
+      "microbatch_size": 2,
+      "step_mean_ms": 32.55374116666667,
+      "step_repeat_std_ms": 0.605417208006273,
+      "tokens_per_second": 7863.91950127473,
+      "ideal_fill_drain_efficiency": 0.8,
+      "bidirectional_boundary_bytes_per_batch": 131072
+    },
+    "8": {
+      "repeat_count": 3,
+      "microbatch_size": 1,
+      "step_mean_ms": 56.38029063333334,
+      "step_repeat_std_ms": 4.733818052214676,
+      "tokens_per_second": 4540.593833843184,
+      "ideal_fill_drain_efficiency": 0.8888888888888888,
+      "bidirectional_boundary_bytes_per_batch": 131072
+    }
+  },
+  "xl_reference_accounting": {
+    "world_size": 2,
+    "model_config": {
+      "d_model": 2560,
+      "d_ff": 10240,
+      "num_layers": 32,
+      "num_heads": 32
+    },
+    "vocab_size": 10000,
+    "global_batch_size": 8,
+    "context_length": 512,
+    "num_microbatches": 8,
+    "microbatch_size": 1,
+    "dtype": "torch.float32",
+    "stages": [
+      {
+        "stage_index": 0,
+        "layer_start": 0,
+        "layer_end": 16,
+        "layer_count": 16,
+        "parameter_count": 1703403520,
+        "parameter_bytes": 6813614080,
+        "persistent_parameter_gradient_moment_bytes": 27254456320
+      },
+      {
+        "stage_index": 1,
+        "layer_start": 16,
+        "layer_end": 32,
+        "layer_count": 16,
+        "parameter_count": 1703406080,
+        "parameter_bytes": 6813624320,
+        "persistent_parameter_gradient_moment_bytes": 27254497280
+      }
+    ],
+    "total_parameter_bytes": 13627238400,
+    "max_stage_parameter_bytes": 6813624320,
+    "min_stage_parameter_bytes": 6813614080,
+    "parameter_imbalance_ratio": 1.000001502873494,
+    "forward_activation_bytes_per_boundary_per_batch": 41943040,
+    "backward_activation_gradient_bytes_per_boundary_per_batch": 41943040,
+    "bidirectional_boundary_bytes_per_batch": 83886080,
+    "ideal_fill_drain_efficiency": 0.8888888888888888
+  },
+  "suite_wall_seconds": 50.886551175266504
+}

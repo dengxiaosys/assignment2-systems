@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1320" height="800" viewBox="0 0 1320 800">
+  <rect width="1320" height="800" fill="#ffffff"/>
+  <style>
+    text { font-family: "DejaVu Sans", Arial, sans-serif; fill: #17212b; }
+    .title { font-size: 23px; font-weight: 700; }
+    .subtitle { font-size: 13px; fill: #52606d; }
+    .panel-title { font-size: 17px; font-weight: 700; }
+    .row-label { font-size: 13px; font-weight: 700; text-anchor: end; }
+    .tick { font-size: 11px; fill: #697886; text-anchor: middle; }
+    .cell { font-size: 12px; font-weight: 700; text-anchor: middle; dominant-baseline: middle; }
+    .note { font-size: 12px; fill: #52606d; }
+    .center-note { font-size: 12px; fill: #52606d; text-anchor: middle; }
+    .key { font-size: 14px; font-weight: 700; text-anchor: middle; }
+  </style>
+
+  <text x="42" y="35" class="title">Schedule order and optimizer-update timing are different concepts</text>
+  <text x="42" y="59" class="subtitle">Exact two-stage timelines for M=4. F/B labels carry the microbatch index; U is an optimizer update.</text>
+
+  <g transform="translate(42,78)">
+    <rect x="0" y="0" width="1236" height="205" rx="8" fill="#f7fafc" stroke="#9ab4c6"/>
+    <text x="20" y="29" class="panel-title">A. GPipe fill-drain: all forward, then all backward</text>
+    <text x="102" y="82" class="row-label">Stage 0</text>
+    <text x="102" y="137" class="row-label">Stage 1</text>
+
+    <g>
+      <text x="153" y="51" class="tick">t0</text><text x="241" y="51" class="tick">t1</text>
+      <text x="329" y="51" class="tick">t2</text><text x="417" y="51" class="tick">t3</text>
+      <text x="505" y="51" class="tick">t4</text><text x="593" y="51" class="tick">t5</text>
+      <text x="681" y="51" class="tick">t6</text><text x="769" y="51" class="tick">t7</text>
+      <text x="857" y="51" class="tick">t8</text><text x="945" y="51" class="tick">t9</text>
+      <text x="1033" y="51" class="tick">t10</text>
+    </g>
+
+    <g stroke-width="1.1">
+      <rect x="114" y="60" width="78" height="42" rx="4" fill="#cde7f5" stroke="#2778a5"/><text x="153" y="81" class="cell">F0</text>
+      <rect x="202" y="60" width="78" height="42" rx="4" fill="#cde7f5" stroke="#2778a5"/><text x="241" y="81" class="cell">F1</text>
+      <rect x="290" y="60" width="78" height="42" rx="4" fill="#cde7f5" stroke="#2778a5"/><text x="329" y="81" class="cell">F2</text>
+      <rect x="378" y="60" width="78" height="42" rx="4" fill="#cde7f5" stroke="#2778a5"/><text x="417" y="81" class="cell">F3</text>
+      <rect x="466" y="60" width="78" height="42" rx="4" fill="#edf0f2" stroke="#c7ced3"/><text x="505" y="81" class="cell">idle</text>
+      <rect x="554" y="60" width="78" height="42" rx="4" fill="#edf0f2" stroke="#c7ced3"/><text x="593" y="81" class="cell">idle</text>
+      <rect x="642" y="60" width="78" height="42" rx="4" fill="#f5d2aa" stroke="#bc681f"/><text x="681" y="81" class="cell">B3</text>
+      <rect x="730" y="60" width="78" height="42" rx="4" fill="#f5d2aa" stroke="#bc681f"/><text x="769" y="81" class="cell">B2</text>
+      <rect x="818" y="60" width="78" height="42" rx="4" fill="#f5d2aa" stroke="#bc681f"/><text x="857" y="81" class="cell">B1</text>
+      <rect x="906" y="60" width="78" height="42" rx="4" fill="#f5d2aa" stroke="#bc681f"/><text x="945" y="81" class="cell">B0</text>
+      <rect x="994" y="60" width="78" height="42" rx="4" fill="#ead5e0" stroke="#a6597b"/><text x="1033" y="81" class="cell">U</text>
+
+      <rect x="114" y="115" width="78" height="42" rx="4" fill="#edf0f2" stroke="#c7ced3"/><text x="153" y="136" class="cell">idle</text>
+      <rect x="202" y="115" width="78" height="42" rx="4" fill="#cde7f5" stroke="#2778a5"/><text x="241" y="136" class="cell">F0</text>
+      <rect x="290" y="115" width="78" height="42" rx="4" fill="#cde7f5" stroke="#2778a5"/><text x="329" y="136" class="cell">F1</text>
+      <rect x="378" y="115" width="78" height="42" rx="4" fill="#cde7f5" stroke="#2778a5"/><text x="417" y="136" class="cell">F2</text>
+      <rect x="466" y="115" width="78" height="42" rx="4" fill="#cde7f5" stroke="#2778a5"/><text x="505" y="136" class="cell">F3</text>
+      <rect x="554" y="115" width="78" height="42" rx="4" fill="#f5d2aa" stroke="#bc681f"/><text x="593" y="136" class="cell">B3</text>
+      <rect x="642" y="115" width="78" height="42" rx="4" fill="#f5d2aa" stroke="#bc681f"/><text x="681" y="136" class="cell">B2</text>
+      <rect x="730" y="115" width="78" height="42" rx="4" fill="#f5d2aa" stroke="#bc681f"/><text x="769" y="136" class="cell">B1</text>
+      <rect x="818" y="115" width="78" height="42" rx="4" fill="#f5d2aa" stroke="#bc681f"/><text x="857" y="136" class="cell">B0</text>
+      <rect x="906" y="115" width="78" height="42" rx="4" fill="#edf0f2" stroke="#c7ced3"/><text x="945" y="136" class="cell">idle</text>
+      <rect x="994" y="115" width="78" height="42" rx="4" fill="#ead5e0" stroke="#a6597b"/><text x="1033" y="136" class="cell">U</text>
+    </g>
+    <rect x="1092" y="60" width="118" height="97" rx="5" fill="#e3f1e9" stroke="#5a9a75"/>
+    <text x="1151" y="88" class="cell">theta^0 for</text>
+    <text x="1151" y="108" class="cell">every F/B</text>
+    <text x="1151" y="136" class="center-note">update once</text>
+    <text x="618" y="185" class="center-note">The idle cells are fill/drain bubbles; both stages update only at t10.</text>
+  </g>
+
+  <g transform="translate(42,300)">
+    <rect x="0" y="0" width="1236" height="205" rx="8" fill="#f5faf7" stroke="#7fb39e"/>
+    <text x="20" y="29" class="panel-title">B. Synchronous 1F1B: forward and backward interleave, update still waits</text>
+    <text x="102" y="82" class="row-label">Stage 0</text>
+    <text x="102" y="137" class="row-label">Stage 1</text>
+
+    <g>
+      <text x="153" y="51" class="tick">t0</text><text x="241" y="51" class="tick">t1</text>
+      <text x="329" y="51" class="tick">t2</text><text x="417" y="51" class="tick">t3</text>
+      <text x="505" y="51" class="tick">t4</text><text x="593" y="51" class="tick">t5</text>
+      <text x="681" y="51" class="tick">t6</text><text x="769" y="51" class="tick">t7</text>
+      <text x="857" y="51" class="tick">t8</text><text x="945" y="51" class="tick">t9</text>
+      <text x="1033" y="51" class="tick">t10</text>
+    </g>
+
+    <g stroke-width="1.1">
+      <rect x="114" y="60" width="78" height="42" rx="4" fill="#cde7f5" stroke="#2778a5"/><text x="153" y="81" class="cell">F0</text>
+      <rect x="202" y="60" width="78" height="42" rx="4" fill="#cde7f5" stroke="#2778a5"/><text x="241" y="81" class="cell">F1</text>
+      <rect x="290" y="60" width="78" height="42" rx="4" fill="#cde7f5" stroke="#2778a5"/><text x="329" y="81" class="cell">F2</text>
+      <rect x="378" y="60" width="78" height="42" rx="4" fill="#f5d2aa" stroke="#bc681f"/><text x="417" y="81" class="cell">B0</text>
+      <rect x="466" y="60" width="78" height="42" rx="4" fill="#cde7f5" stroke="#2778a5"/><text x="505" y="81" class="cell">F3</text>
+      <rect x="554" y="60" width="78" height="42" rx="4" fill="#f5d2aa" stroke="#bc681f"/><text x="593" y="81" class="cell">B1</text>
+      <rect x="642" y="60" width="78" height="42" rx="4" fill="#edf0f2" stroke="#c7ced3"/><text x="681" y="81" class="cell">idle</text>
+      <rect x="730" y="60" width="78" height="42" rx="4" fill="#f5d2aa" stroke="#bc681f"/><text x="769" y="81" class="cell">B2</text>
+      <rect x="818" y="60" width="78" height="42" rx="4" fill="#edf0f2" stroke="#c7ced3"/><text x="857" y="81" class="cell">idle</text>
+      <rect x="906" y="60" width="78" height="42" rx="4" fill="#f5d2aa" stroke="#bc681f"/><text x="945" y="81" class="cell">B3</text>
+      <rect x="994" y="60" width="78" height="42" rx="4" fill="#ead5e0" stroke="#a6597b"/><text x="1033" y="81" class="cell">U</text>
+
+      <rect x="114" y="115" width="78" height="42" rx="4" fill="#edf0f2" stroke="#c7ced3"/><text x="153" y="136" class="cell">idle</text>
+      <rect x="202" y="115" width="78" height="42" rx="4" fill="#cde7f5" stroke="#2778a5"/><text x="241" y="136" class="cell">F0</text>
+      <rect x="290" y="115" width="78" height="42" rx="4" fill="#f5d2aa" stroke="#bc681f"/><text x="329" y="136" class="cell">B0</text>
+      <rect x="378" y="115" width="78" height="42" rx="4" fill="#cde7f5" stroke="#2778a5"/><text x="417" y="136" class="cell">F1</text>
+      <rect x="466" y="115" width="78" height="42" rx="4" fill="#f5d2aa" stroke="#bc681f"/><text x="505" y="136" class="cell">B1</text>
+      <rect x="554" y="115" width="78" height="42" rx="4" fill="#cde7f5" stroke="#2778a5"/><text x="593" y="136" class="cell">F2</text>
+      <rect x="642" y="115" width="78" height="42" rx="4" fill="#f5d2aa" stroke="#bc681f"/><text x="681" y="136" class="cell">B2</text>
+      <rect x="730" y="115" width="78" height="42" rx="4" fill="#cde7f5" stroke="#2778a5"/><text x="769" y="136" class="cell">F3</text>
+      <rect x="818" y="115" width="78" height="42" rx="4" fill="#f5d2aa" stroke="#bc681f"/><text x="857" y="136" class="cell">B3</text>
+      <rect x="906" y="115" width="78" height="42" rx="4" fill="#edf0f2" stroke="#c7ced3"/><text x="945" y="136" class="cell">idle</text>
+      <rect x="994" y="115" width="78" height="42" rx="4" fill="#ead5e0" stroke="#a6597b"/><text x="1033" y="136" class="cell">U</text>
+    </g>
+    <rect x="1092" y="60" width="118" height="97" rx="5" fill="#e3f1e9" stroke="#5a9a75"/>
+    <text x="1151" y="88" class="cell">theta^0 for</text>
+    <text x="1151" y="108" class="cell">every F/B</text>
+    <text x="1151" y="136" class="center-note">update once</text>
+    <text x="618" y="185" class="center-note">After warmup, the oldest ready graph runs backward: B0 intentionally precedes B3.</text>
+  </g>
+
+  <g transform="translate(42,522)">
+    <rect x="0" y="0" width="1236" height="238" rx="8" fill="#fcf6f1" stroke="#cc9567"/>
+    <text x="20" y="29" class="panel-title">C. PipeDream-style asynchronous update: versions can differ across stages</text>
+    <text x="102" y="82" class="row-label">Stage 0</text>
+    <text x="102" y="137" class="row-label">Stage 1</text>
+
+    <g stroke-width="1.1">
+      <rect x="114" y="60" width="96" height="42" rx="4" fill="#cde7f5" stroke="#2778a5"/><text x="162" y="81" class="cell">F0 [theta0]</text>
+      <rect x="216" y="60" width="96" height="42" rx="4" fill="#cde7f5" stroke="#2778a5"/><text x="264" y="81" class="cell">F1 [theta0]</text>
+      <rect x="318" y="60" width="96" height="42" rx="4" fill="#cde7f5" stroke="#2778a5"/><text x="366" y="81" class="cell">F2 [theta0]</text>
+      <rect x="420" y="60" width="96" height="42" rx="4" fill="#f5d2aa" stroke="#bc681f"/><text x="468" y="81" class="cell">B0 [theta0]</text>
+      <rect x="522" y="60" width="96" height="42" rx="4" fill="#ead5e0" stroke="#a6597b"/><text x="570" y="81" class="cell">U -> theta1</text>
+      <rect x="624" y="60" width="96" height="42" rx="4" fill="#cde7f5" stroke="#2778a5"/><text x="672" y="81" class="cell">F3 [theta1]</text>
+      <rect x="726" y="60" width="96" height="42" rx="4" fill="#f5d2aa" stroke="#bc681f"/><text x="774" y="81" class="cell">B1 [theta0*]</text>
+
+      <rect x="114" y="115" width="96" height="42" rx="4" fill="#edf0f2" stroke="#c7ced3"/><text x="162" y="136" class="cell">idle</text>
+      <rect x="216" y="115" width="96" height="42" rx="4" fill="#cde7f5" stroke="#2778a5"/><text x="264" y="136" class="cell">F0 [theta0]</text>
+      <rect x="318" y="115" width="96" height="42" rx="4" fill="#f5d2aa" stroke="#bc681f"/><text x="366" y="136" class="cell">B0 [theta0]</text>
+      <rect x="420" y="115" width="96" height="42" rx="4" fill="#ead5e0" stroke="#a6597b"/><text x="468" y="136" class="cell">U -> theta1</text>
+      <rect x="522" y="115" width="96" height="42" rx="4" fill="#cde7f5" stroke="#2778a5"/><text x="570" y="136" class="cell">F1 [theta1]</text>
+      <rect x="624" y="115" width="96" height="42" rx="4" fill="#f5d2aa" stroke="#bc681f"/><text x="672" y="136" class="cell">B1 [theta1]</text>
+      <rect x="726" y="115" width="96" height="42" rx="4" fill="#ead5e0" stroke="#a6597b"/><text x="774" y="136" class="cell">U -> theta2</text>
+    </g>
+
+    <rect x="852" y="60" width="342" height="97" rx="6" fill="#fffdfb" stroke="#cc9567"/>
+    <text x="1023" y="84" class="center-note">For microbatch 1:</text>
+    <text x="1023" y="106" class="cell">Stage 0 F1 uses theta0</text>
+    <text x="1023" y="128" class="cell">Stage 1 F1 uses theta1</text>
+    <text x="1023" y="149" class="center-note">cross-stage version mismatch</text>
+
+    <text x="618" y="187" class="center-note">* Stage 0 backward for microbatch 1 reuses its stashed theta0, even though the live weight is already theta1.</text>
+    <rect x="114" y="202" width="1080" height="25" rx="4" fill="#f1e2d5"/>
+    <text x="654" y="219" class="key">1F1B determines F/B order; update placement determines weight staleness.</text>
+  </g>
+</svg>

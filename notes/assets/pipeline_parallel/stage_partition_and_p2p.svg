@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="470" viewBox="0 0 1120 470">
+  <defs>
+    <marker id="forward-arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L10,3 L0,6 Z" fill="#147ca8"/>
+    </marker>
+    <marker id="backward-arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L10,3 L0,6 Z" fill="#c45c18"/>
+    </marker>
+  </defs>
+  <rect width="1120" height="470" fill="#ffffff"/>
+  <style>
+    text { font-family: "DejaVu Sans", Arial, sans-serif; fill: #17212b; }
+    .title { font-size: 22px; font-weight: 700; }
+    .subtitle { font-size: 13px; fill: #52606d; }
+    .stage-title { font-size: 18px; font-weight: 700; text-anchor: middle; }
+    .module { font-size: 14px; text-anchor: middle; }
+    .rank { font-size: 12px; fill: #52606d; text-anchor: middle; }
+    .arrow-label { font-size: 13px; font-weight: 700; text-anchor: middle; }
+    .note { font-size: 12px; fill: #52606d; text-anchor: middle; }
+  </style>
+
+  <text x="45" y="37" class="title">Contiguous Transformer partition and boundary communication</text>
+  <text x="45" y="61" class="subtitle">Parameters remain local to their owning stage; only activations and their gradients cross adjacent boundaries.</text>
+
+  <rect x="55" y="120" width="285" height="245" rx="8" fill="#edf7f5" stroke="#168c78" stroke-width="2"/>
+  <rect x="418" y="120" width="285" height="245" rx="8" fill="#f2f6fb" stroke="#3976a8" stroke-width="2"/>
+  <rect x="780" y="120" width="285" height="245" rx="8" fill="#fbf3ea" stroke="#c87834" stroke-width="2"/>
+
+  <text x="198" y="151" class="stage-title">Stage 0</text>
+  <text x="198" y="173" class="rank">rank 0</text>
+  <rect x="95" y="198" width="205" height="42" rx="5" fill="#caebe4" stroke="#168c78"/>
+  <text x="198" y="224" class="module">Token embedding</text>
+  <rect x="95" y="252" width="205" height="72" rx="5" fill="#d9f0eb" stroke="#168c78"/>
+  <text x="198" y="280" class="module">Transformer blocks</text>
+  <text x="198" y="303" class="note">layers [0, a)</text>
+  <text x="198" y="347" class="note">owns theta_0 only</text>
+
+  <text x="560" y="151" class="stage-title">Stage 1</text>
+  <text x="560" y="173" class="rank">rank 1</text>
+  <rect x="458" y="225" width="205" height="86" rx="5" fill="#dce9f5" stroke="#3976a8"/>
+  <text x="560" y="261" class="module">Transformer blocks</text>
+  <text x="560" y="286" class="note">layers [a, b)</text>
+  <text x="560" y="347" class="note">owns theta_1 only</text>
+
+  <text x="922" y="151" class="stage-title">Stage 2</text>
+  <text x="922" y="173" class="rank">rank 2</text>
+  <rect x="820" y="198" width="205" height="72" rx="5" fill="#f6dfc8" stroke="#c87834"/>
+  <text x="922" y="226" class="module">Transformer blocks</text>
+  <text x="922" y="249" class="note">layers [b, L)</text>
+  <rect x="820" y="282" width="205" height="42" rx="5" fill="#f2d3b4" stroke="#c87834"/>
+  <text x="922" y="308" class="module">Final norm + LM head</text>
+  <text x="922" y="347" class="note">owns theta_2 only</text>
+
+  <line x1="340" y1="205" x2="412" y2="205" stroke="#147ca8" stroke-width="3" marker-end="url(#forward-arrow)"/>
+  <line x1="703" y1="205" x2="774" y2="205" stroke="#147ca8" stroke-width="3" marker-end="url(#forward-arrow)"/>
+  <text x="379" y="188" class="arrow-label" fill="#147ca8">h_m^(0)</text>
+  <text x="740" y="188" class="arrow-label" fill="#147ca8">h_m^(1)</text>
+
+  <line x1="774" y1="300" x2="709" y2="300" stroke="#c45c18" stroke-width="3" marker-end="url(#backward-arrow)"/>
+  <line x1="412" y1="300" x2="346" y2="300" stroke="#c45c18" stroke-width="3" marker-end="url(#backward-arrow)"/>
+  <text x="740" y="330" class="arrow-label" fill="#c45c18">dL / dh_m^(1)</text>
+  <text x="379" y="330" class="arrow-label" fill="#c45c18">dL / dh_m^(0)</text>
+
+  <rect x="55" y="397" width="1010" height="43" rx="6" fill="#f5f6f7" stroke="#c8cdd2"/>
+  <text x="560" y="415" class="note">No parameter all-gather across stages. Each rank computes gradients only for its local theta_s.</text>
+  <text x="560" y="432" class="note">A full optimizer step occurs only after every microbatch has completed backward.</text>
+</svg>

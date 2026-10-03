@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="500" viewBox="0 0 1080 500">
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L10,3 L0,6 Z" fill="#1877a8"/>
+    </marker>
+    <marker id="arrow-orange" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L10,3 L0,6 Z" fill="#c65f18"/>
+    </marker>
+  </defs>
+  <rect width="1080" height="500" fill="#ffffff"/>
+  <style>
+    text { font-family: "DejaVu Sans", Arial, sans-serif; fill: #17212b; }
+    .title { font-size: 22px; font-weight: 700; }
+    .subtitle { font-size: 13px; fill: #52606d; }
+    .stage-title { font-size: 18px; font-weight: 700; text-anchor: middle; }
+    .box-title { font-size: 15px; font-weight: 700; text-anchor: middle; }
+    .small { font-size: 12px; fill: #52606d; text-anchor: middle; }
+    .arrow-label { font-size: 14px; font-weight: 700; text-anchor: middle; }
+  </style>
+
+  <text x="45" y="36" class="title">Explicit autograd seam at a process boundary</text>
+  <text x="45" y="60" class="subtitle">Tensor data crosses the process boundary; the autograd graph does not. The backward P2P message reconnects the chain rule.</text>
+
+  <rect x="50" y="92" width="420" height="340" rx="8" fill="#f4f8fb" stroke="#7ba7c4" stroke-width="2"/>
+  <rect x="610" y="92" width="420" height="340" rx="8" fill="#fbf7f2" stroke="#d49a65" stroke-width="2"/>
+  <text x="260" y="124" class="stage-title">Stage s / rank s</text>
+  <text x="820" y="124" class="stage-title">Stage s+1 / rank s+1</text>
+
+  <rect x="105" y="172" width="130" height="72" rx="6" fill="#d8ecf6" stroke="#1877a8"/>
+  <text x="170" y="200" class="box-title">Local graph</text>
+  <text x="170" y="221" class="small">F_s(theta_s)</text>
+
+  <rect x="300" y="172" width="120" height="72" rx="6" fill="#c3e2ef" stroke="#1877a8"/>
+  <text x="360" y="199" class="box-title">h_m^(s)</text>
+  <text x="360" y="220" class="small">graph attached</text>
+  <line x1="235" y1="208" x2="294" y2="208" stroke="#1877a8" stroke-width="3" marker-end="url(#arrow-blue)"/>
+
+  <rect x="665" y="172" width="120" height="72" rx="6" fill="#f6dfc6" stroke="#c65f18"/>
+  <text x="725" y="199" class="box-title">h_hat_m^(s)</text>
+  <text x="725" y="220" class="small">new leaf tensor</text>
+
+  <rect x="850" y="172" width="130" height="72" rx="6" fill="#f8d2aa" stroke="#c65f18"/>
+  <text x="915" y="200" class="box-title">Local graph</text>
+  <text x="915" y="221" class="small">F_(s+1)(theta)</text>
+  <line x1="791" y1="208" x2="844" y2="208" stroke="#1877a8" stroke-width="3" marker-end="url(#arrow-blue)"/>
+
+  <line x1="426" y1="190" x2="659" y2="190" stroke="#1877a8" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <text x="542" y="84" class="arrow-label" fill="#1877a8">forward: detach + send data</text>
+
+  <line x1="659" y1="318" x2="426" y2="318" stroke="#c65f18" stroke-width="3" marker-end="url(#arrow-orange)"/>
+  <text x="542" y="468" class="arrow-label" fill="#c65f18">backward: send dL / dh_m^(s)</text>
+
+  <rect x="105" y="286" width="315" height="94" rx="6" fill="#ffffff" stroke="#9eb8ca"/>
+  <text x="262" y="314" class="box-title">output.backward(received_gradient)</text>
+  <text x="262" y="338" class="small">continues chain rule inside stage s</text>
+  <text x="262" y="360" class="small">produces dL / d theta_s and earlier activation grad</text>
+
+  <rect x="665" y="286" width="315" height="94" rx="6" fill="#ffffff" stroke="#d4ac85"/>
+  <text x="822" y="314" class="box-title">local backward</text>
+  <text x="822" y="338" class="small">produces dL / d theta_(s+1)</text>
+  <text x="822" y="360" class="small">and h_hat_m^(s).grad</text>
+
+  <rect x="490" y="108" width="100" height="286" rx="8" fill="#eef1f4" stroke="#a7b0b8" stroke-dasharray="7 5"/>
+  <text x="540" y="250" class="box-title" transform="rotate(-90 540 250)">PROCESS BOUNDARY</text>
+  <text x="540" y="414" class="subtitle" text-anchor="middle">No cross-process autograd edge</text>
+</svg>

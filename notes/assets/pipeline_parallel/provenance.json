@@ -1,0 +1,51 @@
+{
+  "generated_at_utc": "2026-10-02T19:52:57.440088+00:00",
+  "source_directory": "benchmark_results/pipeline_parallel/cpu_gloo_final2_20261003",
+  "source_sha256": {
+    "cs336_systems/pipeline_parallel.py": "7c5653de57dc6127d88893f6abcf9b89616759129af4884ef39a02c279632835",
+    "cs336_systems/pipeline_parallel_accounting.py": "d1e2e10cef6db7280f78a4121b2ef88a1933d347a3f9854ef5242c7e02e03e2c",
+    "scripts/benchmark_pipeline_parallel.py": "e33dfaa74532a8640c615bf17ba662059b4d2bb614d964f2e5b1c97a8dd3ab1c",
+    "scripts/plot_pipeline_parallel.py": "af4bac49b2eb2ae2ff8fe0e577ba7f26d02f109d13b8f729d13e2a6bfcfa06b8",
+    "scripts/train_pipeline_parallel.py": "2ce51cc5558997b3af671376e7e3b2723d19c46393b66e36d246a0d2bb15bc98",
+    "tests/test_pipeline_parallel.py": "131e7cd8d8ad77aae3009dd5a93221b19d953addc3bd9303a2feb019331ec5c1",
+    "tests/test_pipeline_parallel_accounting.py": "885b6f24ef7cac049c64a2a7ec6c7e788ee3deb8408e7e405c6c54e2c8b78ceb",
+    "notes/assets/pipeline_parallel/cpu_gloo_summary.json": "e5d1da492f0df831175456f3a88677de8c5778428814b3e4021d6ece78a2ea8f",
+    "notes/assets/pipeline_parallel/stage_partition_and_p2p.svg": "b4ef66a3049dd413c6c3a48b3a9dd800a87a4eed0aff53bba0471590b107329e",
+    "notes/assets/pipeline_parallel/gpipe_figure2.png": "5d67c395737293bf19360b86010b3abae942b18095388b7e2e3300039c02f9f5",
+    "notes/assets/pipeline_parallel/fill_drain_schedule.svg": "a4063d00f53ec0af7b55995df8a20b35b0912922c42e7d3e3adc802a8c14925b",
+    "notes/assets/pipeline_parallel/autograd_seam.svg": "345efe16975de87b0c774593933ec953adb9bfbdc55ec9b1dd66a36a97830418",
+    "notes/assets/pipeline_parallel/schedule_update_semantics.svg": "5ad02fcebd5d458b30fa15d66ad6c8befa01e941ca8c05e0fc2b4d98cefff1a4",
+    "notes/assets/pipeline_parallel/microbatch_scaling.svg": "7e3a8e6516c477bd29af7b93ccf0088311991c04edcca4ab84d7d0ac939f2102"
+  },
+  "environment": {
+    "cpu": "Intel(R) Xeon(R) Platinum 8336C CPU @ 2.30GHz",
+    "cpu_count": 56,
+    "python_version": "3.13.12",
+    "torch_version": "2.11.0+cu130",
+    "cuda_available": false,
+    "cuda_device_count": 0,
+    "backend": "gloo",
+    "world_size": 2,
+    "threads_per_worker": 1
+  },
+  "figure_extraction": {
+    "source": "notes/references/distributed_training/gpipe_easy_scaling_with_micro_batch_pipeline_parallelism.pdf",
+    "source_sha256": "697f257e85667829053707594800447f3a75482226ddb6eb24374905c5af6d44",
+    "source_page": 3,
+    "renderer": "Ghostscript 9.53.3",
+    "render_dpi": 180,
+    "crop_box_pixels": [235, 155, 1295, 880],
+    "output": "notes/assets/pipeline_parallel/gpipe_figure2.png"
+  },
+  "measurement_semantics": {
+    "schedule": "synchronous GPipe fill-drain",
+    "timing": "per-step maximum across ranks; mean per repeat; mean and population standard deviation across three isolated repeats",
+    "communication": "one forward activation send and one backward activation-gradient send per stage boundary and microbatch",
+    "cuda": "not measured because no CUDA devices were visible"
+  },
+  "nccl_fail_fast": {
+    "command": "CUDA_VISIBLE_DEVICES='' uv run python scripts/benchmark_pipeline_parallel.py --backend nccl --world-size 2 --microbatches 1 --repeats 1 --measurement-steps 1 --output-dir /tmp/pipeline_parallel_nccl_unavailable",
+    "exit_status": 1,
+    "error": "RuntimeError: NCCL requires 2 distinct visible CUDA devices"
+  }
+}
