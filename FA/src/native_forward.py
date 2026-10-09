@@ -2,24 +2,11 @@
 
 import torch
 
-
-def _validate_inputs(q: torch.Tensor, k: torch.Tensor, v: torch.Tensor) -> None:
-    if any(tensor.ndim != 2 for tensor in (q, k, v)):
-        raise ValueError("Q/K/V must each be a 2D tensor of shape (S, d)")
-    if q.shape != k.shape or q.shape != v.shape:
-        raise ValueError("Q/K/V must have the same shape (S, d)")
-    if min(q.shape) <= 0:
-        raise ValueError("S and d must be positive")
-    if q.device != k.device or k.device != v.device:
-        raise ValueError("Q/K/V must be on the same device")
-    if q.dtype != k.dtype or k.dtype != v.dtype:
-        raise ValueError("Q/K/V must have the same dtype")
-    if q.dtype != torch.float32:
-        raise TypeError("Q/K/V must use float32")
+from .input_validation import validate_attention_inputs
 
 
 @torch.no_grad()
-def attention_forward(
+def native_attention_forward(
     q: torch.Tensor,
     k: torch.Tensor,
     v: torch.Tensor,
@@ -34,7 +21,7 @@ def attention_forward(
     Only forward is implemented; autograd is disabled. Inputs and scaled
     dot products must be finite. Run outside mixed-precision autocast.
     """
-    _validate_inputs(q, k, v)
+    validate_attention_inputs(q, k, v)
     seq_len, d = q.shape
 
     # 1. Materialize the entire score matrix: (S, S).

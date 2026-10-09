@@ -1,4 +1,4 @@
-"""Backend contract tests; --device cuda additionally checks real fused outputs."""
+"""Memory-efficient forward tests; --device cuda checks real fused outputs."""
 
 import argparse
 import unittest
@@ -8,15 +8,17 @@ from unittest.mock import patch
 import torch
 from torch.nn.attention import SDPBackend, sdpa_kernel
 
-from src.backends import get_attention_kernel, validate_backend
-from src.forward import attention_forward
-from src.verification import verify_against_cpu_fp64
+from src.memory_efficient_forward import (
+    memory_efficient_attention_forward,
+    validate_memory_efficient_support,
+)
+from src.numerical_verification import verify_against_cpu_fp64
 
 
 DEVICE = torch.device("cpu")
 
 
-def enabled_backends():
+def enabled_sdpa_backends():
     return (
         torch.backends.cuda.flash_sdp_enabled(),
         torch.backends.cuda.mem_efficient_sdp_enabled(),
@@ -25,24 +27,13 @@ def enabled_backends():
     )
 
 
-class BackendContractTests(unittest.TestCase):
-    def test_native_selection_and_invalid_name(self):
-        self.assertIs(get_attention_kernel("native"), attention_forward)
-        q = torch.randn(7, 16)
-        validate_backend("native", q, q, q)
-        for name in ("auto", "flash"):
-            with self.subTest(implementation=name):
-                with self.assertRaisesRegex(ValueError, "Unknown implementation"):
-                    get_attention_kernel(name)
-                with self.assertRaisesRegex(ValueError, "Unknown implementation"):
-                    validate_backend(name, q, q, q)
-
+class MemoryEfficientForwardContractTests(unittest.TestCase):
     def test_efficient_rejects_cpu(self):
         q = torch.randn(7, 16)
         with self.assertRaisesRegex(RuntimeError, "requires CUDA"):
-            validate_backend("efficient", q, q, q)
+            validate_memory_efficient_support(q, q, q)
         with self.assertRaisesRegex(RuntimeError, "requires CUDA"):
-            get_attention_kernel("efficient")(q, q, q)
+            memory_efficient_attention_forward(q, q, q)
 
     def test_forced_backend_views_and_state_restoration(self):
         # Mock only the CUDA boundary and operator: verifies dispatch, not GPU math.
@@ -54,7 +45,7 @@ class BackendContractTests(unittest.TestCase):
         for fail in (False, True):
             with self.subTest(failure=fail):
                 def fake_sdpa(q4, k4, v4, *, dropout_p, is_causal):
-                    self.assertEqual(enabled_backends(), (False, True, False, False))
+                    self.assertEqual(enabled_sdpa_backends(), (False, True, False, False))
                     self.assertFalse(torch.is_grad_enabled())
                     self.assertEqual(dropout_p, 0.0)
                     self.assertTrue(is_causal)
@@ -67,37 +58,48 @@ class BackendContractTests(unittest.TestCase):
                     return q4 + k4 + v4
 
                 with sdpa_kernel(all_backends):
-                    before = enabled_backends()
+                    before = enabled_sdpa_backends()
                     with (
-                        patch("src.backends._require_cuda"),
-                        patch("src.backends.F.scaled_dot_product_attention", side_effect=fake_sdpa) as sdpa,
+                        patch("src.memory_efficient_forward._require_cuda"),
+                        patch(
+                            "src.memory_efficient_forward.F.scaled_dot_product_attention",
+                            side_effect=fake_sdpa,
+                        ) as sdpa,
                     ):
-                        kernel = get_attention_kernel("efficient")
                         if fail:
                             with self.assertRaisesRegex(RuntimeError, "unsupported kernel"):
-                                kernel(q, k, v, is_causal=True)
+                                memory_efficient_attention_forward(
+                                    q,
+                                    k,
+                                    v,
+                                    is_causal=True,
+                                )
                         else:
-                            output = kernel(q, k, v, is_causal=True)
+                            output = memory_efficient_attention_forward(
+                                q,
+                                k,
+                                v,
+                                is_causal=True,
+                            )
                             self.assertEqual(output.shape, q.shape)
                             self.assertEqual(output.dtype, torch.float32)
                             self.assertFalse(output.requires_grad)
                         sdpa.assert_called_once()
-                    self.assertEqual(enabled_backends(), before)
+                    self.assertEqual(enabled_sdpa_backends(), before)
 
 
-class CudaNumericalTests(unittest.TestCase):
+class MemoryEfficientCudaNumericalTests(unittest.TestCase):
     def setUp(self):
         if DEVICE.type != "cuda":
             self.skipTest("real GPU numerical validation requires --device cuda")
         torch.manual_seed(0)
 
-    def test_efficient(self):
-        kernel = get_attention_kernel("efficient")
+    def test_matches_cpu_fp64_reference(self):
         probe = torch.randn(65, 64, device=DEVICE, dtype=torch.float32)
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                validate_backend("efficient", probe, probe, probe)
+                validate_memory_efficient_support(probe, probe, probe)
         except RuntimeError as error:
             self.skipTest(str(error))
         for seq_len in (7, 65, 257):
@@ -108,13 +110,19 @@ class CudaNumericalTests(unittest.TestCase):
                         for _ in range(3)
                     ]
                     copies = [tensor.detach().clone() for tensor in inputs]
-                    validate_backend("efficient", *inputs, is_causal=causal)
-                    verify_against_cpu_fp64(
-                        kernel,
+                    validate_memory_efficient_support(
                         *inputs,
                         is_causal=causal,
                     )
-                    output = kernel(*inputs, is_causal=causal)
+                    verify_against_cpu_fp64(
+                        memory_efficient_attention_forward,
+                        *inputs,
+                        is_causal=causal,
+                    )
+                    output = memory_efficient_attention_forward(
+                        *inputs,
+                        is_causal=causal,
+                    )
                     self.assertEqual(output.shape, inputs[0].shape)
                     self.assertEqual(output.dtype, torch.float32)
                     self.assertEqual(output.device, inputs[0].device)

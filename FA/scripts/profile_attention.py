@@ -1,7 +1,7 @@
 """Capture exactly one FP32 (S, d) forward call under Nsight Systems or nvprof.
 
 Use nsys --capture-range=cudaProfilerApi or nvprof --profile-from-start off.
-This entry point emits NVTX operator ranges; use scripts.benchmark for latency.
+This entry point emits NVTX operator ranges; use scripts.benchmark_attention for latency.
 """
 
 import argparse
@@ -11,13 +11,17 @@ import sys
 import torch
 import torch.cuda.profiler
 
-from src.backends import BACKEND_NAMES, get_attention_kernel, validate_backend
+from src.forward_registry import (
+    IMPLEMENTATION_BACKENDS,
+    get_attention_forward,
+    validate_implementation,
+)
 
 
 def parse_args() -> argparse.Namespace:
     """Parse command-line options and validate their values."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--impl", choices=tuple(BACKEND_NAMES), default="native")
+    parser.add_argument("--impl", choices=tuple(IMPLEMENTATION_BACKENDS), default="native")
     parser.add_argument("--seq-len", type=int, default=16384)
     parser.add_argument("--head-dim", type=int, default=64)
     parser.add_argument("--causal", action="store_true")
@@ -43,14 +47,14 @@ def main() -> None:
     torch.set_num_threads(args.threads)
     torch.manual_seed(args.seed)
     torch.backends.cuda.matmul.allow_tf32 = False
-    kernel = get_attention_kernel(args.impl)
+    forward = get_attention_forward(args.impl)
     q = torch.randn(args.seq_len, args.head_dim, device="cuda", dtype=torch.float32)
     k = torch.randn_like(q)
     v = torch.randn_like(q)
-    validate_backend(args.impl, q, k, v, is_causal=args.causal)
+    validate_implementation(args.impl, q, k, v, is_causal=args.causal)
     print(json.dumps({
         "implementation": args.impl,
-        "backend": BACKEND_NAMES[args.impl],
+        "backend": IMPLEMENTATION_BACKENDS[args.impl],
         "python": sys.executable,
         "torch": torch.__version__,
         "cuda_build": torch.version.cuda,
@@ -65,7 +69,7 @@ def main() -> None:
 
     # Input generation, CUDA/cuBLAS initialization and warmup are outside capture.
     for _ in range(args.warmup):
-        kernel(q, k, v, is_causal=args.causal)
+        forward(q, k, v, is_causal=args.causal)
     torch.cuda.synchronize()
 
     # Annotate the selected forward's ATen operators without changing its algorithm.
@@ -74,7 +78,7 @@ def main() -> None:
         torch.cuda.profiler.start()
         try:
             with torch.cuda.nvtx.range(f"attention_forward/{args.impl}/float32"):
-                kernel(q, k, v, is_causal=args.causal)
+                forward(q, k, v, is_causal=args.causal)
             # Wait once at the capture boundary, not between kernels.
             torch.cuda.synchronize()
         finally:

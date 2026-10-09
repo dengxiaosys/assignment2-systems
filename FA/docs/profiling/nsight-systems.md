@@ -2,7 +2,7 @@
 
 ## 1. 目标与采集范围
 
-使用 [scripts/profile_forward.py](../../scripts/profile_forward.py) 采集二维 attention 的 GPU kernel
+使用 [scripts/profile_attention.py](../../scripts/profile_attention.py) 采集二维 attention 的 GPU kernel
 执行顺序、耗时和 launch 间隙。输入 `Q/K/V` 均为 `(S, d)`，固定使用 **FP32**。
 通过 `--impl native|efficient` 选择实现，默认 `native`，没有精度切换参数。
 
@@ -32,7 +32,7 @@ memory-efficient 后端不完整物化这两张矩阵，不能用该理论值表
 抢占 PATH。若使用 `conda run -n nanovllm python ...`，应先用 `deactivate`
 退出已激活的项目 venv。
 
-脚本参数由 [parse_args()](../../scripts/profile_forward.py#L17-L32)
+脚本参数由 [parse_args()](../../scripts/profile_attention.py#L21-L36)
 独立解析和校验：
 
 | 参数 | 默认值 | 含义 |
@@ -69,7 +69,7 @@ nsys profile \
   --capture-range-end=stop \
   --output=./profiles/baseline_naive_attention_s16384_d64 \
   /home/dengxiao/miniconda3/envs/nanovllm/bin/python -E -s -B \
-  -m scripts.profile_forward \
+  -m scripts.profile_attention \
   --impl native --seq-len 16384 --head-dim 64 --warmup 5
 ```
 
@@ -83,7 +83,7 @@ Python 的 `-E -s -B` 分别忽略 `PYTHON*` 环境变量、禁用用户级 site
 
 ### 3.2 录制边界
 
-采集流程位于 [main()](../../scripts/profile_forward.py#L35-L81)：
+采集流程位于 [main()](../../scripts/profile_attention.py#L39-L85)：
 
 1. 选择实现，创建输入，检查当前硬件、精度和布局是否支持指定后端。
    预检在采集区间外；通过后执行 5 次 warmup，完成相关 CUDA/kernel 初始化。
@@ -115,14 +115,15 @@ nsys profile \
   --capture-range=cudaProfilerApi --capture-range-end=stop \
   --output=./profiles/memory_efficient_attention_s16384_d64_fp32 \
   /home/dengxiao/miniconda3/envs/nanovllm/bin/python -E -s -B \
-  -m scripts.profile_forward \
+  -m scripts.profile_attention \
   --impl efficient --seq-len 16384 --head-dim 64 --warmup 5
 ```
 
 脚本在采集前打印实现、后端、PyTorch/CUDA 版本、GPU、compute capability、shape 和 dtype。
 预检或正式执行发现不支持时会报错；不把 math、cuDNN 或其他后端的结果混入所选实现。
-维度适配和严格选择见
-[src/backends.py](../../src/backends.py#L23-L50)。
+维度适配见
+[src/memory_efficient_forward.py](../../src/memory_efficient_forward.py#L15-L68)，
+实现选择见 [src/forward_registry.py](../../src/forward_registry.py#L21-L54)。
 
 ## 4. 查看时间线与耗时
 
@@ -209,7 +210,7 @@ nsys profile \
   --capture-range-end=stop \
   --output=./profiles/baseline_naive_attention_s16384_d64_memory \
   /home/dengxiao/miniconda3/envs/nanovllm/bin/python -E -s -B \
-  -m scripts.profile_forward \
+  -m scripts.profile_attention \
   --impl native --seq-len 16384 --head-dim 64 --warmup 0
 
 nsys-ui ./profiles/baseline_naive_attention_s16384_d64_memory.nsys-rep
@@ -231,7 +232,7 @@ nsys-ui ./profiles/baseline_naive_attention_s16384_d64_memory.nsys-rep
 | CUDA 层分配与释放随时间变化 | Nsight 的 GPU Memory Allocation Graph |
 | PyTorch 当前活跃分配 | `torch.cuda.memory_allocated()` |
 | PyTorch 内存池总占用，含空闲缓存 | `torch.cuda.memory_reserved()` |
-| 一次 forward 的 PyTorch 额外峰值 | `scripts.benchmark` 的 `peak_additional_cuda_allocated_bytes` |
+| 一次 forward 的 PyTorch 额外峰值 | `scripts.benchmark_attention` 的 `peak_additional_cuda_allocated_bytes` |
 
 若要定位具体 Tensor 的分配和释放，可进一步使用 PyTorch memory profiler；
 Nsight 的曲线不能直接解释为 `S/P` 两张 Tensor 的占用曲线。
@@ -248,7 +249,7 @@ mkdir -p ./profiles
 nvprof --profile-from-start off \
   --export-profile ./profiles/baseline_naive_attention_s16384_d64.nvvp \
   /home/dengxiao/miniconda3/envs/nanovllm/bin/python -E -s -B \
-  -m scripts.profile_forward \
+  -m scripts.profile_attention \
   --impl native --seq-len 16384 --head-dim 64 --warmup 5
 
 nvvp ./profiles/baseline_naive_attention_s16384_d64.nvvp
@@ -260,12 +261,13 @@ nvvp ./profiles/baseline_naive_attention_s16384_d64.nvvp
 ## 6. 结果用途与验证状态
 
 用时间线回答“启动了哪些 kernel、顺序如何、哪里存在空隙、哪个 kernel 累计耗时高”。
-记录正式加速比时，仍使用不带 profiler 的 `scripts.benchmark`；NVTX 标注和 profiler
+记录正式加速比时，仍使用不带 profiler 的 `scripts.benchmark_attention`；NVTX 标注和 profiler
 采集都会引入额外开销，profile 内的耗时不应直接替代基准结果。
 
 已核对本机工具版本、采集参数和报告名，脚本语法、帮助及参数校验已通过。
 原生 CPU 数值测试和后端调度契约测试通过；调度测试不等于真实 GPU kernel 数值验证。
-可先执行 `python -m tests.test_backends --device cuda`，检查本机 FP32 efficient 的数值；
+可先执行 `python -m tests.test_memory_efficient_forward --device cuda`，
+检查本机 FP32 efficient 的数值；
 不支持时明确跳过。
 代理侧 GPU 设备访问仍受沙箱限制，尚未在代理侧实际生成 `.nsys-rep` 或 `.nvvp`；
 请在用户已确认 CUDA 可用的终端执行上述采集命令。

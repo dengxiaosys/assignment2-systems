@@ -6,16 +6,23 @@ from pathlib import Path
 
 import torch
 
-from src.backends import BACKEND_NAMES, get_attention_kernel, validate_backend
-from src.measurement import measure_latency, measure_peak_bytes
-from src.verification import REFERENCE_TOLERANCE, verify_against_cpu_fp64
+from src.benchmark_measurement import measure_latency, measure_peak_bytes
+from src.forward_registry import (
+    IMPLEMENTATION_BACKENDS,
+    get_attention_forward,
+    validate_implementation,
+)
+from src.numerical_verification import (
+    REFERENCE_TOLERANCE,
+    verify_against_cpu_fp64,
+)
 
 
 def parse_args() -> argparse.Namespace:
     """Parse command-line options and validate their values."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cuda")
-    parser.add_argument("--impl", choices=tuple(BACKEND_NAMES), default="native")
+    parser.add_argument("--impl", choices=tuple(IMPLEMENTATION_BACKENDS), default="native")
     parser.add_argument("--seq-len", type=int, default=16384, help="Sequence length S")
     parser.add_argument("--head-dim", type=int, default=64, help="Feature dimension d")
     parser.add_argument("--causal", action="store_true")
@@ -45,13 +52,13 @@ def main() -> None:
     torch.manual_seed(args.seed)
     torch.backends.cuda.matmul.allow_tf32 = False
 
-    kernel = get_attention_kernel(args.impl)
+    forward = get_attention_forward(args.impl)
     q = torch.randn(args.seq_len, args.head_dim, device=device, dtype=torch.float32)
     k = torch.randn_like(q)
     v = torch.randn_like(k)
-    validate_backend(args.impl, q, k, v, is_causal=args.causal)
+    validate_implementation(args.impl, q, k, v, is_causal=args.causal)
     error = None if args.no_verify else verify_against_cpu_fp64(
-        kernel,
+        forward,
         q,
         k,
         v,
@@ -59,14 +66,14 @@ def main() -> None:
     )
 
     def operation() -> torch.Tensor:
-        return kernel(q, k, v, is_causal=args.causal)
+        return forward(q, k, v, is_causal=args.causal)
 
     timing = measure_latency(operation, device, args.warmup, args.iterations, args.repeats)
     peak = measure_peak_bytes(operation, device)
     matrix_bytes = args.seq_len**2 * q.element_size()
     payload = {
         "implementation": args.impl,
-        "backend": BACKEND_NAMES[args.impl],
+        "backend": IMPLEMENTATION_BACKENDS[args.impl],
         "device": str(device),
         "gpu_name": torch.cuda.get_device_name(device) if device.type == "cuda" else None,
         "compute_capability": list(torch.cuda.get_device_capability(device)) if device.type == "cuda" else None,

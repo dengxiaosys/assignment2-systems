@@ -13,9 +13,9 @@
 PyTorch CUDA FlashAttention 后端不支持本实验固定的 FP32，因此不在这个对照中。
 
 运行入口为
-[scripts/benchmark.py](../../scripts/benchmark.py)，
+[scripts/benchmark_attention.py](../../scripts/benchmark_attention.py)，
 通用计时逻辑位于
-[src/measurement.py](../../src/measurement.py)。
+[src/benchmark_measurement.py](../../src/benchmark_measurement.py)。
 
 ## 2. 运行
 
@@ -26,19 +26,19 @@ cd /home/dengxiao/code_repos/institutionalized/stanford_cs336/assignments/assign
 
 # 大规模原生基线；避免创建巨大的 CPU FP64 参考中间量
 /home/dengxiao/miniconda3/envs/nanovllm/bin/python -E -s -B \
-  -m scripts.benchmark \
+  -m scripts.benchmark_attention \
   --device cuda --impl native \
   --seq-len 16384 --head-dim 64 --no-verify
 
 # 相同 FP32 输入上的 memory-efficient SDPA
 /home/dengxiao/miniconda3/envs/nanovllm/bin/python -E -s -B \
-  -m scripts.benchmark \
+  -m scripts.benchmark_attention \
   --device cuda --impl efficient \
   --seq-len 16384 --head-dim 64 --no-verify
 
 # CPU 冒烟验证
 /home/dengxiao/miniconda3/envs/nanovllm/bin/python -E -s -B \
-  -m scripts.benchmark \
+  -m scripts.benchmark_attention \
   --device cpu --impl native \
   --seq-len 257 --head-dim 64 \
   --warmup 2 --iterations 5 --repeats 3
@@ -123,6 +123,6 @@ CUDA Event 测量的是当前 stream 上 start/end Event 之间的时间，包�
 ## 7. 正确性
 
 默认使用
-[src/verification.py](../../src/verification.py)
+[src/numerical_verification.py](../../src/numerical_verification.py)
 生成 CPU FP64 math SDPA 参考，FP32 校验容差为 `rtol=atol=2e-5`。
 融合实现的运算顺序不同，不要求与 native 逐位相同。
