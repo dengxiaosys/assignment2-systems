@@ -8,9 +8,12 @@
 |---|---|---|
 | `native` | `softmax(QKᵀ / sqrt(d))V` 的直接 PyTorch 实现 | 是 |
 | `efficient` | 强制使用 PyTorch memory-efficient SDPA | 否 |
+| `cuda_fa2` | 自写 C++/CUDA online-softmax baseline | 否 |
 
-两条路径使用相同的 `(S, d)` 输入、causal 规则、精度、warmup 和计时方式。
+三条路径使用相同的 `(S, d)` 输入、causal 规则、精度、warmup 和计时方式。
 PyTorch CUDA FlashAttention 后端不支持本实验固定的 FP32，因此不在这个对照中。
+`cuda_fa2` 的算法、并行方式和限制见
+[cpp_cuda/fa2/design.md](../../cpp_cuda/fa2/design.md)。
 
 运行入口为
 [scripts/benchmark_attention.py](../../scripts/benchmark_attention.py)，
@@ -36,6 +39,17 @@ cd /home/dengxiao/code_repos/institutionalized/stanford_cs336/assignments/assign
   --device cuda --impl efficient \
   --seq-len 16384 --head-dim 64 --no-verify
 
+# 首次使用前显式构建，不依赖 Ninja
+CUDA_HOME=/usr/local/cuda-12.8 TORCH_CUDA_ARCH_LIST=6.1 \
+/home/dengxiao/miniconda3/envs/nanovllm/bin/python -E -s -B \
+  cpp_cuda/fa2/build_extension.py build_ext --inplace
+
+# 自写 C++/CUDA online-softmax baseline
+/home/dengxiao/miniconda3/envs/nanovllm/bin/python -E -s -B \
+  -m scripts.benchmark_attention \
+  --device cuda --impl cuda_fa2 \
+  --seq-len 16384 --head-dim 64 --no-verify
+
 # CPU 冒烟验证
 /home/dengxiao/miniconda3/envs/nanovllm/bin/python -E -s -B \
   -m scripts.benchmark_attention \
@@ -52,8 +66,8 @@ GPU 不可用或指定 fused 后端不受支持时直接报错，不回退到 CP
 
 | 参数 | 默认值 | 含义 |
 |---|---:|---|
-| `--device` | `cuda` | `cpu` 或 `cuda`；`efficient` 只允许 CUDA |
-| `--impl` | `native` | `native` 或 `efficient` |
+| `--device` | `cuda` | `cpu` 或 `cuda`；非 native 实现只允许 CUDA |
+| `--impl` | `native` | `native`、`efficient` 或 `cuda_fa2` |
 | `--seq-len` | `16384` | 序列长度 `S` |
 | `--head-dim` | `64` | 特征维度 `d` |
 | `--causal` | 关闭 | 使用包含对角线的下三角可见性 |
@@ -65,7 +79,19 @@ GPU 不可用或指定 fused 后端不受支持时直接报错，不回退到 CP
 | `--no-verify` | 关闭 | 跳过 CPU FP64 参考校验 |
 | `--output-json` | 无 | 可选 JSON 输出路径 |
 
-## 4. 计时口径
+## 4. CUDA 扩展构建
+
+`cuda_fa2` 使用 [build_extension.py](../../cpp_cuda/fa2/build_extension.py)
+显式构建 [cpp_cuda/fa2](../../cpp_cuda/fa2/) 中的 C++/CUDA extension。
+构建器采用 `BuildExtension(use_ninja=False)`，运行 benchmark 时只导入已有 `.so`，
+不会隐式触发编译。
+
+- `TORCH_CUDA_ARCH_LIST=6.1` 明确只为 GTX 1060 编译。
+- 构建过程是普通 setuptools 串行编译，不额外引入 Ninja。
+- 源码或编译参数变化后，需要重新执行构建命令。
+- 当前只支持连续 FP32 CUDA 张量和 `d <= 128`。
+
+## 5. 计时口径
 
 每个 sample 是一批 `iterations` 次调用的平均值：
 
@@ -92,7 +118,7 @@ sample_ms = 一批调用的总耗时 / iterations
 计时前创建输入并关闭 TF32。后端能力预检、输入生成、CPU 参考计算和数据拷贝不进入
 正式计时。完整 eager forward 的参数校验、张量分配、算子发射与计算都计入。
 
-## 5. 输出字段
+## 6. 输出字段
 
 | 字段 | 含义 |
 |---|---|
@@ -110,19 +136,26 @@ sample_ms = 一批调用的总耗时 / iterations
 CUDA Event 测量的是当前 stream 上 start/end Event 之间的时间，包含期间的 GPU 空闲；
 它不是某一个 kernel 的耗时，也不等于 kernel duration 的简单相加。
 
-## 6. 显存与复杂度
+## 7. 显存与复杂度
 
 - 两次矩阵乘的总算术量为 `Θ(S²d)`，约 `4S²d` FLOPs。
 - native softmax 为 `Θ(S²)`，完整 `S/P` 存储为 `Θ(S²)`。
 - FP32 native 的两张矩阵合计 `8S²` bytes；`S=16384` 时为 2 GiB。
 - memory-efficient 路径仍有 `Θ(S²d)` 算术量，但通过分块矩阵乘和 online softmax
   避免写出完整 `S/P`；具体 workspace 由后端决定。
+- `cuda_fa2` 同样是 `Θ(S²d)`，每个 128-thread CTA 处理 1 行 Q，通过 shared-memory
+  tree reduction 和 online softmax 推进；额外全局存储为 `Θ(Sd)`。
 - 峰值分配统计包含输出、mask 和算子临时量，不等于理论 `S/P` 字节数，也不是
   `nvidia-smi` 展示的进程总显存。
 
-## 7. 正确性
+## 8. 正确性
 
 默认使用
 [src/numerical_verification.py](../../src/numerical_verification.py)
 生成 CPU FP64 math SDPA 参考，FP32 校验容差为 `rtol=atol=2e-5`。
 融合实现的运算顺序不同，不要求与 native 逐位相同。
+真实 CUDA 测试入口为：
+
+```bash
+python -m tests.test_cuda_fa2_forward --device cuda
+```

@@ -1,4 +1,4 @@
-"""Benchmark native or memory-efficient SDPA on FP32 (S, d) inputs."""
+"""Benchmark native, memory-efficient SDPA or custom CUDA FA2 on FP32 inputs."""
 
 import argparse
 import json
@@ -39,7 +39,7 @@ def parse_args() -> argparse.Namespace:
     if args.warmup < 0:
         parser.error("warmup must be non-negative")
     if args.device == "cpu" and args.impl != "native":
-        parser.error("efficient requires --device cuda")
+        parser.error("efficient and cuda_fa2 require --device cuda")
     return args
 
 

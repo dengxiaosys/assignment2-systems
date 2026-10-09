@@ -122,8 +122,33 @@ nsys profile \
 脚本在采集前打印实现、后端、PyTorch/CUDA 版本、GPU、compute capability、shape 和 dtype。
 预检或正式执行发现不支持时会报错；不把 math、cuDNN 或其他后端的结果混入所选实现。
 维度适配见
-[src/memory_efficient_forward.py](../../src/memory_efficient_forward.py#L15-L68)，
-实现选择见 [src/forward_registry.py](../../src/forward_registry.py#L21-L54)。
+[src/memory_efficient_forward.py](../../src/memory_efficient_forward.py#L15-L78)，
+实现选择见 [src/forward_registry.py](../../src/forward_registry.py#L26-L68)。
+
+### 3.4 自写 C++/CUDA FA2-style forward
+
+`cuda_fa2` 支持相同的 profiler 入口。先单独构建 extension，再启动 `nsys`；
+profiling 进程不会隐式编译。CUDA 源码使用 `-lineinfo`，GPU stream 中可看到
+`fa2_forward_fp32_kernel`。
+
+```bash
+mkdir -p ./profiles
+
+CUDA_HOME=/usr/local/cuda-12.8 TORCH_CUDA_ARCH_LIST=6.1 \
+/home/dengxiao/miniconda3/envs/nanovllm/bin/python -E -s -B \
+  cpp_cuda/fa2/build_extension.py build_ext --inplace
+
+nsys profile \
+  --trace=cuda,nvtx --sample=none --cpuctxsw=none \
+  --capture-range=cudaProfilerApi --capture-range-end=stop \
+  --output=./profiles/custom_cuda_fa2_s16384_d64_fp32 \
+  /home/dengxiao/miniconda3/envs/nanovllm/bin/python -E -s -B \
+  -m scripts.profile_attention \
+  --impl cuda_fa2 --seq-len 16384 --head-dim 64 --warmup 5
+```
+
+当前实现固定 FP32、forward-only、连续 `(S,d)` 输入且 `d <= 128`。
+算法与并行方式见 [cpp_cuda/fa2/design.md](../../cpp_cuda/fa2/design.md)。
 
 ## 4. 查看时间线与耗时
 
@@ -185,6 +210,9 @@ wall-clock 占比。看 launch 间隙、CPU 等待或多 stream 重叠，需要�
 `efficient` 路径可寻找 `aten::_scaled_dot_product_efficient_attention`。
 该路径将分块矩阵乘与 softmax 融合，不应期待与 native 一样独立的
 `mm → div → softmax → mm` 序列；GPU kernel 的实际名称和数量仍以报告为准。
+
+`cuda_fa2` 路径对应单个 `fa2_forward_fp32_kernel`。当前基线每个 CTA 只处理 1 行 Q，
+逐 key 做 shared-memory tree reduction；具体 block 和执行时长可在 kernel 详情中查看。
 
 ### 4.4 追踪显存分配变化
 
@@ -261,13 +289,15 @@ nvvp ./profiles/baseline_naive_attention_s16384_d64.nvvp
 ## 6. 结果用途与验证状态
 
 用时间线回答“启动了哪些 kernel、顺序如何、哪里存在空隙、哪个 kernel 累计耗时高”。
-记录正式加速比时，仍使用不带 profiler 的 `scripts.benchmark_attention`；NVTX 标注和 profiler
-采集都会引入额外开销，profile 内的耗时不应直接替代基准结果。
+记录正式加速比时，仍使用不带 profiler 的 `scripts.benchmark_attention`；
+NVTX 标注和 profiler 采集都会引入额外开销，profile 内的耗时不应直接替代基准结果。
 
 已核对本机工具版本、采集参数和报告名，脚本语法、帮助及参数校验已通过。
 原生 CPU 数值测试和后端调度契约测试通过；调度测试不等于真实 GPU kernel 数值验证。
 可先执行 `python -m tests.test_memory_efficient_forward --device cuda`，
-检查本机 FP32 efficient 的数值；
-不支持时明确跳过。
+检查 FP32 efficient；执行 `python -m tests.test_cuda_fa2_forward --device cuda`
+检查自写 kernel。
+自写 extension 已使用 CUDA 12.8 为 `sm_61` 成功编译并加载，但代理侧无法执行 GPU
+数值测试或实际生成对应 profiler 报告。
 代理侧 GPU 设备访问仍受沙箱限制，尚未在代理侧实际生成 `.nsys-rep` 或 `.nvvp`；
 请在用户已确认 CUDA 可用的终端执行上述采集命令。

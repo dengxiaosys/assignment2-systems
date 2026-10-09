@@ -12,6 +12,11 @@ def _require_cuda(q: torch.Tensor) -> None:
         raise RuntimeError("memory-efficient attention requires CUDA tensors")
 
 
+def _as_sdpa_input(tensor: torch.Tensor) -> torch.Tensor:
+    """View (S, d) as (1, 1, S, d) without copying data."""
+    return tensor.unsqueeze(0).unsqueeze(0)
+
+
 @torch.no_grad()
 def memory_efficient_attention_forward(
     q: torch.Tensor,
@@ -23,12 +28,14 @@ def memory_efficient_attention_forward(
     """Run memory-efficient SDPA without backend fallback or dtype conversion."""
     validate_attention_inputs(q, k, v)
     _require_cuda(q)
-    # Singleton batch/head axes are zero-copy views.
+    q_sdpa = _as_sdpa_input(q)
+    k_sdpa = _as_sdpa_input(k)
+    v_sdpa = _as_sdpa_input(v)
     with sdpa_kernel(SDPBackend.EFFICIENT_ATTENTION):
         output = F.scaled_dot_product_attention(
-            q[None, None],
-            k[None, None],
-            v[None, None],
+            q_sdpa,
+            k_sdpa,
+            v_sdpa,
             dropout_p=0.0,
             is_causal=is_causal,
         )
@@ -46,10 +53,13 @@ def validate_memory_efficient_support(
     """Check whether the installed PyTorch build can run this fused backend."""
     validate_attention_inputs(q, k, v)
     _require_cuda(q)
+    q_sdpa = _as_sdpa_input(q)
+    k_sdpa = _as_sdpa_input(k)
+    v_sdpa = _as_sdpa_input(v)
     params = torch.backends.cuda.SDPAParams(
-        q[None, None],
-        k[None, None],
-        v[None, None],
+        q_sdpa,
+        k_sdpa,
+        v_sdpa,
         None,
         0.0,
         is_causal,

@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 import torch
 
+from src.cuda_fa2_forward import cuda_fa2_attention_forward
 from src.forward_registry import (
     get_attention_forward,
     validate_implementation,
@@ -19,6 +20,10 @@ class ForwardRegistryTests(unittest.TestCase):
         self.assertIs(
             get_attention_forward("efficient"),
             memory_efficient_attention_forward,
+        )
+        self.assertIs(
+            get_attention_forward("cuda_fa2"),
+            cuda_fa2_attention_forward,
         )
 
     def test_rejects_unknown_implementation(self):
@@ -43,3 +48,15 @@ class ForwardRegistryTests(unittest.TestCase):
             is_causal=True,
         )
 
+    def test_delegates_cuda_fa2_support_check(self):
+        q = torch.randn(7, 16)
+        with patch(
+            "src.forward_registry.validate_cuda_fa2_support"
+        ) as validate_support:
+            validate_implementation("cuda_fa2", q, q, q, is_causal=True)
+        validate_support.assert_called_once_with(
+            q,
+            q,
+            q,
+            is_causal=True,
+        )
