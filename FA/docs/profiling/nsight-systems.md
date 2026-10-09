@@ -148,7 +148,7 @@ nsys profile \
 ```
 
 当前实现固定 FP32、forward-only、连续 `(S,d)` 输入且 `d <= 128`。
-算法与并行方式见 [cpp_cuda/fa2/design.md](../../cpp_cuda/fa2/design.md)。
+算法与并行方式见 [CUDA FA2 设计文档](../cuda-fa2/design.md)。
 
 ## 4. 查看时间线与耗时
 
@@ -214,7 +214,85 @@ wall-clock 占比。看 launch 间隙、CPU 等待或多 stream 重叠，需要�
 `cuda_fa2` 路径对应单个 `fa2_forward_fp32_kernel`。当前基线每个 CTA 只处理 1 行 Q，
 逐 key 做 shared-memory tree reduction；具体 block 和执行时长可在 kernel 详情中查看。
 
-### 4.4 追踪显存分配变化
+### 4.4 分析 kernel 内部瓶颈
+
+Nsight Systems 不只显示 kernel duration，还能分析：
+
+- CPU CUDA API 与 GPU kernel 的对应关系。
+- Kernel launch 间隙。
+- Stream 并发和 CPU/GPU 重叠。
+- Memcpy、Memset 和 CUDA 内存分配事件。
+- NVTX Range 与系统级调度时间线。
+- 受支持设备上的周期性 GPU Metrics Sampling。
+
+但 Nsight Systems 的主要定位是**系统级时间线**，不能替代单 kernel 的微架构分析。
+
+| 问题 | 主要工具 |
+|---|---|
+| Kernel 何时启动、运行多久 | Nsight Systems |
+| Kernel 之间为什么有空隙 | Nsight Systems |
+| CPU 是否及时发射 Kernel | Nsight Systems |
+| Occupancy、Warp Stall、指令吞吐 | Nsight Compute / `nvprof` |
+| Global/Shared Memory 访问效率 | Nsight Compute / `nvprof` |
+| CUDA 源码行对应的热点 | Nsight Compute / `nvprof` Source-Level Analysis |
+| Roofline 与硬件单元利用率 | Nsight Compute |
+
+通常应先用 Nsight Systems 找到耗时 kernel，再用 Nsight Compute（`ncu`）分析该 kernel
+内部的硬件计数器、Warp Stall、Memory Throughput、Occupancy 和源码行热点。
+
+本机安装了 Nsight Compute `2025.1.1`，但其 `--list-chips` 从 Volta `gv100` 开始，
+不包含 GTX 1060 的 Pascal `gp106`。因此当前硬件不能使用这个版本的 `ncu` 深入分析。
+
+GTX 1060 应使用仍支持 Pascal 的 `nvprof 12.8`。先查询当前设备支持的指标：
+
+```bash
+nvprof --query-metrics
+nvprof --query-events
+```
+
+收集 Visual Profiler Analysis 数据：
+
+```bash
+mkdir -p ./profiles
+
+nvprof \
+  --profile-from-start off \
+  --analysis-metrics \
+  --export-profile ./profiles/cuda_fa2_s1024_d64_analysis.nvvp \
+  /home/dengxiao/miniconda3/envs/nanovllm/bin/python -E -s -B \
+  -m scripts.profile_attention \
+  --impl cuda_fa2 --seq-len 1024 --head-dim 64 --warmup 5
+```
+
+收集源码级 Global/Shared Memory、Branch、Instruction 和 PC Sampling 数据：
+
+```bash
+nvprof \
+  --profile-from-start off \
+  --source-level-analysis \
+    global_access,shared_access,branch,instruction_execution,pc_sampling \
+  --export-profile ./profiles/cuda_fa2_s1024_d64_source.nvvp \
+  /home/dengxiao/miniconda3/envs/nanovllm/bin/python -E -s -B \
+  -m scripts.profile_attention \
+  --impl cuda_fa2 --seq-len 1024 --head-dim 64 --warmup 5
+```
+
+当前 CUDA 源码已经使用 `-lineinfo` 编译，可以在 `nvvp` 中将采样结果关联回
+`fa2_forward.cu`。可重点观察：
+
+- `achieved_occupancy`。
+- `sm_efficiency`。
+- `warp_execution_efficiency`。
+- `gld_efficiency` / `gst_efficiency`。
+- DRAM Read/Write Throughput。
+- Synchronization、Memory Dependency 和 Execution Dependency Stall。
+- Source-Level Global/Shared Access 与 PC Sampling。
+
+硬件计数器通常需要 Kernel Replay，多指标采集可能把同一个 kernel 重放多次。
+因此这里使用较小的 `S=1024`，并且绝不能把 `nvprof/ncu` 报告中的运行时间作为正式
+Benchmark 结果。
+
+### 4.5 追踪显存分配变化
 
 Nsight Systems 支持 `--cuda-memory-usage=true`，在时间线上展示
 **CUDA GPU Memory Allocation Graph**。它跟踪 CUDA 层的 GPU 内存分配和释放，

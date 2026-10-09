@@ -13,7 +13,7 @@
 三条路径使用相同的 `(S, d)` 输入、causal 规则、精度、warmup 和计时方式。
 PyTorch CUDA FlashAttention 后端不支持本实验固定的 FP32，因此不在这个对照中。
 `cuda_fa2` 的算法、并行方式和限制见
-[cpp_cuda/fa2/design.md](../../cpp_cuda/fa2/design.md)。
+[CUDA FA2 设计文档](../cuda-fa2/design.md)。
 
 运行入口为
 [scripts/benchmark_attention.py](../../scripts/benchmark_attention.py)，
@@ -85,6 +85,7 @@ GPU 不可用或指定 fused 后端不受支持时直接报错，不回退到 CP
 显式构建 [cpp_cuda/fa2](../../cpp_cuda/fa2/) 中的 C++/CUDA extension。
 构建器采用 `BuildExtension(use_ninja=False)`，运行 benchmark 时只导入已有 `.so`，
 不会隐式触发编译。
+完整构建流程见 [CUDA Extension 构建文档](../cuda-fa2/extension-build.md)。
 
 - `TORCH_CUDA_ARCH_LIST=6.1` 明确只为 GTX 1060 编译。
 - 构建过程是普通 setuptools 串行编译，不额外引入 Ninja。

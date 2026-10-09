@@ -1,7 +1,5 @@
 """Python wrapper for the prebuilt C++/CUDA attention forward."""
 
-import importlib
-from functools import lru_cache
 from types import ModuleType
 
 import torch
@@ -10,22 +8,21 @@ from .input_validation import validate_attention_inputs
 
 
 MAX_HEAD_DIM = 128
-_EXTENSION_MODULE = "src._cuda_fa2"
 _BUILD_COMMAND = (
     "python cpp_cuda/fa2/build_extension.py build_ext --inplace"
 )
 
 
-@lru_cache(maxsize=1)
-def load_cuda_fa2_extension() -> ModuleType:
-    """Import the extension built by cpp_cuda/fa2/build_extension.py."""
+def import_cuda_fa2_extension() -> ModuleType:
+    """Import the generated src/cuda_fa2_extension shared library."""
     try:
-        return importlib.import_module(_EXTENSION_MODULE)
+        import src.cuda_fa2_extension as extension
     except (ImportError, OSError) as error:
         raise RuntimeError(
             "cuda_fa2 extension is not built or cannot be loaded. "
             f"Run `{_BUILD_COMMAND}` from the FA directory."
         ) from error
+    return extension
 
 
 def validate_cuda_fa2_support(
@@ -49,7 +46,7 @@ def validate_cuda_fa2_support(
         raise RuntimeError(
             f"cuda_fa2 requires compute capability >= 6.0, got {capability}"
         )
-    load_cuda_fa2_extension()
+    import_cuda_fa2_extension()
 
 
 @torch.no_grad()
@@ -62,5 +59,5 @@ def cuda_fa2_attention_forward(
 ) -> torch.Tensor:
     """Run the custom online-softmax CUDA baseline."""
     validate_cuda_fa2_support(q, k, v, is_causal=is_causal)
-    extension = load_cuda_fa2_extension()
+    extension = import_cuda_fa2_extension()
     return extension.forward(q, k, v, is_causal)

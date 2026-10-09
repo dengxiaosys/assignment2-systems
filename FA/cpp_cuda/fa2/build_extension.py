@@ -15,9 +15,11 @@ def _configure_cuda_home() -> None:
 
 
 SOURCE_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = SOURCE_DIR.parents[1]
 
 
 def main() -> None:
+    os.chdir(PROJECT_ROOT)
     _configure_cuda_home()
 
     from setuptools import setup
@@ -26,9 +28,10 @@ def main() -> None:
     setup(
         name="cs336-cuda-fa2",
         packages=["src"],
+        package_dir={"src": "src"},
         ext_modules=[
             CUDAExtension(
-                name="src._cuda_fa2",
+                name="src.cuda_fa2_extension",
                 sources=[
                     str(SOURCE_DIR / "binding.cpp"),
                     str(SOURCE_DIR / "fa2_forward.cu"),
