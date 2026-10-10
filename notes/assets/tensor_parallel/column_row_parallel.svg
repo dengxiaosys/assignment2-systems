@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="570" viewBox="0 0 1200 570">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L10,3 L0,6 Z" fill="#52606d"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="570" fill="#ffffff"/>
+  <style>
+    text { font-family: "DejaVu Sans", Arial, sans-serif; fill: #17212b; }
+    .title { font-size: 23px; font-weight: 700; }
+    .subtitle { font-size: 13px; fill: #52606d; }
+    .panel { font-size: 18px; font-weight: 700; text-anchor: middle; }
+    .label { font-size: 14px; font-weight: 700; text-anchor: middle; }
+    .small { font-size: 12px; fill: #52606d; text-anchor: middle; }
+    .formula { font-size: 15px; font-weight: 700; text-anchor: middle; }
+  </style>
+
+  <text x="40" y="36" class="title">Two ways to shard a linear layer</text>
+  <text x="40" y="60" class="subtitle">Megatron notation: Y = X A; column-vector equivalent: y = A^T x. PyTorch stores A^T.</text>
+
+  <rect x="35" y="88" width="545" height="438" rx="9" fill="#f5f9fc" stroke="#7aa6c2" stroke-width="2"/>
+  <rect x="620" y="88" width="545" height="438" rx="9" fill="#fbf7f2" stroke="#ca9567" stroke-width="2"/>
+
+  <text x="307" y="124" class="panel">Output-dimension sharding</text>
+  <text x="307" y="148" class="small">PyTorch ColwiseParallel; split rows of stored A^T</text>
+
+  <rect x="75" y="205" width="110" height="70" rx="6" fill="#e8edf1" stroke="#7d8992"/>
+  <text x="130" y="233" class="label">x</text>
+  <text x="130" y="254" class="small">replicated</text>
+
+  <rect x="255" y="175" width="135" height="92" rx="6" fill="#cfe7f4" stroke="#2778a5"/>
+  <text x="322" y="207" class="label">A_1^T</text>
+  <text x="322" y="231" class="small">rank 0</text>
+  <text x="322" y="250" class="small">first output shard</text>
+
+  <rect x="255" y="286" width="135" height="92" rx="6" fill="#b9dbe9" stroke="#2778a5"/>
+  <text x="322" y="318" class="label">A_2^T</text>
+  <text x="322" y="342" class="small">rank 1</text>
+  <text x="322" y="361" class="small">second output shard</text>
+
+  <line x1="185" y1="230" x2="249" y2="219" stroke="#52606d" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="185" y1="250" x2="249" y2="329" stroke="#52606d" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="445" y="175" width="95" height="92" rx="6" fill="#dceef7" stroke="#2778a5"/>
+  <text x="492" y="211" class="label">y_1</text>
+  <text x="492" y="235" class="small">output shard</text>
+  <rect x="445" y="286" width="95" height="92" rx="6" fill="#c8e3ee" stroke="#2778a5"/>
+  <text x="492" y="322" class="label">y_2</text>
+  <text x="492" y="346" class="small">output shard</text>
+
+  <line x1="390" y1="221" x2="439" y2="221" stroke="#52606d" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="390" y1="332" x2="439" y2="332" stroke="#52606d" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <text x="307" y="426" class="formula">y_i = A_i^T x</text>
+  <text x="307" y="454" class="small">Each rank owns different output features.</text>
+  <text x="307" y="476" class="small">Keep them sharded when the next layer can consume shards.</text>
+
+  <text x="892" y="124" class="panel">Input-dimension sharding</text>
+  <text x="892" y="148" class="small">PyTorch RowwiseParallel; split columns of stored A^T</text>
+
+  <rect x="660" y="175" width="95" height="92" rx="6" fill="#e8edf1" stroke="#7d8992"/>
+  <text x="707" y="211" class="label">x_1</text>
+  <text x="707" y="235" class="small">input shard</text>
+  <rect x="660" y="286" width="95" height="92" rx="6" fill="#dde4e9" stroke="#7d8992"/>
+  <text x="707" y="322" class="label">x_2</text>
+  <text x="707" y="346" class="small">input shard</text>
+
+  <rect x="810" y="175" width="135" height="92" rx="6" fill="#f5d8b8" stroke="#bc681f"/>
+  <text x="877" y="207" class="label">A_1^T</text>
+  <text x="877" y="231" class="small">rank 0</text>
+  <text x="877" y="250" class="small">first input shard</text>
+  <rect x="810" y="286" width="135" height="92" rx="6" fill="#efc99e" stroke="#bc681f"/>
+  <text x="877" y="318" class="label">A_2^T</text>
+  <text x="877" y="342" class="small">rank 1</text>
+  <text x="877" y="361" class="small">second input shard</text>
+
+  <line x1="755" y1="221" x2="804" y2="221" stroke="#52606d" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="755" y1="332" x2="804" y2="332" stroke="#52606d" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="995" y="175" width="115" height="92" rx="6" fill="#f9e6cf" stroke="#bc681f"/>
+  <text x="1052" y="211" class="label">y_tilde_1</text>
+  <text x="1052" y="235" class="small">partial output</text>
+  <rect x="995" y="286" width="115" height="92" rx="6" fill="#f6ddc1" stroke="#bc681f"/>
+  <text x="1052" y="322" class="label">y_tilde_2</text>
+  <text x="1052" y="346" class="small">partial output</text>
+
+  <line x1="945" y1="221" x2="989" y2="221" stroke="#52606d" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="945" y1="332" x2="989" y2="332" stroke="#52606d" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <text x="892" y="426" class="formula">y = all-reduce(y_tilde_i)</text>
+  <text x="892" y="454" class="small">Each rank computes a partial full-size output.</text>
+  <text x="892" y="476" class="small">The all-reduce reconstructs the replicated result.</text>
+
+  <rect x="35" y="538" width="1130" height="23" rx="4" fill="#f1f3f5"/>
+  <text x="600" y="554" class="small">Output-sharded activations from a Colwise layer can feed a Rowwise layer directly, avoiding an intermediate all-gather.</text>
+</svg>

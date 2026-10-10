@@ -13,6 +13,7 @@
 | `04` | 分布式通信与训练 |
 | `05` | Optimizer State Sharding 与 FSDP |
 | `06` | 并行策略与 Pipeline Parallelism |
+| `07` | Python 与 C++ 原生扩展 |
 | `90` | 独立运维附录 |
 
 后续笔记按 handout 的依赖顺序继续编号。
@@ -68,8 +69,13 @@
 4. [05_03 FSDP 代码阅读指南](./05_03_fsdp_code_walkthrough.md)：沿初始化、forward、backward 和 optimizer step 跟踪 shard/full weight 切换、collective 调度、真实执行顺序与内存生命周期。
 5. [05_04 FSDP Accounting 实验报告](./05_04_fsdp_accounting_report.md)：核算 `xl` persistent state 节省，测量 CPU/Gloo all-gather readiness 与 exposed wait，并给出正式 NCCL/Nsight 复跑和证据标准。
 
-## 06 并行策略与 Pipeline Parallelism
+## 06 并行策略与模型并行
 
 1. [06_01 Alternate Ring All-Reduce](./06_01_alternate_ring_all_reduce.md)：推导整 tensor 环传算法的 $(N-1)S/W$ 耗时，验证归约正确性，并与标准 reduce-scatter + all-gather ring 对比。
 2. [06_02 流水线并行入门：从同步语义到 GPipe 实现](./06_02_pipeline_parallel_report.md)：从 stage 和 microbatch 出发，解释梯度如何跨进程传递，给出最小训练脚本，推导 bubble、通信与内存开销，并用 2/3-stage 正确性测试验证实现。
 3. [06_03 最小 Pipeline Parallel 训练示例](./06_03_pipeline_parallel_training_example.md)：沿两 rank、四 microbatch 的实际执行路径阅读 stage 构造、activation P2P、activation-gradient P2P 和本地 optimizer step。
+4. [06_04 Tensor Parallelism 入门：理论与最小训练示例](./06_04_tensor_parallelism_theory_and_training.md)：推导输出维/输入维线性层分片与 SwiGLU 前反向通信，先手写 Megatron-LM 的 $f/g$ 和并行线性层，再给出 PyTorch DTensor 对照实现。
+
+## 07 Python 与 C++ 原生扩展
+
+1. [07_01 从 C++ 的 a+b 到 Python 原生扩展](./07_01_cpp_function_python_extension_textbook.md)：面向 Linux，从 CPython 扩展协议、ELF 动态库和 ABI 出发，逐步讲解 pybind11、CMake、参数绑定、GIL、异常、生命周期、调试、性能边界及其与 PyTorch C++/CUDA Extension 的关系，并提供可构建 demo。

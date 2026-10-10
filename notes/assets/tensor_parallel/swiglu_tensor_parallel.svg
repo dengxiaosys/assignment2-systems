@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="650" viewBox="0 0 1200 650">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L10,3 L0,6 Z" fill="#52606d"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="650" fill="#ffffff"/>
+  <style>
+    text { font-family: "DejaVu Sans", Arial, sans-serif; fill: #17212b; }
+    .title { font-size: 23px; font-weight: 700; }
+    .subtitle { font-size: 13px; fill: #52606d; }
+    .rank-title { font-size: 18px; font-weight: 700; text-anchor: middle; }
+    .label { font-size: 13px; font-weight: 700; text-anchor: middle; }
+    .small { font-size: 11px; fill: #52606d; text-anchor: middle; }
+    .collective { font-size: 14px; font-weight: 700; text-anchor: middle; }
+  </style>
+
+  <text x="42" y="35" class="title">Tensor-parallel SwiGLU: Colwise -> local gate -> Rowwise</text>
+  <text x="42" y="59" class="subtitle">A1/A3 are column-sharded; B consumes the same z shards and all-reduces partial h-dimensional outputs.</text>
+
+  <rect x="40" y="88" width="540" height="430" rx="9" fill="#f5f9fc" stroke="#7aa6c2" stroke-width="2"/>
+  <rect x="620" y="88" width="540" height="430" rx="9" fill="#f7faf7" stroke="#79ad92" stroke-width="2"/>
+  <text x="310" y="121" class="rank-title">TP rank 0</text>
+  <text x="890" y="121" class="rank-title">TP rank 1</text>
+
+  <rect x="75" y="155" width="100" height="54" rx="6" fill="#e8edf1" stroke="#7d8992"/>
+  <text x="125" y="178" class="label">x</text>
+  <text x="125" y="197" class="small">replicated</text>
+  <rect x="655" y="155" width="100" height="54" rx="6" fill="#e8edf1" stroke="#7d8992"/>
+  <text x="705" y="178" class="label">x</text>
+  <text x="705" y="197" class="small">replicated</text>
+
+  <rect x="220" y="145" width="120" height="64" rx="6" fill="#cfe7f4" stroke="#2778a5"/>
+  <text x="280" y="169" class="label">A1_1^T</text>
+  <text x="280" y="190" class="small">w1: (d_ff/2, h)</text>
+  <rect x="220" y="235" width="120" height="64" rx="6" fill="#b9dbe9" stroke="#2778a5"/>
+  <text x="280" y="259" class="label">A3_1^T</text>
+  <text x="280" y="280" class="small">w3: (d_ff/2, h)</text>
+
+  <rect x="800" y="145" width="120" height="64" rx="6" fill="#d8ecdf" stroke="#408b68"/>
+  <text x="860" y="169" class="label">A1_2^T</text>
+  <text x="860" y="190" class="small">w1: (d_ff/2, h)</text>
+  <rect x="800" y="235" width="120" height="64" rx="6" fill="#c5e2d1" stroke="#408b68"/>
+  <text x="860" y="259" class="label">A3_2^T</text>
+  <text x="860" y="280" class="small">w3: (d_ff/2, h)</text>
+
+  <line x1="175" y1="177" x2="214" y2="177" stroke="#52606d" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="175" y1="190" x2="214" y2="267" stroke="#52606d" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="755" y1="177" x2="794" y2="177" stroke="#52606d" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="755" y1="190" x2="794" y2="267" stroke="#52606d" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="385" y="184" width="135" height="76" rx="6" fill="#e4eff6" stroke="#5e91b5"/>
+  <text x="452" y="207" class="label">z_1</text>
+  <text x="452" y="228" class="small">SiLU(A1_1^T x)</text>
+  <text x="452" y="246" class="small">* (A3_1^T x)</text>
+  <rect x="965" y="184" width="135" height="76" rx="6" fill="#e2f0e7" stroke="#5b9676"/>
+  <text x="1032" y="207" class="label">z_2</text>
+  <text x="1032" y="228" class="small">SiLU(A1_2^T x)</text>
+  <text x="1032" y="246" class="small">* (A3_2^T x)</text>
+
+  <line x1="340" y1="177" x2="379" y2="207" stroke="#52606d" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="340" y1="267" x2="379" y2="237" stroke="#52606d" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="920" y1="177" x2="959" y2="207" stroke="#52606d" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="920" y1="267" x2="959" y2="237" stroke="#52606d" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="240" y="350" width="145" height="72" rx="6" fill="#f5d8b8" stroke="#bc681f"/>
+  <text x="312" y="376" class="label">B_1^T</text>
+  <text x="312" y="398" class="small">w2: (h, d_ff/2)</text>
+  <rect x="820" y="350" width="145" height="72" rx="6" fill="#f0cda7" stroke="#bc681f"/>
+  <text x="892" y="376" class="label">B_2^T</text>
+  <text x="892" y="398" class="small">w2: (h, d_ff/2)</text>
+
+  <line x1="452" y1="260" x2="330" y2="344" stroke="#52606d" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="1032" y1="260" x2="910" y2="344" stroke="#52606d" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="425" y="350" width="115" height="72" rx="6" fill="#f9e6cf" stroke="#bc681f"/>
+  <text x="482" y="379" class="label">y_tilde_1</text>
+  <text x="482" y="400" class="small">partial output</text>
+  <rect x="1005" y="350" width="115" height="72" rx="6" fill="#f6ddc1" stroke="#bc681f"/>
+  <text x="1062" y="379" class="label">y_tilde_2</text>
+  <text x="1062" y="400" class="small">partial output</text>
+
+  <line x1="385" y1="386" x2="419" y2="386" stroke="#52606d" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="965" y1="386" x2="999" y2="386" stroke="#52606d" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <line x1="482" y1="422" x2="565" y2="487" stroke="#52606d" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="1062" y1="422" x2="635" y2="487" stroke="#52606d" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="515" y="476" width="170" height="58" rx="7" fill="#ead5e0" stroke="#a6597b" stroke-width="2"/>
+  <text x="600" y="499" class="collective">all-reduce sum</text>
+  <text x="600" y="520" class="small">y = y_tilde_1 + y_tilde_2</text>
+
+  <rect x="40" y="552" width="1120" height="70" rx="7" fill="#f2f4f6" stroke="#c6cdd2"/>
+  <text x="600" y="576" class="collective">Why no intermediate all-gather?</text>
+  <text x="600" y="598" class="small">A1/A3 output shards and B input shards use the same d_ff partition, so z_i stays local.</text>
+  <text x="600" y="615" class="small">Backward mirrors this pattern: parameter gradients stay local; replicated input gradients are summed across TP ranks.</text>
+</svg>

@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="610" viewBox="0 0 1200 610" role="img" aria-labelledby="title desc">
+  <title id="title">Build pipeline for a Python C++ extension</title>
+  <desc id="desc">C++ source, Python package files, and build configuration pass through uv, scikit-build-core, CMake, Ninja, and the compiler to produce a wheel and a CPython ABI-tagged shared library.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M1 1 L7 4 L1 7 Z" fill="#52525b"/>
+    </marker>
+    <style>
+      .bg { fill: #f7f7f8; }
+      .node { fill: #ffffff; stroke: #d4d4d8; stroke-width: 2; }
+      .focus { fill: #e5fff2; stroke: #0f8a4b; stroke-width: 3; }
+      .tool { fill: #eafbf8; stroke: #159b8c; stroke-width: 2; }
+      .title { fill: #171717; font: 600 28px "PingFang SC", "Noto Sans CJK SC", sans-serif; }
+      .label { fill: #171717; font: 600 20px "PingFang SC", "Noto Sans CJK SC", sans-serif; }
+      .meta { fill: #52525b; font: 16px "PingFang SC", "Noto Sans CJK SC", sans-serif; }
+      .code { fill: #171717; font: 15px "JetBrains Mono", "SFMono-Regular", monospace; }
+      .arrow { fill: none; stroke: #52525b; stroke-width: 2.5; stroke-linecap: round; marker-end: url(#arrow); }
+      .group { fill: none; stroke: #a1a1aa; stroke-width: 2; stroke-dasharray: 8 8; }
+      .group-title { fill: #52525b; font: 600 16px "PingFang SC", "Noto Sans CJK SC", sans-serif; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1200" height="610" rx="16"/>
+  <text class="title" x="50" y="52">From source to import: the native build pipeline</text>
+
+  <rect class="group" x="40" y="86" width="330" height="395" rx="16"/>
+  <text class="group-title" x="64" y="118">Inputs</text>
+
+  <rect class="node" x="70" y="145" width="270" height="82" rx="10"/>
+  <text class="label" x="205" y="178" text-anchor="middle">C++ binding source</text>
+  <text class="code" x="205" y="207" text-anchor="middle">src/add.cpp</text>
+
+  <rect class="node" x="70" y="258" width="270" height="82" rx="10"/>
+  <text class="label" x="205" y="291" text-anchor="middle">CMake rules</text>
+  <text class="code" x="205" y="320" text-anchor="middle">CMakeLists.txt</text>
+
+  <rect class="node" x="70" y="371" width="270" height="82" rx="10"/>
+  <text class="label" x="205" y="404" text-anchor="middle">Python metadata</text>
+  <text class="code" x="205" y="433" text-anchor="middle">pyproject.toml + package/</text>
+
+  <rect class="group" x="430" y="86" width="330" height="395" rx="16"/>
+  <text class="group-title" x="454" y="118">Build frontend and backend</text>
+
+  <rect class="tool" x="460" y="145" width="270" height="82" rx="10"/>
+  <text class="label" x="595" y="178" text-anchor="middle">uv / pip</text>
+  <text class="meta" x="595" y="207" text-anchor="middle">isolated build environment</text>
+
+  <rect class="tool" x="460" y="258" width="270" height="82" rx="10"/>
+  <text class="label" x="595" y="291" text-anchor="middle">scikit-build-core</text>
+  <text class="meta" x="595" y="320" text-anchor="middle">PEP 517 backend drives CMake</text>
+
+  <rect class="tool" x="460" y="371" width="270" height="82" rx="10"/>
+  <text class="label" x="595" y="404" text-anchor="middle">CMake + Ninja + g++</text>
+  <text class="meta" x="595" y="433" text-anchor="middle">compile PIC and link module</text>
+
+  <rect class="group" x="820" y="86" width="340" height="395" rx="16"/>
+  <text class="group-title" x="844" y="118">Installed artifacts</text>
+
+  <rect class="focus" x="850" y="145" width="280" height="105" rx="10"/>
+  <text class="label" x="990" y="178" text-anchor="middle">Native extension</text>
+  <text class="code" x="990" y="208" text-anchor="middle">_cpp_add.cpython-313-</text>
+  <text class="code" x="990" y="232" text-anchor="middle">x86_64-linux-gnu.so</text>
+
+  <rect class="node" x="850" y="285" width="280" height="82" rx="10"/>
+  <text class="label" x="990" y="318" text-anchor="middle">Python package</text>
+  <text class="code" x="990" y="347" text-anchor="middle">cpp_add_demo/__init__.py</text>
+
+  <rect class="node" x="850" y="402" width="280" height="82" rx="10"/>
+  <text class="label" x="990" y="435" text-anchor="middle">wheel</text>
+  <text class="meta" x="990" y="464" text-anchor="middle">installable distribution archive</text>
+
+  <path class="arrow" d="M370 283 H422"/>
+  <path class="arrow" d="M760 283 H812"/>
+  <path class="arrow" d="M990 250 V277"/>
+  <path class="arrow" d="M990 367 V394"/>
+
+  <rect class="node" x="250" y="520" width="700" height="58" rx="10"/>
+  <text class="meta" x="600" y="555" text-anchor="middle">At import time CPython loads the installed library and resolves PyInit__cpp_add</text>
+</svg>

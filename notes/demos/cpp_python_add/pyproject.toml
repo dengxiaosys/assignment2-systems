@@ -1,0 +1,24 @@
+[build-system]
+requires = [
+    "pybind11>=3.0,<4",
+    "scikit-build-core>=0.11,<2",
+]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "cpp-add-demo"
+version = "0.1.0"
+description = "Minimal pybind11 example that exposes C++ addition to Python"
+requires-python = ">=3.12"
+
+[dependency-groups]
+test = [
+    "pytest>=8",
+]
+
+[tool.scikit-build]
+build-dir = "build/{wheel_tag}"
+wheel.packages = ["cpp_add_demo"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
