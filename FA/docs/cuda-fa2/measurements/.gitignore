@@ -3,6 +3,11 @@
 !*/snapshot/*.so
 !*/binaries/*.so
 
+# Regenerate these exports from the archived binary; summaries live in manifest.json.
+*/data/sass.txt
+*/data/resources.txt
+*/data/execution-status.json
+
 # Nsight Systems analysis databases are regenerated from tracked .nsys-rep files.
 *.sqlite
 *.sqlite-shm

@@ -1,0 +1,131 @@
+{
+  "device": "NVIDIA GeForce GTX 1060 (0)",
+  "kernel": "void _GLOBAL__N__50a466d1_14_fa2_forward_cu_26943507::fa2_forward_fp32_kernel<int=2>(float const *, float const , float const , float*, int, int, float, bool)",
+  "shape": [
+    16384,
+    64
+  ],
+  "causal": false,
+  "aggregate_mode": "on",
+  "captured_forward_calls": 1,
+  "kernel_replay": true,
+  "raw_file": "nvprof-custom-s16384-d64.csv",
+  "metrics": {
+    "achieved_occupancy": {
+      "value": 0.624171,
+      "unit": "unitless"
+    },
+    "sm_efficiency": {
+      "value": 99.936946,
+      "unit": "%"
+    },
+    "warp_execution_efficiency": {
+      "value": 98.384853,
+      "unit": "%"
+    },
+    "warp_nonpred_execution_efficiency": {
+      "value": 97.737087,
+      "unit": "%"
+    },
+    "eligible_warps_per_cycle": {
+      "value": 3.211435,
+      "unit": "unitless"
+    },
+    "issue_slot_utilization": {
+      "value": 50.95904,
+      "unit": "%"
+    },
+    "stall_sync": {
+      "value": 7.668617,
+      "unit": "%"
+    },
+    "stall_memory_dependency": {
+      "value": 6.23992,
+      "unit": "%"
+    },
+    "stall_exec_dependency": {
+      "value": 53.507239,
+      "unit": "%"
+    },
+    "stall_other": {
+      "value": 24.289828,
+      "unit": "%"
+    },
+    "stall_not_selected": {
+      "value": 3.093487,
+      "unit": "%"
+    },
+    "stall_inst_fetch": {
+      "value": 3.610647,
+      "unit": "%"
+    },
+    "stall_pipe_busy": {
+      "value": 1.587165,
+      "unit": "%"
+    },
+    "stall_texture": {
+      "value": 0.0,
+      "unit": "%"
+    },
+    "stall_memory_throttle": {
+      "value": 0.000147,
+      "unit": "%"
+    },
+    "stall_constant_memory_dependency": {
+      "value": 0.002948,
+      "unit": "%"
+    },
+    "dram_read_throughput": {
+      "value": 2.251748,
+      "unit": "GB/s"
+    },
+    "dram_write_throughput": {
+      "value": 28.126977,
+      "unit": "MB/s"
+    },
+    "l2_read_throughput": {
+      "value": 69.605342,
+      "unit": "GB/s"
+    },
+    "l2_write_throughput": {
+      "value": 28.258494,
+      "unit": "MB/s"
+    },
+    "l2_tex_read_hit_rate": {
+      "value": 94.709465,
+      "unit": "%"
+    },
+    "dram_read_transactions": {
+      "value": 10887482.0,
+      "unit": "unitless"
+    },
+    "l2_read_transactions": {
+      "value": 336550499.0,
+      "unit": "unitless"
+    },
+    "gld_efficiency": {
+      "value": 100.0,
+      "unit": "%"
+    },
+    "gst_efficiency": {
+      "value": 100.0,
+      "unit": "%"
+    },
+    "shared_load_throughput": {
+      "value": 888.28472,
+      "unit": "GB/s"
+    },
+    "shared_store_throughput": {
+      "value": 111.03559,
+      "unit": "GB/s"
+    },
+    "shared_load_transactions_per_request": {
+      "value": 1.0,
+      "unit": "unitless"
+    },
+    "shared_store_transactions_per_request": {
+      "value": 1.0,
+      "unit": "unitless"
+    }
+  }
+}

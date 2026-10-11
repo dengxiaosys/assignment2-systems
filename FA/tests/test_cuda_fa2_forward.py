@@ -124,6 +124,27 @@ class CudaFa2NumericalTests(unittest.TestCase):
         for causal in (False, True):
             verify_against_cpu_fp64(FORWARD, q, k, v, is_causal=causal)
 
+    def test_key_tiles_causal_diagonals_and_query_tails(self):
+        for seq_len in (8, 9, 31, 32, 33, 63, 64, 65):
+            for head_dim in (3, 33, 64, 97, 128):
+                inputs = [torch.randn(seq_len, head_dim, device=DEVICE) for _ in range(3)]
+                for causal in (False, True):
+                    with self.subTest(shape=(seq_len, head_dim), causal=causal):
+                        verify_against_cpu_fp64(FORWARD, *inputs, is_causal=causal)
+
+    def test_softmax_maximum_changes_across_tiles(self):
+        q = torch.zeros(65, 64, device=DEVICE)
+        q[:, 0] = 1
+        k = torch.zeros_like(q)
+        scores = torch.full((65,), -70.0, device=DEVICE)
+        scores[[0, 31, 32, 63, 64]] = torch.tensor(
+            [-30, 2, 40, 40, 60], device=DEVICE, dtype=scores.dtype,
+        )
+        k[:, 0] = scores * 64**0.5
+        v = torch.randn_like(q)
+        for causal in (False, True):
+            verify_against_cpu_fp64(FORWARD, q, k, v, is_causal=causal)
+
     def test_rejects_noncontiguous_inputs(self):
         q, k, v = [
             torch.randn(64, 17, device=DEVICE).T
@@ -163,7 +184,7 @@ class CudaFa2LongSequenceTests(unittest.TestCase):
         records = []
         for causal in (False, True):
             output = FORWARD(*inputs, is_causal=causal).cpu().double()
-            for qi in (0, 1, 3, 4, 8191, 16383):
+            for qi in (0, 1, 3, 4, 7, 8, 31, 32, 8191, 16383):
                 with self.subTest(causal=causal, query_index=qi):
                     expected = reference_row(*cpu_inputs, qi, causal)
                     torch.testing.assert_close(
@@ -191,7 +212,7 @@ class CudaFa2LongSequenceTests(unittest.TestCase):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
-    parser.add_argument("--impl", choices=("cuda_fa2", "cuda_fa2_v1"), default="cuda_fa2")
+    parser.add_argument("--impl", choices=("cuda_fa2", "cuda_fa2_v1", "cuda_fa2_v2"), default="cuda_fa2")
     parser.add_argument("--long-sequence", action="store_true", help="Also check sampled rows at S=16384, d=64")
     parser.add_argument("--output-json", type=Path, help="Save the optional long-sequence verification result")
     args = parser.parse_args()

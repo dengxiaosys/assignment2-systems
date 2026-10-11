@@ -22,10 +22,13 @@ PROJECT_ROOT = SOURCE_DIR.parents[1]
 
 def main() -> None:
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("--version", choices=("v0", "v1"), default="v1")
+    parser.add_argument("--version", choices=("v0", "v1", "v2"), default="v1")
     args, setup_args = parser.parse_known_args()
     sys.argv = [sys.argv[0], *setup_args]
-    module_name = "src.cuda_fa2_extension" if args.version == "v0" else "src.cuda_fa2_v1_extension"
+    module_name = (
+        "src.cuda_fa2_extension" if args.version == "v0"
+        else f"src.cuda_fa2_{args.version}_extension"
+    )
 
     os.chdir(PROJECT_ROOT)
     os.environ.setdefault("MAX_JOBS", "1")

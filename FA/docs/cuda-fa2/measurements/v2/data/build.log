@@ -1,0 +1,33 @@
+running build_ext
+/home/dengxiao/miniconda3/envs/nanovllm/lib/python3.11/site-packages/torch/utils/cpp_extension.py:448: UserWarning: The detected CUDA version (12.8) has a minor version mismatch with the version that was used to compile PyTorch (12.4). Most likely this shouldn't be a problem.
+  warnings.warn(CUDA_MISMATCH_WARN.format(cuda_str_version, torch.version.cuda))
+/home/dengxiao/miniconda3/envs/nanovllm/lib/python3.11/site-packages/torch/utils/cpp_extension.py:458: UserWarning: There are no g++ version bounds defined for CUDA version 12.8
+  warnings.warn(f'There are no {compiler_name} version bounds defined for CUDA version {cuda_str_version}')
+building 'src.cuda_fa2_v2_extension' extension
+g++ -pthread -B /home/dengxiao/miniconda3/envs/nanovllm/compiler_compat -DNDEBUG -fwrapv -O2 -Wall -fPIC -O2 -isystem /home/dengxiao/miniconda3/envs/nanovllm/include -fPIC -O2 -isystem /home/dengxiao/miniconda3/envs/nanovllm/include -fPIC -I/home/dengxiao/miniconda3/envs/nanovllm/lib/python3.11/site-packages/torch/include -I/home/dengxiao/miniconda3/envs/nanovllm/lib/python3.11/site-packages/torch/include/torch/csrc/api/include -I/home/dengxiao/miniconda3/envs/nanovllm/lib/python3.11/site-packages/torch/include/TH -I/home/dengxiao/miniconda3/envs/nanovllm/lib/python3.11/site-packages/torch/include/THC -I/usr/local/cuda-12.8/include -I/home/dengxiao/miniconda3/envs/nanovllm/include/python3.11 -c /home/dengxiao/code_repos/institutionalized/stanford_cs336/assignments/assignment2-systems/FA/cpp_cuda/fa2/common/binding.cpp -o /tmp/fa2-v2-build/temp/home/dengxiao/code_repos/institutionalized/stanford_cs336/assignments/assignment2-systems/FA/cpp_cuda/fa2/common/binding.o -O2 -DTORCH_API_INCLUDE_EXTENSION_H -DPYBIND11_COMPILER_TYPE=\"_gcc\" -DPYBIND11_STDLIB=\"_libstdcpp\" -DPYBIND11_BUILD_ABI=\"_cxxabi1011\" -DTORCH_EXTENSION_NAME=cuda_fa2_v2_extension -D_GLIBCXX_USE_CXX11_ABI=0 -std=c++17
+/usr/local/cuda-12.8/bin/nvcc -I/home/dengxiao/miniconda3/envs/nanovllm/lib/python3.11/site-packages/torch/include -I/home/dengxiao/miniconda3/envs/nanovllm/lib/python3.11/site-packages/torch/include/torch/csrc/api/include -I/home/dengxiao/miniconda3/envs/nanovllm/lib/python3.11/site-packages/torch/include/TH -I/home/dengxiao/miniconda3/envs/nanovllm/lib/python3.11/site-packages/torch/include/THC -I/usr/local/cuda-12.8/include -I/home/dengxiao/miniconda3/envs/nanovllm/include/python3.11 -c /home/dengxiao/code_repos/institutionalized/stanford_cs336/assignments/assignment2-systems/FA/cpp_cuda/fa2/v2/fa2_forward.cu -o /tmp/fa2-v2-build/temp/home/dengxiao/code_repos/institutionalized/stanford_cs336/assignments/assignment2-systems/FA/cpp_cuda/fa2/v2/fa2_forward.o -D__CUDA_NO_HALF_OPERATORS__ -D__CUDA_NO_HALF_CONVERSIONS__ -D__CUDA_NO_BFLOAT16_CONVERSIONS__ -D__CUDA_NO_HALF2_OPERATORS__ --expt-relaxed-constexpr --compiler-options '-fPIC' -O2 -lineinfo --ptxas-options=-v -DTORCH_API_INCLUDE_EXTENSION_H -DPYBIND11_COMPILER_TYPE=\"_gcc\" -DPYBIND11_STDLIB=\"_libstdcpp\" -DPYBIND11_BUILD_ABI=\"_cxxabi1011\" -DTORCH_EXTENSION_NAME=cuda_fa2_v2_extension -D_GLIBCXX_USE_CXX11_ABI=0 -gencode=arch=compute_61,code=sm_61 -std=c++17
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).
+ptxas info    : 11 bytes gmem, 88 bytes cmem[4]
+ptxas info    : Compiling entry function '_ZN47_GLOBAL__N__50a466d1_14_fa2_forward_cu_2694350723fa2_forward_fp32_kernelILi4EEEvPKfS2_S2_Pfiifb' for 'sm_61'
+ptxas info    : Function properties for _ZN47_GLOBAL__N__50a466d1_14_fa2_forward_cu_2694350723fa2_forward_fp32_kernelILi4EEEvPKfS2_S2_Pfiifb
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 32 registers, used 1 barriers, 33280 bytes smem, 365 bytes cmem[0], 32 bytes cmem[2]
+ptxas info    : Compile time = 65.530 ms
+ptxas info    : Compiling entry function '_ZN47_GLOBAL__N__50a466d1_14_fa2_forward_cu_2694350723fa2_forward_fp32_kernelILi3EEEvPKfS2_S2_Pfiifb' for 'sm_61'
+ptxas info    : Function properties for _ZN47_GLOBAL__N__50a466d1_14_fa2_forward_cu_2694350723fa2_forward_fp32_kernelILi3EEEvPKfS2_S2_Pfiifb
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 40 registers, used 1 barriers, 24960 bytes smem, 365 bytes cmem[0], 32 bytes cmem[2]
+ptxas info    : Compile time = 52.926 ms
+ptxas info    : Compiling entry function '_ZN47_GLOBAL__N__50a466d1_14_fa2_forward_cu_2694350723fa2_forward_fp32_kernelILi2EEEvPKfS2_S2_Pfiifb' for 'sm_61'
+ptxas info    : Function properties for _ZN47_GLOBAL__N__50a466d1_14_fa2_forward_cu_2694350723fa2_forward_fp32_kernelILi2EEEvPKfS2_S2_Pfiifb
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 40 registers, used 1 barriers, 16640 bytes smem, 365 bytes cmem[0], 32 bytes cmem[2]
+ptxas info    : Compile time = 39.234 ms
+ptxas info    : Compiling entry function '_ZN47_GLOBAL__N__50a466d1_14_fa2_forward_cu_2694350723fa2_forward_fp32_kernelILi1EEEvPKfS2_S2_Pfiifb' for 'sm_61'
+ptxas info    : Function properties for _ZN47_GLOBAL__N__50a466d1_14_fa2_forward_cu_2694350723fa2_forward_fp32_kernelILi1EEEvPKfS2_S2_Pfiifb
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 40 registers, used 1 barriers, 8320 bytes smem, 365 bytes cmem[0], 32 bytes cmem[2]
+ptxas info    : Compile time = 26.977 ms
+creating /tmp/fa2-v2-build/lib/src
+g++ -pthread -B /home/dengxiao/miniconda3/envs/nanovllm/compiler_compat -DNDEBUG -fwrapv -O2 -Wall -fPIC -O2 -isystem /home/dengxiao/miniconda3/envs/nanovllm/include -fPIC -O2 -isystem /home/dengxiao/miniconda3/envs/nanovllm/include -shared /tmp/fa2-v2-build/temp/home/dengxiao/code_repos/institutionalized/stanford_cs336/assignments/assignment2-systems/FA/cpp_cuda/fa2/common/binding.o /tmp/fa2-v2-build/temp/home/dengxiao/code_repos/institutionalized/stanford_cs336/assignments/assignment2-systems/FA/cpp_cuda/fa2/v2/fa2_forward.o -L/home/dengxiao/miniconda3/envs/nanovllm/lib/python3.11/site-packages/torch/lib -L/usr/local/cuda-12.8/lib64 -lc10 -ltorch -ltorch_cpu -ltorch_python -lcudart -lc10_cuda -ltorch_cuda -o /tmp/fa2-v2-build/lib/src/cuda_fa2_v2_extension.cpython-311-x86_64-linux-gnu.so
+copying /tmp/fa2-v2-build/lib/src/cuda_fa2_v2_extension.cpython-311-x86_64-linux-gnu.so -> src
