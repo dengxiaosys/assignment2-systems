@@ -145,6 +145,18 @@ class CudaFa2NumericalTests(unittest.TestCase):
         for causal in (False, True):
             verify_against_cpu_fp64(FORWARD, q, k, v, is_causal=causal)
 
+    def test_cancellation_across_accumulator_groups(self):
+        for head_dim in (3, 4, 5, 31, 33, 63, 64, 65, 127, 128):
+            q = torch.randn(33, head_dim, device=DEVICE)
+            k = torch.randn_like(q)
+            signs = 1 - 2 * (torch.arange(head_dim, device=DEVICE) % 2)
+            q *= signs
+            v = torch.randn_like(q)
+            v[1::2] = -v[::2][:16]
+            for causal in (False, True):
+                with self.subTest(head_dim=head_dim, causal=causal):
+                    verify_against_cpu_fp64(FORWARD, q, k, v, is_causal=causal)
+
     def test_rejects_noncontiguous_inputs(self):
         q, k, v = [
             torch.randn(64, 17, device=DEVICE).T
@@ -212,7 +224,10 @@ class CudaFa2LongSequenceTests(unittest.TestCase):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
-    parser.add_argument("--impl", choices=("cuda_fa2", "cuda_fa2_v1", "cuda_fa2_v2"), default="cuda_fa2")
+    parser.add_argument(
+        "--impl", choices=("cuda_fa2", "cuda_fa2_v1", "cuda_fa2_v2", "cuda_fa2_v3"),
+        default="cuda_fa2",
+    )
     parser.add_argument("--long-sequence", action="store_true", help="Also check sampled rows at S=16384, d=64")
     parser.add_argument("--output-json", type=Path, help="Save the optional long-sequence verification result")
     args = parser.parse_args()

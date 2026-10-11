@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="600" viewBox="0 0 1000 600" role="img" aria-labelledby="title desc">
+  <title id="title">V3 寄存器矩阵块与 shared 工作区复用</title>
+  <desc id="desc">四个 warp 处理 64 行。每个线程拥有四行乘四个 key 的 score，沿维度加载四个 Q 与四个 K，更新十六个 score。PV 读取四行 P 与八个 V 维度，更新三十二个输出。shared 的 K 与 P加V通过union按阶段复用。</desc>
+  <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 10 5 0 10Z" fill="#64748b"/></marker></defs>
+  <rect width="1000" height="600" rx="16" fill="#f8fafc"/>
+  <g font-family="Noto Sans CJK SC,Microsoft YaHei,sans-serif" fill="#0f172a">
+    <text x="30" y="40" font-size="24" font-weight="700">V3：64 query / CTA × 32 key / tile</text>
+    <text x="30" y="69" font-size="16" fill="#475569">4 warp、128 threads；每个 warp 处理 16 行，每 8 个 lane 协作一组行</text>
+    <rect x="30" y="93" width="455" height="175" rx="12" fill="#dbeafe" stroke="#93c5fd"/>
+    <text x="49" y="123" font-size="19" font-weight="700">QK：每线程拥有 4×4 个 score</text>
+    <text x="49" y="155" font-size="16">读取 4 行 Q 分量 + 4 个 key 的 K 分量</text>
+    <text x="49" y="182" font-size="16">外积更新 16 个独立 accumulator</text>
+    <text x="49" y="209" font-size="16">每个 Q 被 4 个 key 使用；每个 K 被 4 行使用</text>
+    <text x="49" y="245" font-size="16">每行：4 个 key / lane × 8 lane = 32 key</text>
+    <rect x="515" y="93" width="455" height="175" rx="12" fill="#dcfce7" stroke="#86efac"/>
+    <text x="534" y="123" font-size="19" font-weight="700">PV：每线程拥有 4×8 个 Z 分量</text>
+    <text x="534" y="155" font-size="16">读取 4 行概率 + 8 个输出维度的 V 分量</text>
+    <text x="534" y="182" font-size="16">外积更新 32 个输出 accumulator（d=64）</text>
+    <text x="534" y="209" font-size="16">每个 P 被 8 个维度使用；每个 V 被 4 行使用</text>
+    <text x="534" y="245" font-size="16">Q/Z 保持寄存器；输出行不跨 warp 合并</text>
+    <text x="30" y="308" font-size="20" font-weight="700">Shared union 的生命周期与四个屏障</text>
+    <g fill="#e0e7ff" stroke="#a5b4fc">
+      <rect x="30" y="327" width="190" height="99" rx="10"/>
+      <rect x="281" y="327" width="190" height="99" rx="10"/>
+      <rect x="532" y="327" width="190" height="99" rx="10"/>
+      <rect x="783" y="327" width="187" height="99" rx="10"/>
+    </g>
+    <text x="45" y="354" font-size="17" font-weight="700">加载 K [D][33]</text>
+    <text x="45" y="382" font-size="15">屏障 1：发布 K</text>
+    <text x="45" y="406" font-size="15">shared 活动成员：K</text>
+    <text x="296" y="354" font-size="17" font-weight="700">QK → softmax</text>
+    <text x="296" y="382" font-size="15">8-lane max/sum</text>
+    <text x="296" y="406" font-size="15">屏障 2：K 读者结束</text>
+    <text x="547" y="354" font-size="17" font-weight="700">覆盖为 P + V</text>
+    <text x="547" y="382" font-size="15">P [64][40] + V [32][D]</text>
+    <text x="547" y="406" font-size="15">屏障 3：发布 P/V</text>
+    <text x="798" y="354" font-size="17" font-weight="700">PV → 下一 tile</text>
+    <text x="798" y="382" font-size="15">更新私有 Z</text>
+    <text x="798" y="406" font-size="15">屏障 4：P/V 读者结束</text>
+    <path d="M226 376H273M477 376H524M728 376H775" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+    <path d="M877 432V465H126V432" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+    <text x="30" y="510" font-size="17">shared = max(K, P+V)；d=64 时为 18 KiB，避免三者同时分配。</text>
+    <text x="30" y="541" font-size="16" fill="#475569">query 尾部线程仍参加全部屏障；causal 未来概率为 0，补齐维度数据为 0。</text>
+    <text x="30" y="570" font-size="16" fill="#475569">结果复用与独立 accumulator 提高每次加载的价值；展开范围由指令体积实测决定。</text>
+  </g>
+</svg>

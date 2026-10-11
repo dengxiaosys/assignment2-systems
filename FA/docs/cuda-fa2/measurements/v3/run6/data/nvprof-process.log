@@ -1,0 +1,25 @@
+{
+  "implementation": "cuda_fa2_v3",
+  "backend": "custom_cpp_cuda_fa2_register_matrix_tiles_fp32",
+  "cuda_fa2_version": "v3",
+  "extension_module": "src.cuda_fa2_v3_extension",
+  "extension_path": "/home/dengxiao/code_repos/institutionalized/stanford_cs336/assignments/assignment2-systems/FA/src/cuda_fa2_v3_extension.cpython-311-x86_64-linux-gnu.so",
+  "extension_sha256": "016f355c6cb6f3c5f45fb1bf3550c512c9e30feb08f981dfc28fb20d9934711d",
+  "python": "/home/dengxiao/miniconda3/envs/nanovllm/bin/python",
+  "torch": "2.6.0+cu124",
+  "cuda_build": "12.4",
+  "gpu": "NVIDIA GeForce GTX 1060",
+  "compute_capability": [
+    6,
+    1
+  ],
+  "qkv_shape": [
+    16384,
+    64
+  ],
+  "dtype": "torch.float32",
+  "causal": false,
+  "warmup": 5,
+  "captured_iterations": 1
+}
+Capture finished: one forward call. Inspect the external profiler report.

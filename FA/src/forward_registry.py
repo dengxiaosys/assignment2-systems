@@ -8,6 +8,7 @@ from .cuda_fa2_forward import (
     cuda_fa2_attention_forward,
     cuda_fa2_v1_attention_forward,
     cuda_fa2_v2_attention_forward,
+    cuda_fa2_v3_attention_forward,
     validate_cuda_fa2_support,
 )
 from .input_validation import validate_attention_inputs
@@ -24,6 +25,7 @@ IMPLEMENTATION_BACKENDS = {
     "cuda_fa2": "custom_cpp_cuda_fa2_baseline_fp32",
     "cuda_fa2_v1": "custom_cpp_cuda_fa2_warp_query_fp32",
     "cuda_fa2_v2": "custom_cpp_cuda_fa2_shared_tile_fp32",
+    "cuda_fa2_v3": "custom_cpp_cuda_fa2_register_matrix_tiles_fp32",
 }
 
 
@@ -39,6 +41,8 @@ def get_attention_forward(implementation: str) -> Callable[..., torch.Tensor]:
         return cuda_fa2_v1_attention_forward
     elif implementation == "cuda_fa2_v2":
         return cuda_fa2_v2_attention_forward
+    elif implementation == "cuda_fa2_v3":
+        return cuda_fa2_v3_attention_forward
     else:
         raise ValueError(
             f"Unknown implementation {implementation!r}; "
@@ -72,7 +76,7 @@ def validate_implementation(
             v,
             is_causal=is_causal,
         )
-    elif implementation in ("cuda_fa2_v1", "cuda_fa2_v2"):
+    elif implementation in ("cuda_fa2_v1", "cuda_fa2_v2", "cuda_fa2_v3"):
         validate_cuda_fa2_support(
             q, k, v, is_causal=is_causal, version=implementation.removeprefix("cuda_fa2_"),
         )

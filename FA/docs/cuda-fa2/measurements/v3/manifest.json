@@ -1,0 +1,1049 @@
+{
+  "measurement_id": "V3",
+  "measurement_date": "2026-10-12",
+  "parent_measurement": "V2",
+  "working_head": "807cf8ebd2aa0d3740de5b014eedd368e7e5f6f9",
+  "development_source": "../../../../cpp_cuda/fa2/v3/fa2_forward.cu",
+  "core_source_snapshot": "snapshot/fa2_forward.cu",
+  "core_source_sha256": "96537becdf02cff3f624a62b3d6cea395eb8793766e09ff0bc16b5215d14bc27",
+  "snapshot_policy": {
+    "core_source_only": true,
+    "binary": "binaries/",
+    "shared_files": "Workspace references and hashes; no copied binding, build, Python or tests.",
+    "derived_exports": "Resource/SASS dumps regenerated from archived binary; counters summaries parsed from raw CSV and stored in this manifest.",
+    "identical_content": "Byte-identical snapshots and validation logs are stored once and referenced by every applicable run; distinct measured binaries and profiler reports remain archived."
+  },
+  "measured_binary": {
+    "module": "src.cuda_fa2_v3_extension",
+    "runtime_path_relative_to_fa": "src/cuda_fa2_v3_extension.cpython-311-x86_64-linux-gnu.so",
+    "archive_path": "binaries/cuda_fa2_v3_extension.cpython-311-x86_64-linux-gnu.so",
+    "sha256": "686ee2a7b5e2a04906728bb22bafb4faa782f70ea96a2e40ce3db040ff4525f3",
+    "size_bytes": 652936,
+    "architecture": "sm_61"
+  },
+  "parent_binary": {
+    "module": "src.cuda_fa2_v2_extension",
+    "sha256": "69f273550022c1e699e9c12c8b226494e8cca96d4c58df1299d024692b3f2e32",
+    "archive_path": "../v2/binaries/cuda_fa2_v2_extension.cpython-311-x86_64-linux-gnu.so",
+    "rerun": false
+  },
+  "environment": {
+    "gpu": "NVIDIA GeForce GTX 1060",
+    "compute_capability": [
+      6,
+      1
+    ],
+    "sm_count": 10,
+    "driver": "570.211.01",
+    "torch": "2.6.0+cu124",
+    "torch_cuda_build": "12.4",
+    "nvcc": "12.8.93",
+    "nvprof": "12.8.90 (21)",
+    "gxx": "13.3.0",
+    "compute_sanitizer": "2025.1.0.0",
+    "cpu_threads": 1,
+    "max_build_jobs": 1,
+    "execution_identity": "sudo",
+    "concurrent_gpu_runs": false,
+    "clock_policy": "Dynamic clocks; no clock or power changes.",
+    "device_attributes": {
+      "max_shared_per_block": 49152,
+      "max_shared_per_sm": 98304,
+      "max_regs_per_sm": 65536,
+      "max_threads_per_sm": 2048
+    },
+    "note": "GPU child processes run under authorized sudo because ordinary sandboxed CUDA initialization fails."
+  },
+  "build": {
+    "command": "sudo env -u LD_LIBRARY_PATH -u LD_PRELOAD -u PYTHONPATH -u PYTHONHOME PATH=/usr/local/cuda-12.8/bin:/usr/bin:/bin TORCH_CUDA_ARCH_LIST=6.1 MAX_JOBS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 /home/dengxiao/miniconda3/envs/nanovllm/bin/python -E -s -B cpp_cuda/fa2/build_extension.py --version v3 build_ext --inplace --force --build-temp /tmp/fa2-v3-build/temp --build-lib /tmp/fa2-v3-build/lib",
+    "cxx_flags": [
+      "-O2"
+    ],
+    "nvcc_flags": [
+      "-O2",
+      "-lineinfo",
+      "--ptxas-options=-v"
+    ],
+    "fast_math": false,
+    "log": "data/build.log"
+  },
+  "kernel": {
+    "queries_per_cta": 64,
+    "warps_per_cta": 4,
+    "threads_per_cta": 128,
+    "keys_per_tile": 32,
+    "lanes_per_row": 8,
+    "rows_per_thread": 4,
+    "scores_per_thread": 16,
+    "main_output_accumulators_per_thread": 32,
+    "key_stride": 33,
+    "probability_stride": 40,
+    "grid_for_main_shape": [
+      256,
+      1,
+      1
+    ],
+    "head_dim_supported": [
+      1,
+      128
+    ],
+    "unroll_policy": "QK register-slot outer loop unrolled; inner 8 dimension lanes rolled. PV key loop rolled; micro matrix inner loops unrolled.",
+    "compiled_resources": [
+      {
+        "dims_per_lane": 1,
+        "REG": 96,
+        "STACK": 0,
+        "SHARED": 14336,
+        "LOCAL": 0
+      },
+      {
+        "dims_per_lane": 2,
+        "REG": 128,
+        "STACK": 0,
+        "SHARED": 18432,
+        "LOCAL": 0
+      },
+      {
+        "dims_per_lane": 3,
+        "REG": 168,
+        "STACK": 0,
+        "SHARED": 22528,
+        "LOCAL": 0
+      },
+      {
+        "dims_per_lane": 4,
+        "REG": 200,
+        "STACK": 0,
+        "SHARED": 26624,
+        "LOCAL": 0
+      }
+    ],
+    "sass_counts": [
+      {
+        "dims_per_lane": 1,
+        "BAR.SYNC": 4,
+        "MEMBAR.CTA": 4,
+        "SHFL": 40,
+        "LDS": 24,
+        "STS": 30,
+        "MUFU": 38,
+        "FFMA": 256
+      },
+      {
+        "dims_per_lane": 2,
+        "BAR.SYNC": 4,
+        "MEMBAR.CTA": 4,
+        "SHFL": 56,
+        "LDS": 44,
+        "STS": 30,
+        "MUFU": 54,
+        "FFMA": 416
+      },
+      {
+        "dims_per_lane": 3,
+        "BAR.SYNC": 4,
+        "MEMBAR.CTA": 4,
+        "SHFL": 72,
+        "LDS": 64,
+        "STS": 30,
+        "MUFU": 70,
+        "FFMA": 576
+      },
+      {
+        "dims_per_lane": 4,
+        "BAR.SYNC": 4,
+        "MEMBAR.CTA": 4,
+        "SHFL": 88,
+        "LDS": 84,
+        "STS": 30,
+        "MUFU": 86,
+        "FFMA": 736
+      }
+    ],
+    "spill_stores_bytes": 0,
+    "spill_loads_bytes": 0
+  },
+  "correctness": {
+    "cuda_tests": {
+      "count": 13,
+      "passed": true,
+      "log": "data/cuda-validation.log"
+    },
+    "registry_tests": {
+      "count": 5,
+      "passed": true,
+      "log": "data/registry-validation.log"
+    },
+    "rtol": 2e-05,
+    "atol": 2e-05,
+    "all_supported_head_dims_tested": true,
+    "large_sequence_sampled_rows": [
+      0,
+      1,
+      3,
+      4,
+      7,
+      8,
+      31,
+      32,
+      8191,
+      16383
+    ],
+    "large_sequence_causal_modes": [
+      false,
+      true
+    ],
+    "large_sequence_all_rows_verified": false,
+    "large_sequence_max_abs_error": 2.3379741453943836e-07,
+    "large_sequence_data": "data/row-validation.json",
+    "sanitizer_scope": "12 regular tests; no long-sequence sanitizer run",
+    "sanitizer": {
+      "memcheck": {
+        "exit_code": 0,
+        "errors": 0,
+        "log": "data/memcheck.log"
+      },
+      "synccheck": {
+        "exit_code": 0,
+        "errors": 0,
+        "log": "data/synccheck.log"
+      },
+      "racecheck": {
+        "exit_code": 0,
+        "errors": 0,
+        "log": "data/racecheck.log"
+      }
+    }
+  },
+  "benchmark": {
+    "shape": [
+      16384,
+      64
+    ],
+    "dtype": "float32",
+    "causal_for_version_comparison": false,
+    "seed": 0,
+    "tf32": false,
+    "cpu_threads": 1,
+    "warmup": 5,
+    "iterations_per_repeat": 20,
+    "repeats": 5,
+    "records": {
+      "v3": "data/benchmark-custom.json",
+      "v3_causal": "data/benchmark-custom-causal.json",
+      "efficient": "data/benchmark-efficient.json",
+      "v2": "../v2/data/benchmark-custom.json",
+      "v2_causal": "../v2/data/benchmark-custom-causal.json",
+      "v0": "../v0/data/evidence.json"
+    },
+    "cuda_event_mean_ms": {
+      "v3": 47.4592822265625,
+      "v3_causal": 25.76015563964844,
+      "efficient": 36.171397094726565,
+      "v2": 143.56043212890626,
+      "v2_causal": 73.50832153320313,
+      "v0": 2922.2971875
+    },
+    "v2_over_v3": 3.024917895799041,
+    "v2_causal_over_v3_causal": 2.8535666694522477,
+    "v0_over_v3": 61.57482899866569,
+    "v3_over_efficient": 1.3120666061715818,
+    "parent_baselines_rerun": false
+  },
+  "profile": {
+    "shape": [
+      16384,
+      64
+    ],
+    "causal": false,
+    "warmup": 5,
+    "captured_forward_calls": 1,
+    "metric_count": 29,
+    "aggregate_mode": "on",
+    "kernel_replay_for_counters": true,
+    "counter_overflows": [],
+    "counters": "data/nvprof-custom-s16384-d64.csv",
+    "metrics": {
+      "achieved_occupancy": {"value": 0.234428, "unit": "unitless"},
+      "sm_efficiency": {"value": 98.813071, "unit": "%"},
+      "warp_execution_efficiency": {"value": 100.0, "unit": "%"},
+      "warp_nonpred_execution_efficiency": {"value": 99.257603, "unit": "%"},
+      "eligible_warps_per_cycle": {"value": 4.630517, "unit": "unitless"},
+      "issue_slot_utilization": {"value": 68.346762, "unit": "%"},
+      "stall_sync": {"value": 3.932961, "unit": "%"},
+      "stall_memory_dependency": {"value": 5.32874, "unit": "%"},
+      "stall_exec_dependency": {"value": 58.416421, "unit": "%"},
+      "stall_other": {"value": 3.497985, "unit": "%"},
+      "stall_not_selected": {"value": 15.765509, "unit": "%"},
+      "stall_inst_fetch": {"value": 9.165196, "unit": "%"},
+      "stall_pipe_busy": {"value": 3.884894, "unit": "%"},
+      "stall_texture": {"value": 0.001586, "unit": "%"},
+      "stall_memory_throttle": {"value": 0.002101, "unit": "%"},
+      "stall_constant_memory_dependency": {"value": 0.004608, "unit": "%"},
+      "dram_read_throughput": {"value": 1.233688, "unit": "GB/s"},
+      "dram_write_throughput": {"value": 90.5927, "unit": "MB/s"},
+      "l2_read_throughput": {"value": 22.016892, "unit": "GB/s"},
+      "l2_write_throughput": {"value": 165.900725, "unit": "MB/s"},
+      "l2_tex_read_hit_rate": {"value": 94.373226, "unit": "%"},
+      "dram_read_transactions": {"value": 1996852.0, "unit": "unitless"},
+      "l2_read_transactions": {"value": 35636635.0, "unit": "unitless"},
+      "gld_efficiency": {"value": 100.0, "unit": "%"},
+      "gst_efficiency": {"value": 50.0, "unit": "%"},
+      "shared_load_throughput": {"value": 829.218939, "unit": "GB/s"},
+      "shared_store_throughput": {"value": 62.19142, "unit": "GB/s"},
+      "shared_load_transactions_per_request": {"value": 1.0, "unit": "unitless"},
+      "shared_store_transactions_per_request": {"value": 1.0, "unit": "unitless"}
+    },
+    "process_identity": "data/nvprof-process.log",
+    "process_note": "Counter/timeline process identity output is identical; one copy retained.",
+    "timeline": "data/nvprof-timeline.csv",
+    "timeline_report": "profiles/forward.nvvp",
+    "timeline_kernel_ms": 47.572188
+  },
+  "efficient_reference": {
+    "library_path": "/home/dengxiao/miniconda3/envs/nanovllm/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so",
+    "library_sha256": "136a5e4be2aee6e17a38179aeff229f4e0d87c2e43d8ca58e87183df4be73667",
+    "library_size_bytes": 902652937,
+    "kernel": "fmha_cutlassF_f32_aligned_64x64_rf_sm50",
+    "symbol": "_Z39fmha_cutlassF_f32_aligned_64x64_rf_sm50N22PyTorchMemEffAttention15AttentionKernelIfN7cutlass4arch4Sm50ELb1ELi64ELi64ELi64ELb1ELb1EE6ParamsE",
+    "architecture": "sm_50",
+    "grid": [
+      256,
+      1,
+      1
+    ],
+    "block": [
+      32,
+      4,
+      1
+    ],
+    "queries_per_cta": 64,
+    "keys_per_tile": 64,
+    "registers_per_thread": 168,
+    "static_shared_bytes": 0,
+    "dynamic_shared_bytes": 22016,
+    "STACK": 0,
+    "LOCAL": 0,
+    "sass_counts": {
+      "BAR.SYNC": 31,
+      "MEMBAR.CTA": 31,
+      "SHFL": 25,
+      "LDS": 151,
+      "STS": 97,
+      "MUFU": 60,
+      "FFMA": 583
+    },
+    "timeline": "efficient-reference/timeline.csv",
+    "timeline_kernel_ms": 39.597281,
+    "counters": "efficient-reference/counters.csv",
+    "metrics": {
+      "achieved_occupancy": {"value": 0.186268, "unit": "unitless"},
+      "sm_efficiency": {"value": 95.431623, "unit": "%"},
+      "warp_execution_efficiency": {"value": 99.573523, "unit": "%"},
+      "warp_nonpred_execution_efficiency": {"value": 97.896062, "unit": "%"},
+      "eligible_warps_per_cycle": {"value": 4.324108, "unit": "unitless"},
+      "issue_slot_utilization": {"value": 66.997537, "unit": "%"},
+      "stall_sync": {"value": 23.071899, "unit": "%"},
+      "stall_memory_dependency": {"value": 0.827313, "unit": "%"},
+      "stall_exec_dependency": {"value": 37.372316, "unit": "%"},
+      "stall_other": {"value": 4.272451, "unit": "%"},
+      "stall_not_selected": {"value": 17.85669, "unit": "%"},
+      "stall_inst_fetch": {"value": 12.554382, "unit": "%"},
+      "stall_pipe_busy": {"value": 4.033112, "unit": "%"},
+      "stall_texture": {"value": 0.000001, "unit": "%"},
+      "stall_memory_throttle": {"value": 0.000035, "unit": "%"},
+      "stall_constant_memory_dependency": {"value": 0.011802, "unit": "%"},
+      "dram_read_throughput": {"value": 6.665775, "unit": "GB/s"},
+      "dram_write_throughput": {"value": 109.955744, "unit": "MB/s"},
+      "l2_read_throughput": {"value": 82.461766, "unit": "GB/s"},
+      "l2_write_throughput": {"value": 109.9482, "unit": "MB/s"},
+      "l2_tex_read_hit_rate": {"value": 95.357283, "unit": "%"},
+      "dram_read_transactions": {"value": 8142739.0, "unit": "unitless"},
+      "l2_read_transactions": {"value": 100733168.0, "unit": "unitless"},
+      "gld_efficiency": {"value": 100.0, "unit": "%"},
+      "gst_efficiency": {"value": 100.0, "unit": "%"},
+      "shared_load_throughput": {"value": 961.27171, "unit": "GB/s"},
+      "shared_store_throughput": {"value": 382.001002, "unit": "GB/s"},
+      "shared_load_transactions_per_request": {"value": 2.796997, "unit": "unitless"},
+      "shared_store_transactions_per_request": {"value": 3.435517, "unit": "unitless"}
+    },
+    "process": "efficient-reference/process.log",
+    "source_tag": "pytorch v2.6.0",
+    "source_urls": [
+      "https://github.com/pytorch/pytorch/blob/v2.6.0/aten/src/ATen/native/transformers/cuda/mem_eff_attention/kernel_forward.h",
+      "https://github.com/pytorch/pytorch/blob/v2.6.0/aten/src/ATen/native/transformers/cuda/mem_eff_attention/gemm_kernel_utils.h"
+    ]
+  },
+  "exploratory_runs": [
+    {
+      "run": "run1",
+      "description": "Four independent QK/PV partial accumulators; dimension predicates retained.",
+      "core_source": "run1/snapshot/fa2_forward.cu",
+      "core_source_sha256": "614e34b40da09acc831cf771fc91aad5a6062eed85a85a637995e3b392c1e619",
+      "successful_build": true,
+      "build_log": "run1/data/build.log",
+      "binary": {
+        "archive_path": "run1/binaries/cuda_fa2_v3_extension.cpython-311-x86_64-linux-gnu.so",
+        "sha256": "50fcb717d7d9fe4c5c846233540f2aeae7b860b80e7fdcfe0d52ed044cc9a357",
+        "size_bytes": 517776
+      },
+      "compiled_resources": [
+        {
+          "dims_per_lane": 1,
+          "REG": 40,
+          "STACK": 0,
+          "SHARED": 8320,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 2,
+          "REG": 48,
+          "STACK": 0,
+          "SHARED": 16640,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 3,
+          "REG": 55,
+          "STACK": 0,
+          "SHARED": 24960,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 4,
+          "REG": 56,
+          "STACK": 0,
+          "SHARED": 33280,
+          "LOCAL": 0
+        }
+      ],
+      "sass_counts": [
+        {
+          "dims_per_lane": 1,
+          "BAR.SYNC": 2,
+          "MEMBAR.CTA": 2,
+          "SHFL": 75,
+          "LDS": 64,
+          "STS": 14,
+          "MUFU": 5,
+          "FFMA": 91
+        },
+        {
+          "dims_per_lane": 2,
+          "BAR.SYNC": 2,
+          "MEMBAR.CTA": 2,
+          "SHFL": 107,
+          "LDS": 128,
+          "STS": 14,
+          "MUFU": 6,
+          "FFMA": 161
+        },
+        {
+          "dims_per_lane": 3,
+          "BAR.SYNC": 2,
+          "MEMBAR.CTA": 2,
+          "SHFL": 139,
+          "LDS": 192,
+          "STS": 14,
+          "MUFU": 7,
+          "FFMA": 231
+        },
+        {
+          "dims_per_lane": 4,
+          "BAR.SYNC": 2,
+          "MEMBAR.CTA": 2,
+          "SHFL": 171,
+          "LDS": 256,
+          "STS": 14,
+          "MUFU": 8,
+          "FFMA": 301
+        }
+      ],
+      "benchmark_records": {
+        "benchmark-custom-causal": {
+          "path": "run1/data/benchmark-custom-causal.json",
+          "cuda_event_mean_ms": 72.93092041015625
+        },
+        "benchmark-custom": {
+          "path": "run1/data/benchmark-custom.json",
+          "cuda_event_mean_ms": 141.22361816406251
+        },
+        "benchmark-efficient": {
+          "path": "run1/data/benchmark-efficient.json",
+          "cuda_event_mean_ms": 36.764951171875
+        }
+      },
+      "validation_logs": [
+        "data/registry-validation.log",
+        "run1/data/cuda-validation.log"
+      ],
+      "sanitizer_logs": {
+        "memcheck": "run1/data/memcheck.log",
+        "synccheck": "run1/data/synccheck.log",
+        "racecheck": "run1/data/racecheck.log"
+      },
+      "counters": "run1/data/nvprof-custom-s16384-d64.csv"
+    },
+    {
+      "run": "run2",
+      "description": "Four partial accumulators, grouped operands, zero-padded dimension computation.",
+      "core_source": "run2/snapshot/fa2_forward.cu",
+      "core_source_sha256": "aad9c6b54689fa1c9f694854073826db26dcadd1d23b54cb064fd5f0ebe086ef",
+      "successful_build": true,
+      "build_log": "run2/data/build.log",
+      "binary": {
+        "archive_path": "run2/binaries/cuda_fa2_v3_extension.cpython-311-x86_64-linux-gnu.so",
+        "sha256": "c0cfde102b844c665b3c970ded11050d6bd6acb9bb8f7becb29d89e63ccef989",
+        "size_bytes": 460432
+      },
+      "compiled_resources": [
+        {
+          "dims_per_lane": 1,
+          "REG": 40,
+          "STACK": 0,
+          "SHARED": 8320,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 2,
+          "REG": 48,
+          "STACK": 0,
+          "SHARED": 16640,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 3,
+          "REG": 56,
+          "STACK": 0,
+          "SHARED": 24960,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 4,
+          "REG": 56,
+          "STACK": 0,
+          "SHARED": 33280,
+          "LOCAL": 0
+        }
+      ],
+      "sass_counts": [
+        {
+          "dims_per_lane": 1,
+          "BAR.SYNC": 2,
+          "MEMBAR.CTA": 2,
+          "SHFL": 75,
+          "LDS": 64,
+          "STS": 14,
+          "MUFU": 5,
+          "FFMA": 91
+        },
+        {
+          "dims_per_lane": 2,
+          "BAR.SYNC": 2,
+          "MEMBAR.CTA": 2,
+          "SHFL": 107,
+          "LDS": 128,
+          "STS": 14,
+          "MUFU": 6,
+          "FFMA": 161
+        },
+        {
+          "dims_per_lane": 3,
+          "BAR.SYNC": 2,
+          "MEMBAR.CTA": 2,
+          "SHFL": 139,
+          "LDS": 192,
+          "STS": 14,
+          "MUFU": 7,
+          "FFMA": 231
+        },
+        {
+          "dims_per_lane": 4,
+          "BAR.SYNC": 2,
+          "MEMBAR.CTA": 2,
+          "SHFL": 171,
+          "LDS": 256,
+          "STS": 14,
+          "MUFU": 8,
+          "FFMA": 301
+        }
+      ],
+      "benchmark_records": {
+        "benchmark-confirmation": {
+          "path": "run2/data/benchmark-confirmation.json",
+          "cuda_event_mean_ms": 138.13391845703126
+        },
+        "benchmark-custom-causal": {
+          "path": "run2/data/benchmark-custom-causal.json",
+          "cuda_event_mean_ms": 71.46503295898438
+        },
+        "benchmark-custom": {
+          "path": "run2/data/benchmark-custom.json",
+          "cuda_event_mean_ms": 138.0683349609375
+        },
+        "benchmark-efficient": {
+          "path": "run2/data/benchmark-efficient.json",
+          "cuda_event_mean_ms": 36.704313354492186
+        }
+      },
+      "validation_logs": [
+        "data/registry-validation.log",
+        "run2/data/cuda-validation.log"
+      ],
+      "sanitizer_logs": {
+        "memcheck": "run2/data/memcheck.log",
+        "synccheck": "run2/data/synccheck.log",
+        "racecheck": "run2/data/racecheck.log"
+      },
+      "counters": "run2/data/nvprof-custom-s16384-d64.csv"
+    },
+    {
+      "run": "run3",
+      "description": "64-query register matrix tile, fully unrolled QK/PV; first measured trial.",
+      "core_source": "run6/snapshot/fa2_forward.cu",
+      "core_source_note": "The measured core source is byte-identical to run6; retain one snapshot while keeping each run's distinct binary.",
+      "core_source_sha256": "955ee068b89678ee1c79eaf410333600c24e1ed9bedeef7bc924b9ce6c61148c",
+      "successful_build": true,
+      "build_log": "run3/data/build.log",
+      "binary": {
+        "archive_path": "run3/binaries/cuda_fa2_v3_extension.cpython-311-x86_64-linux-gnu.so",
+        "sha256": "a560efc937ac2257781fb5bd7eb8c787a6412c29f511d0f023164dad16c79c5b",
+        "size_bytes": 1513096
+      },
+      "compiled_resources": [
+        {
+          "dims_per_lane": 1,
+          "REG": 128,
+          "STACK": 0,
+          "SHARED": 14336,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 2,
+          "REG": 168,
+          "STACK": 0,
+          "SHARED": 18432,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 3,
+          "REG": 190,
+          "STACK": 0,
+          "SHARED": 22528,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 4,
+          "REG": 255,
+          "STACK": 0,
+          "SHARED": 26624,
+          "LOCAL": 0
+        }
+      ],
+      "sass_counts": [
+        {
+          "dims_per_lane": 1,
+          "BAR.SYNC": 4,
+          "MEMBAR.CTA": 4,
+          "SHFL": 152,
+          "LDS": 288,
+          "STS": 30,
+          "MUFU": 38,
+          "FFMA": 1200
+        },
+        {
+          "dims_per_lane": 2,
+          "BAR.SYNC": 4,
+          "MEMBAR.CTA": 4,
+          "SHFL": 280,
+          "LDS": 544,
+          "STS": 30,
+          "MUFU": 54,
+          "FFMA": 2304
+        },
+        {
+          "dims_per_lane": 3,
+          "BAR.SYNC": 4,
+          "MEMBAR.CTA": 4,
+          "SHFL": 408,
+          "LDS": 800,
+          "STS": 30,
+          "MUFU": 70,
+          "FFMA": 3408
+        },
+        {
+          "dims_per_lane": 4,
+          "BAR.SYNC": 4,
+          "MEMBAR.CTA": 4,
+          "SHFL": 536,
+          "LDS": 1056,
+          "STS": 30,
+          "MUFU": 86,
+          "FFMA": 4512
+        }
+      ],
+      "benchmark_records": {
+        "benchmark-custom": {
+          "path": "run3/data/benchmark-custom.json",
+          "cuda_event_mean_ms": 83.61509399414062
+        }
+      },
+      "validation_logs": [
+        "run3/data/cuda-validation.log"
+      ]
+    },
+    {
+      "run": "run4",
+      "description": "64-key matrix tile; compile failed because R=4 uses 51200 B shared above 49152 B limit.",
+      "core_source": "run4/snapshot/fa2_forward.cu",
+      "core_source_sha256": "8abd4d64cce2a3ccc61df8fa40c06905950526a1957fb55d1b54d4e51803e2bd",
+      "successful_build": false,
+      "build_log": "run4/data/build.log",
+      "compile_error": "uses too much shared data (0xc800 bytes, 0xc000 max)",
+      "benchmark_performed": false,
+      "benchmark_records": {},
+      "validation_logs": []
+    },
+    {
+      "run": "run5",
+      "description": "Fully unrolled matrix tile with exp2f and base-2 scaling; occupancy regression.",
+      "core_source": "run5/snapshot/fa2_forward.cu",
+      "core_source_sha256": "6a172a806f982a45839f278b7b492c0c4f5e856e7a8473929e11a27398d6843b",
+      "successful_build": true,
+      "build_log": "run5/data/build.log",
+      "binary": {
+        "archive_path": "run5/binaries/cuda_fa2_v3_extension.cpython-311-x86_64-linux-gnu.so",
+        "sha256": "ecd9f57b8bcf6450ac4d1b566704d6545e3670fb9844b21bbc0498a84f0056b6",
+        "size_bytes": 1468040
+      },
+      "compiled_resources": [
+        {
+          "dims_per_lane": 1,
+          "REG": 128,
+          "STACK": 0,
+          "SHARED": 14336,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 2,
+          "REG": 178,
+          "STACK": 0,
+          "SHARED": 18432,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 3,
+          "REG": 195,
+          "STACK": 0,
+          "SHARED": 22528,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 4,
+          "REG": 255,
+          "STACK": 0,
+          "SHARED": 26624,
+          "LOCAL": 0
+        }
+      ],
+      "sass_counts": [
+        {
+          "dims_per_lane": 1,
+          "BAR.SYNC": 4,
+          "MEMBAR.CTA": 4,
+          "SHFL": 152,
+          "LDS": 288,
+          "STS": 30,
+          "MUFU": 38,
+          "FFMA": 1120
+        },
+        {
+          "dims_per_lane": 2,
+          "BAR.SYNC": 4,
+          "MEMBAR.CTA": 4,
+          "SHFL": 280,
+          "LDS": 544,
+          "STS": 30,
+          "MUFU": 54,
+          "FFMA": 2224
+        },
+        {
+          "dims_per_lane": 3,
+          "BAR.SYNC": 4,
+          "MEMBAR.CTA": 4,
+          "SHFL": 408,
+          "LDS": 800,
+          "STS": 30,
+          "MUFU": 70,
+          "FFMA": 3328
+        },
+        {
+          "dims_per_lane": 4,
+          "BAR.SYNC": 4,
+          "MEMBAR.CTA": 4,
+          "SHFL": 536,
+          "LDS": 1056,
+          "STS": 30,
+          "MUFU": 86,
+          "FFMA": 4432
+        }
+      ],
+      "benchmark_records": {
+        "benchmark-custom-causal": {
+          "path": "run5/data/benchmark-custom-causal.json",
+          "cuda_event_mean_ms": 61.068876953125
+        },
+        "benchmark-custom": {
+          "path": "run5/data/benchmark-custom.json",
+          "cuda_event_mean_ms": 118.41272705078126
+        },
+        "benchmark-efficient": {
+          "path": "run5/data/benchmark-efficient.json",
+          "cuda_event_mean_ms": 36.42876525878906
+        }
+      },
+      "validation_logs": [
+        "data/registry-validation.log",
+        "run5/data/cuda-validation.log"
+      ],
+      "sanitizer_logs": {
+        "memcheck": "run5/data/memcheck.log",
+        "synccheck": "run5/data/synccheck.log",
+        "racecheck": "run5/data/racecheck.log"
+      },
+      "counters": "run5/data/nvprof-custom-s16384-d64.csv"
+    },
+    {
+      "run": "run6",
+      "description": "Fully unrolled expf matrix tile remeasurement; instruction-fetch stall led to controlled unrolling.",
+      "core_source": "run6/snapshot/fa2_forward.cu",
+      "core_source_sha256": "955ee068b89678ee1c79eaf410333600c24e1ed9bedeef7bc924b9ce6c61148c",
+      "successful_build": true,
+      "build_log": "run6/data/build.log",
+      "binary": {
+        "archive_path": "run6/binaries/cuda_fa2_v3_extension.cpython-311-x86_64-linux-gnu.so",
+        "sha256": "016f355c6cb6f3c5f45fb1bf3550c512c9e30feb08f981dfc28fb20d9934711d",
+        "size_bytes": 1513096
+      },
+      "compiled_resources": [
+        {
+          "dims_per_lane": 1,
+          "REG": 128,
+          "STACK": 0,
+          "SHARED": 14336,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 2,
+          "REG": 168,
+          "STACK": 0,
+          "SHARED": 18432,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 3,
+          "REG": 190,
+          "STACK": 0,
+          "SHARED": 22528,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 4,
+          "REG": 255,
+          "STACK": 0,
+          "SHARED": 26624,
+          "LOCAL": 0
+        }
+      ],
+      "sass_counts": [
+        {
+          "dims_per_lane": 1,
+          "BAR.SYNC": 4,
+          "MEMBAR.CTA": 4,
+          "SHFL": 152,
+          "LDS": 288,
+          "STS": 30,
+          "MUFU": 38,
+          "FFMA": 1200
+        },
+        {
+          "dims_per_lane": 2,
+          "BAR.SYNC": 4,
+          "MEMBAR.CTA": 4,
+          "SHFL": 280,
+          "LDS": 544,
+          "STS": 30,
+          "MUFU": 54,
+          "FFMA": 2304
+        },
+        {
+          "dims_per_lane": 3,
+          "BAR.SYNC": 4,
+          "MEMBAR.CTA": 4,
+          "SHFL": 408,
+          "LDS": 800,
+          "STS": 30,
+          "MUFU": 70,
+          "FFMA": 3408
+        },
+        {
+          "dims_per_lane": 4,
+          "BAR.SYNC": 4,
+          "MEMBAR.CTA": 4,
+          "SHFL": 536,
+          "LDS": 1056,
+          "STS": 30,
+          "MUFU": 86,
+          "FFMA": 4512
+        }
+      ],
+      "benchmark_records": {
+        "benchmark-custom-causal": {
+          "path": "run6/data/benchmark-custom-causal.json",
+          "cuda_event_mean_ms": 44.1118115234375
+        },
+        "benchmark-custom": {
+          "path": "run6/data/benchmark-custom.json",
+          "cuda_event_mean_ms": 83.954296875
+        },
+        "benchmark-efficient": {
+          "path": "run6/data/benchmark-efficient.json",
+          "cuda_event_mean_ms": 36.51119140625
+        }
+      },
+      "validation_logs": [
+        "data/registry-validation.log",
+        "run6/data/cuda-validation.log"
+      ],
+      "sanitizer_logs": {
+        "memcheck": "run5/data/memcheck.log",
+        "synccheck": "run6/data/synccheck.log",
+        "racecheck": "run6/data/racecheck.log"
+      },
+      "sanitizer_note": "The run6 memcheck output is byte-identical to run5; both invocations passed and share one archived log.",
+      "counters": "run6/data/nvprof-custom-s16384-d64.csv"
+    }
+  ],
+  "workspace_references": {
+    "binding": "../../../../cpp_cuda/fa2/common/binding.cpp",
+    "build": "../../../../cpp_cuda/fa2/build_extension.py",
+    "wrapper": "../../../../src/cuda_fa2_forward.py",
+    "registry": "../../../../src/forward_registry.py",
+    "benchmark": "../../../../scripts/benchmark_attention.py",
+    "profile": "../../../../scripts/profile_attention.py",
+    "tests": "../../../../tests/test_cuda_fa2_forward.py",
+    "registry_tests": "../../../../tests/test_forward_registry.py"
+  },
+  "workspace_sha256": {
+    "binding": "91d91b53e4acd1864bcdb0f4d43dbd8817c2a15b7dbfc1ef482595fd352ecb68",
+    "build": "7bf528462958c4c12f4bcfa4eff6eb70dce80d9ac5062a78727936e506ac6392",
+    "wrapper": "715ce27524a5ac8de0c0eddad38b18df47f4fc23b9b9140f57547566aa58fd03",
+    "registry": "45558d7ca0d30c7f16a774e5352eb1cdbd03ebdb7e2b5b5ebdfad84705162c3b",
+    "benchmark": "857d7567494234ea7790b2e5c3152f9a7868639391ccec91d81e133bc99ee578",
+    "profile": "7cd1e8fc85cd76d1f33b67062e859d047f2a14e7c06896ca214c3c7cdd7e0782",
+    "tests": "ad83c2c0fd17d508afcfbc4a36cffde8bef22392421c04b90cef2470087d3a60",
+    "registry_tests": "2a7e984baf9857138cb018028cf105c5502d31b7db1293adb0ae23d4617090d8"
+  },
+  "limits": [
+    "V0/V1/V2 timing and counters are historical references; clocks, temperature and replay conditions may differ.",
+    "V3 combines register tiles, CTA grouping, shared lifetime reuse and controlled unrolling; no single-cycle causal decomposition.",
+    "Long shape FP64 checks cover twenty row/mask results, not every row.",
+    "Finite scores/V and no FP32 intermediate overflow; non-finite input semantics not extended.",
+    "Static SASS locations are not dynamic instruction counts; throughput and stall percentages cannot be multiplied by independent benchmark time.",
+    "Performance measurements target S=16384,d=64; no all-shape speedup guarantee.",
+    "Exploratory run4 failed compilation and has no measured binary or benchmark."
+  ],
+  "files_sha256": {
+    "assets/register-matrix-tiles.svg": "275d3b1d8bad023f48aaea841bcd5724a3e2929b2aa334dadfba91ac4c91dad9",
+    "binaries/cuda_fa2_v3_extension.cpython-311-x86_64-linux-gnu.so": "686ee2a7b5e2a04906728bb22bafb4faa782f70ea96a2e40ce3db040ff4525f3",
+    "build-and-run.md": "aa2e801b583ef007cda6e9353c8fb79b76ef9ee506806f0b449c3597715548f4",
+    "data/benchmark-custom-causal.json": "b554fe86a6f133f1d85b612d48e6f83df1891943a9209a9ad2b32278981b8e1c",
+    "data/benchmark-custom.json": "09ceba9aafe260904c76c591d5d3e396ad06aeac3c8150b78a50392d178d7781",
+    "data/benchmark-efficient.json": "387a355decf88c2047087ded483d42eb6c6e624e75a252b7bbca3289b67c9e18",
+    "data/build.log": "e6d4a09b5383e256e6851e780dcfa61e2f045b22f1ac21296ba1fb79db243db6",
+    "data/cuda-validation.log": "23af741744997ebb1b0b8bb8c9f6b0a201aea807910d975222f79ad578426539",
+    "data/memcheck.log": "e0133fe6004dcbffa40bf5c4b70781f91d2f407e1d6b572ee47d130cd8679385",
+    "data/nvprof-custom-s16384-d64.csv": "2ebfe6cb03b3a25369774438f46c952fcbf6ba79239e5888daf6a4e08a5a4300",
+    "data/nvprof-process.log": "394e4275b43f46c300bb5cbd9f91a52fe785c7731dd7dfb28d3b5ec64ca48353",
+    "data/nvprof-timeline.csv": "6ca6d107a24345eae60c173506a49c38fa58b878b512a614b753fb45858e2801",
+    "data/racecheck.log": "364af52bd82a43804669d0777fa81befb23f59024c1bb27f510c31af84d164a7",
+    "data/registry-validation.log": "0f7e4b97443e54aca647179972594d13bb587afcbf151fab8228148587ea844a",
+    "data/row-validation.json": "749b7c90e1f90ba596119f250fddccd5389e44f2f66635f0b235743138c53ef2",
+    "data/synccheck.log": "070c6663b3f58357cfb44361c28da7e21c36dd9d13ab0521355756c052bc7b1e",
+    "efficient-analysis.md": "5f80b9590f861c6ee6b89d041dfd9c0f5d688d3b1f462230212ec553affe5fe0",
+    "efficient-reference/counters.csv": "3cde06963edbb2a265776edb31c1a109d4bad4ae0cd5deda9bffb789817701b1",
+    "efficient-reference/process.log": "fbec5755155f8b10c92c23da879e33d8c45e6f785402aad48564e2855a1b045d",
+    "efficient-reference/timeline.csv": "7a0c435e6c7cb18ec6e0b4d77b7a5b3135fd29dae31acbdc1e6b353460218856",
+    "optimization-design.md": "87686f264ebe6c0de75a80e6d628f7af39c48beca4bf89573e6a9352974ca99c",
+    "perf_v3.md": "fc9303947aceadfda3c6f6ef876e38bf6c52805c348812028cdcf4b751704ee8",
+    "profiles/forward.nvvp": "ea4a976c6d16fdb3f05937a41309466ceb588f2f7bcf934c382b38abf812c8fb",
+    "run1/binaries/cuda_fa2_v3_extension.cpython-311-x86_64-linux-gnu.so": "50fcb717d7d9fe4c5c846233540f2aeae7b860b80e7fdcfe0d52ed044cc9a357",
+    "run1/data/benchmark-custom-causal.json": "69517166f79d6e69e9f2e980cfbdb9c4754d6e19dd97c4581db5ef6461cf1801",
+    "run1/data/benchmark-custom.json": "daea22444dd10a5c8de03cd1f65ae0ca981d3a66751c0ffcf723353bef981c2a",
+    "run1/data/benchmark-efficient.json": "5ba72f415176cd737c11a556fd3bf644eb47e41a94244ccf36bc1bbef918037f",
+    "run1/data/build.log": "ebb3b3afb6d195e80436af19e8bc9448524f4321de1b5af14da06a34a6c9c78e",
+    "run1/data/cuda-validation.log": "2e62c77ec1c4b0764e30d0144bdb74091671e27e82568b828f114554e92cf17e",
+    "run1/data/memcheck.log": "21cb725d9f8ab3c20316640d33a237e8302aa3fbd767d0ad6db80b8cbd1653f3",
+    "run1/data/nvprof-custom-s16384-d64.csv": "50bd6c6613fc9270c2ee0a002439937e8d5d8dc672337ab4a4d6c1b02079e501",
+    "run1/data/nvprof-process.log": "5d2c22c7280cd4e21d6b2c5592cc524879b12ef24f3f0e466f7a7a366a9090c7",
+    "run1/data/nvprof-timeline.csv": "1dac9ac7f511ab037f10b3591abfa74aed4c6ea8e3220c8b7fb013048ffa9609",
+    "run1/data/racecheck.log": "be36fd23adf35cd921ed553d9f1057b0a7d578713e034cdd547003605a07b3d8",
+    "run1/data/row-validation.json": "93c5d37b8fd8a6a681f5e9eb752198144815acbdfe45526725b19ee5f79cee64",
+    "run1/data/synccheck.log": "f286062aa7d8a4e5e4442d6a7d8fc3db60ffbe296979a2cbf9cd3f0a29c55f70",
+    "run1/profiles/forward.nvvp": "6044f963d0143e5909f1025723c39f78499f7a52d2add48e4b48f546d3df445a",
+    "run1/snapshot/fa2_forward.cu": "614e34b40da09acc831cf771fc91aad5a6062eed85a85a637995e3b392c1e619",
+    "run2/binaries/cuda_fa2_v3_extension.cpython-311-x86_64-linux-gnu.so": "c0cfde102b844c665b3c970ded11050d6bd6acb9bb8f7becb29d89e63ccef989",
+    "run2/data/benchmark-confirmation.json": "808be82110318050bddfedad4581194f079eff078b5a99c5520419e371482091",
+    "run2/data/benchmark-custom-causal.json": "78bdac44f7f486462c7bb052c0f130cb7ca93be83823ac2890579e31a422c6d3",
+    "run2/data/benchmark-custom.json": "380ca1b9ace00e3bfa3fe38d9d390624783e74de9c6b0b296586fb47be1cf05d",
+    "run2/data/benchmark-efficient.json": "ffa619834f5c1b08f589b604aed8d8df4a63e5864c4114c59f1b8841838b6652",
+    "run2/data/build.log": "99e55fdeead2a8abd926dce4ce1d2f6bb458c63dd1cf0ecfa982507743c93085",
+    "run2/data/cuda-validation.log": "870c74aa462925332336498d8f93c905d1fb21a16b7d4e219054f40acc68eeb2",
+    "run2/data/memcheck.log": "4da3a935348ecc325c3f70b118f15d52d8dcd9228a85ff02c5afc625b7c72162",
+    "run2/data/nvprof-custom-s16384-d64.csv": "eb808ca5787e77cdfb46c5f364cd31a95b5aebe6691e141b38bbc9ad963d3683",
+    "run2/data/nvprof-process.log": "8171ed08664c3120d06aba04776bf794db11080380092b89ea53dd30791f3ec9",
+    "run2/data/nvprof-timeline.csv": "93cf08144ef48925dfab99b78ee8eebcb2101dfcb8af847e3436be2592f131a4",
+    "run2/data/racecheck.log": "224b8291d34f375f6775a663b903e5417f9afa7e8487cd75ee0f2ccb9ad16913",
+    "run2/data/row-validation.json": "b403c43d4ed5059f32b90ef1d2ebcb9a9301e6fbd6ba62d40d6fca93d569814c",
+    "run2/data/synccheck.log": "ada9111835edcc509946df5d0c0d7b6e291b02b8550a08e1e3343291333af798",
+    "run2/profiles/forward.nvvp": "4010d4c87aaafba68dbb71856768492b4c8d01cec96017f272271577883e4a14",
+    "run2/snapshot/fa2_forward.cu": "aad9c6b54689fa1c9f694854073826db26dcadd1d23b54cb064fd5f0ebe086ef",
+    "run3/binaries/cuda_fa2_v3_extension.cpython-311-x86_64-linux-gnu.so": "a560efc937ac2257781fb5bd7eb8c787a6412c29f511d0f023164dad16c79c5b",
+    "run3/data/benchmark-custom.json": "f647d71ed226d45090a60328fb91165b2ce89ddcf8fedf13ac2b512347674895",
+    "run3/data/build.log": "fb6bdb2ca289afc07c71f22161fdb555eb7abcf8936578636d7bac98dfa037ba",
+    "run3/data/cuda-validation.log": "374fd0fb52af8bd358eeb319f411baf979ff77de154cdd32b182085b2db372eb",
+    "run3/data/row-validation.json": "1ccb312caa058fa16a73a4fc37a211e483ff98a1768ad267ad5fe3ba19f3d60e",
+    "run4/data/build.log": "3968a82b70213e627c9959e08e22d0dd7a0c837a507c6507a74e18ee26959a5d",
+    "run4/snapshot/fa2_forward.cu": "8abd4d64cce2a3ccc61df8fa40c06905950526a1957fb55d1b54d4e51803e2bd",
+    "run5/binaries/cuda_fa2_v3_extension.cpython-311-x86_64-linux-gnu.so": "ecd9f57b8bcf6450ac4d1b566704d6545e3670fb9844b21bbc0498a84f0056b6",
+    "run5/data/benchmark-custom-causal.json": "db3f2583d610249e9383cbd9cea10f2b4deebd77e90cbf5df7b3f19a1d9bc77a",
+    "run5/data/benchmark-custom.json": "3439cdd5cab424ca495113255d2cf2d610d0c25292652a4b7b2546ef6cfaf1e8",
+    "run5/data/benchmark-efficient.json": "ee0dbdcc4b0378b6133322a3f2d59411e642b96f33d0e5656285e9ff59974531",
+    "run5/data/build.log": "1f68a0e4b3ff562b8d7bce8d3e145aa28544027a7b7df60471541b4a701dd170",
+    "run5/data/cuda-validation.log": "85c47de3767b71ccc35c70dbc2849c108443c0001fa458ce267c9f78ce1a7d8f",
+    "run5/data/memcheck.log": "6543128925f5916f18d85c4a248d414f0df698fd12fe561f66c8a1b8f4a90e84",
+    "run5/data/nvprof-custom-s16384-d64.csv": "3965e621234883b2033ac64053ecadce07625ff1d4090a5df1a47ee5028f85cf",
+    "run5/data/nvprof-process.log": "b62255e468a5a4f1f0061cb9d67567b33c21b6c218724303ea2c402edf5270f1",
+    "run5/data/nvprof-timeline.csv": "25a9ca8a86b96df2e0e3635982fd028b8f7ecf96956a9df16a2f803968fe354e",
+    "run5/data/racecheck.log": "f23cbcb776e57f1554c7f9ca2f32c879dc8e5536b3b69b05f622edebfc9fab6f",
+    "run5/data/row-validation.json": "da80bd216696e1478b5f6a1c2d20367815b517bf9f22279856e6a0e3bc626da0",
+    "run5/data/synccheck.log": "a68c65e042042d2a15b548bd2bf4e667b9182401872a6148289acae060870d2a",
+    "run5/profiles/forward.nvvp": "fb55c3328c8d99ece6bf0e73448b74ff3c66126da3f42443c3989dba89f912b3",
+    "run5/snapshot/fa2_forward.cu": "6a172a806f982a45839f278b7b492c0c4f5e856e7a8473929e11a27398d6843b",
+    "run6/binaries/cuda_fa2_v3_extension.cpython-311-x86_64-linux-gnu.so": "016f355c6cb6f3c5f45fb1bf3550c512c9e30feb08f981dfc28fb20d9934711d",
+    "run6/data/benchmark-custom-causal.json": "632b8f51b3000094be34c54689a11d7651d9957023d4e8f0d0cc1aa26a050939",
+    "run6/data/benchmark-custom.json": "0c95e6a4bfca9e17d4098884b2fed3000e5cd57752bf44a4f9a186b5c8186fe9",
+    "run6/data/benchmark-efficient.json": "1ed7099fea1e4772320aef5d552991bf0a2863151f03e09483e6b3f1f4e34b07",
+    "run6/data/build.log": "7ff8597d1481e353c3ca75f47fe9f3a206915f2dcf85b374e6e49c97691d5dba",
+    "run6/data/cuda-validation.log": "48ad02d09c5ce15ee1b4c2852e5d859e57fad920afcdaae46e22b97636bc720a",
+    "run6/data/nvprof-custom-s16384-d64.csv": "e716316ac1d5519a4012648c475cc9f8e068855e36e7d48daaf6d8208d324c62",
+    "run6/data/nvprof-process.log": "3eaaeff08489d2e90cecfc0f7b4f37e99238f4d7c3ce60e6508f3d10de710fb2",
+    "run6/data/nvprof-timeline.csv": "99afdb463d454690f338880203ed11208928be4e79f57339c73a83ad15040fbc",
+    "run6/data/racecheck.log": "8c271bb8b0728401adda19526e388123c09c23c05995323f35f0464157cd2ed2",
+    "run6/data/row-validation.json": "c78547b18209f56747e49b77f5f6626248d5349c0006fa2f32de4642a08543ed",
+    "run6/data/synccheck.log": "9b3db6c86f05470948bd57a24a1d68526db8a833b2ebd10714beca278cc0ae79",
+    "run6/profiles/forward.nvvp": "904c68c1d60971ec1e462538d5129fed8b679471fc3a69ca6f7815f98f888045",
+    "run6/snapshot/fa2_forward.cu": "955ee068b89678ee1c79eaf410333600c24e1ed9bedeef7bc924b9ce6c61148c",
+    "snapshot/fa2_forward.cu": "96537becdf02cff3f624a62b3d6cea395eb8793766e09ff0bc16b5215d14bc27"
+  }
+}

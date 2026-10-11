@@ -17,7 +17,7 @@ def import_cuda_fa2_extension(version: str = "v0") -> ModuleType:
     """Import the selected extension without rebuilding or replacing another version."""
     if version == "v0":
         module_name = "src.cuda_fa2_extension"
-    elif version in ("v1", "v2"):
+    elif version in ("v1", "v2", "v3"):
         module_name = f"src.cuda_fa2_{version}_extension"
     else:
         raise ValueError(f"Unknown CUDA FA2 version {version!r}")
@@ -99,9 +99,23 @@ def cuda_fa2_v2_attention_forward(
     return extension.forward(q, k, v, is_causal)
 
 
+@torch.no_grad()
+def cuda_fa2_v3_attention_forward(
+    q: torch.Tensor,
+    k: torch.Tensor,
+    v: torch.Tensor,
+    *,
+    is_causal: bool = False,
+) -> torch.Tensor:
+    """Run SIMT register matrix tiles with shared storage reused between QK and PV."""
+    validate_cuda_fa2_support(q, k, v, is_causal=is_causal, version="v3")
+    extension = import_cuda_fa2_extension("v3")
+    return extension.forward(q, k, v, is_causal)
+
+
 def implementation_metadata(implementation: str) -> dict:
     """Record the loaded CUDA extension identity outside benchmark timing."""
-    if implementation not in ("cuda_fa2", "cuda_fa2_v1", "cuda_fa2_v2"):
+    if implementation not in ("cuda_fa2", "cuda_fa2_v1", "cuda_fa2_v2", "cuda_fa2_v3"):
         return {}
     version = "v0" if implementation == "cuda_fa2" else implementation.removeprefix("cuda_fa2_")
     extension = import_cuda_fa2_extension(version)

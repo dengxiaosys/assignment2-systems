@@ -1,12 +1,18 @@
 # Versioned measurement evidence must remain available after Git synchronization.
-!*/data/*.log
-!*/snapshot/*.so
-!*/binaries/*.so
+!**/data/*.log
+!**/snapshot/*.so
+!**/binaries/*.so
+!**/efficient-reference/*.log
 
 # Regenerate these exports from the archived binary; summaries live in manifest.json.
-*/data/sass.txt
-*/data/resources.txt
-*/data/execution-status.json
+**/data/sass.txt
+**/data/resources.txt
+**/data/execution-status.json
+
+# Parsed counter summaries are stored in manifest.json; raw CSV remains tracked.
+# Existing tracked V0/V1/V2 counter JSON files keep their historical status.
+**/data/counters.json
+**/efficient-reference/counters.json
 
 # Nsight Systems analysis databases are regenerated from tracked .nsys-rep files.
 *.sqlite

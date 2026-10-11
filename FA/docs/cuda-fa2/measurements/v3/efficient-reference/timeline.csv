@@ -1,0 +1,6 @@
+==1262474== NVPROF is profiling process 1262474, command: /home/dengxiao/miniconda3/envs/nanovllm/bin/python -E -s -B -m scripts.profile_attention --impl efficient --seq-len 16384 --head-dim 64 --warmup 5 --threads 1 --seed 0 --no-causal
+==1262474== Profiling application: /home/dengxiao/miniconda3/envs/nanovllm/bin/python -E -s -B -m scripts.profile_attention --impl efficient --seq-len 16384 --head-dim 64 --warmup 5 --threads 1 --seed 0 --no-causal
+==1262474== Profiling result:
+"Start","Duration","Grid X","Grid Y","Grid Z","Block X","Block Y","Block Z","Registers Per Thread","Static SMem","Dynamic SMem","Device","Context","Stream","Name","Correlation_ID"
+ms,ms,,,,,,,,B,KB,,,,,
+453.627447,39.597281,256,1,1,32,4,1,168,0,21.500000,"NVIDIA GeForce GTX 1060 (0)","1","7","fmha_cutlassF_f32_aligned_64x64_rf_sm50(PyTorchMemEffAttention::AttentionKernel<float, cutlass::arch::Sm50, bool=1, int=64, int=64, int=64, bool=1, bool=1>::Params)",35
