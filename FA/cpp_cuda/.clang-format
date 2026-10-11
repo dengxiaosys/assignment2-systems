@@ -1,0 +1,5 @@
+BasedOnStyle: LLVM
+IndentWidth: 4
+NamespaceIndentation: None
+BreakBeforeBraces: Attach
+ColumnLimit: 110

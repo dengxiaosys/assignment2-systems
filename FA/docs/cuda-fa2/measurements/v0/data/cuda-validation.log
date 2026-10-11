@@ -1,0 +1,9 @@
+test_rejects_cpu_before_loading_extension (__main__.CudaFa2ContractTests.test_rejects_cpu_before_loading_extension) ... ok
+test_matches_cpu_fp64_reference (__main__.CudaFa2NumericalTests.test_matches_cpu_fp64_reference) ... ok
+test_rejects_noncontiguous_inputs (__main__.CudaFa2NumericalTests.test_rejects_noncontiguous_inputs) ... ok
+test_rejects_unsupported_head_dimension (__main__.CudaFa2NumericalTests.test_rejects_unsupported_head_dimension) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.536s
+
+OK

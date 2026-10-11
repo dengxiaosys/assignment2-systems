@@ -73,7 +73,7 @@ nsys profile \
   --impl native --seq-len 16384 --head-dim 64 --warmup 5
 ```
 
-采集结果为 `FA/profiles/baseline_naive_attention_s16384_d64.nsys-rep`。
+该命令生成临时报告；既有 V0 原始报告已归档到 [V0 测量目录](../cuda-fa2/measurements/v0/profiles/baseline_naive_attention_s16384_d64.nsys-rep)，未来保留的报告按版本组织，见 [测量索引](../cuda-fa2/measurements/README.md)。
 重复采集时在文件名后追加运行编号，避免覆盖已有结果。
 要看 causal，给 Python 脚本追加 `--causal`，并将文件名前缀设为
 `baseline_naive_attention_s16384_d64_causal`。
@@ -157,10 +157,10 @@ nsys profile \
 在有图形界面的机器上打开：
 
 ```bash
-nsys-ui ./profiles/baseline_naive_attention_s16384_d64.nsys-rep
+nsys-ui ./docs/cuda-fa2/measurements/v0/profiles/baseline_naive_attention_s16384_d64.nsys-rep
 ```
 
-后续命令均在第 3.1 节的 `FA` 目录执行，直接使用 `./profiles/` 路径。
+后续命令均在第 3.1 节的 `FA` 目录执行；查看已有 V0 使用 `./docs/cuda-fa2/measurements/v0/profiles/`，新采集先写入临时路径，确认保留后归档到各自版本目录。
 如果当前 Linux 是无桌面的远程机器，将 `.nsys-rep` 下载到装有 Nsight Systems GUI
 的电脑，通过 **File → Open** 打开；建议 GUI 与采集端使用相同版本。
 
@@ -181,11 +181,11 @@ CPU NVTX 区间结束时，异步发射的 GPU 工作可能还没完成，所以
 ```bash
 # 按 kernel 名称聚合：总时间、调用次数、平均值等
 nsys stats --report cuda_gpu_kern_sum \
-  ./profiles/baseline_naive_attention_s16384_d64.nsys-rep
+  ./docs/cuda-fa2/measurements/v0/profiles/baseline_naive_attention_s16384_d64.nsys-rep
 
 # 按时间列出每次 GPU kernel / memcpy 等活动
 nsys stats --report cuda_gpu_trace \
-  ./profiles/baseline_naive_attention_s16384_d64.nsys-rep
+  ./docs/cuda-fa2/measurements/v0/profiles/baseline_naive_attention_s16384_d64.nsys-rep
 ```
 
 `stats` 首次运行可能生成同目录的 SQLite 分析文件。注意表头时间单位。

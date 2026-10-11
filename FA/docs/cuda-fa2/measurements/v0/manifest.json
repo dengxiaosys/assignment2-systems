@@ -1,0 +1,113 @@
+{
+  "baseline_id": "V0",
+  "profile_collection_date": "2026-10-11",
+  "reference_repository": "stanford_cs336/assignments/assignment2-systems",
+  "reference_commit": "be1e825df74e09adb947fb90182805e2d846080f",
+  "reference_commit_date_utc": "2026-10-10T15:34:54Z",
+  "source_snapshot": {
+    "path": "snapshot/fa2_forward.cu",
+    "git_path": "FA/cpp_cuda/fa2/fa2_forward.cu",
+    "sha256": "e2c57c282ef893fb264dead77d159ac0669f2829bdc464614138c84ab9985671",
+    "origin": "Exact bytes from git show reference_commit:FA/cpp_cuda/fa2/fa2_forward.cu"
+  },
+  "measured_binary": {
+    "module": "src.cuda_fa2_extension",
+    "runtime_path_relative_to_fa": "src/cuda_fa2_extension.cpython-311-x86_64-linux-gnu.so",
+    "archive_path": "snapshot/cuda_fa2_extension.cpython-311-x86_64-linux-gnu.so",
+    "sha256": "29f397f8fa5bad4d2bd7f4f3ba54be87cee2d8bb5eaa4a505db283f60f957d6a",
+    "size_bytes": 221072,
+    "device_code_architecture": "sm_61",
+    "rebuilt_during_profile_collection": false,
+    "matches_previous_baseline_binary": true
+  },
+  "capture_workspace_source_sha256": "c9e04d84abe5eaee67bcda67d67c4ebc060ce7b33bca99e772d63f9a23833ef1",
+  "capture_workspace_source_note": "The existing counters.json recorded this source hash at collection. The workspace already differed from the reference commit; this hash does not identify the source used to build the pre-existing measured binary.",
+  "environment": {
+    "gpu": "NVIDIA GeForce GTX 1060",
+    "compute_capability": [
+      6,
+      1
+    ],
+    "driver_version": "570.211.01",
+    "profiler_version": "nvprof 12.8.90 (21)",
+    "python_environment": "nanovllm",
+    "python_abi_from_extension_filename": "CPython 3.11, Linux x86_64",
+    "torch_version": "2.6.0+cu124",
+    "torch_cuda_build": "12.4"
+  },
+  "build_reference": {
+    "git_path": "FA/cpp_cuda/fa2/build_extension.py",
+    "sha256": "a24e855db69b7ffb5bc422f8da91351b600d5e2656c7fbe94eca5933f66561af",
+    "cxx_flags_in_reference_script": [
+      "-O2"
+    ],
+    "nvcc_flags_in_reference_script": [
+      "-O2",
+      "-lineinfo"
+    ],
+    "historical_compiler_version_recorded": false,
+    "historical_full_build_log_recorded": false
+  },
+  "profile": {
+    "shape": [
+      16384,
+      64
+    ],
+    "dtype": "float32",
+    "causal": false,
+    "tf32": false,
+    "seed": 0,
+    "cpu_threads": 1,
+    "warmup": 5,
+    "captured_forward_calls": 1,
+    "kernel_replay": true,
+    "aggregate_mode": "on",
+    "raw_custom": "data/nvprof-custom-s16384-d64.csv",
+    "raw_efficient": "data/nvprof-efficient-s16384-d64.csv",
+    "counters": "data/counters.json",
+    "evidence": "data/evidence.json"
+  },
+  "unprofiled_benchmark": {
+    "formal": {
+      "warmup": 5,
+      "iterations_per_repeat": 20,
+      "repeats": 5,
+      "custom_cuda_event_mean_ms": 2922.2971875000003,
+      "custom_cuda_event_median_ms": 2916.776953125,
+      "efficient_cuda_event_mean_ms": 35.91298278808594,
+      "source": "data/evidence.json",
+      "record_key": "benchmark_records"
+    },
+    "short_recheck": {
+      "warmup": 5,
+      "iterations_per_repeat": 1,
+      "repeats": 3,
+      "custom_cuda_event_mean_ms": 2896.6222330729165,
+      "source": "data/benchmark-recheck-custom.json"
+    }
+  },
+  "raw_profile_sha256": {
+    "data/nvprof-custom-s16384-d64.csv": "331e2a97aa1d6d009c9484dd12a5a6b54b71bee4b6932fc52618985671d2c97f",
+    "data/nvprof-efficient-s16384-d64.csv": "af94bf8ca7b39ba72a8dda0db5e39567e0c02f89efae2211c95802b1e0703fd4",
+    "data/counters.json": "2bb7dc01fc70ea8f7e0543ca26e76fdc4e3e791a384b489310917096af050ccf"
+  },
+  "limits": [
+    "The reference commit and archived runtime binary identify different provenance layers; the profile was not produced by rebuilding the current workspace.",
+    "Existing measurements establish runtime binary identity and algorithm correspondence, not byte-for-byte reproducibility from the reference source with an unrecorded historical compiler.",
+    "The efficient comparison kernel belongs to the recorded PyTorch distribution, not to the custom CUDA source.",
+    "Per-SM capabilities were queried later; no per-SM performance measurements are part of this baseline."
+  ],
+  "layout": {
+    "path_base": "measurement_directory",
+    "documents": [
+      "opt_routine1.md",
+      "perf-baseline.md",
+      "nvprof-readable.md"
+    ],
+    "data": "data/",
+    "assets": "assets/",
+    "source_and_binary_snapshot": "snapshot/",
+    "profiler_reports": "profiles/"
+  }
+}
+

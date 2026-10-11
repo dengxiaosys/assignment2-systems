@@ -1,0 +1,103 @@
+==WARNING== Note: Running with unmodified GPU clocks. If not controlled otherwise, profiling results may be inconsistent.
+==PROF== Connected to process 511912 (/home/dengxiao/miniconda3/envs/nanovllm/bin/python3.11)
+==PROF== Profiling "fa2_forward_fp32_kernel": 0%....50%....100%{
+  "entry_point": "CUDA Driver API",
+  "input_fixture": "Q=K=0, deterministic V; uniform attention",
+  "shape": [
+    64,
+    64
+  ],
+  "causal": false,
+  "warmup": 1,
+  "captured_forward_calls": 1,
+  "max_abs_error": 0.0
+}
+ - 31 passes
+==PROF== Disconnected from process 511912
+==PROF== Report: /tmp/ncu-pascal-validation/fa2-driver-detailed.nsight-cuprof-report
+[511912] python3.11@127.0.0.1
+  _GLOBAL__N__c5035a89_14_fa2_forward_cu_26943507::fa2_forward_fp32_kernel(float const *,float const *,float const *,float*,int,int,float,bool), 2026-Oct-11 05:20:32, Context 1, Stream 7
+    Section: GPU Speed Of Light
+    ---------------------------------------------------------------------- --------------- ------------------------------
+    Memory Frequency                                                                   Ghz                           7.55
+    SOL FB                                                                               %                           0.51
+    Elapsed Cycles                                                                   cycle                         174311
+    SM Frequency                                                                       Ghz                           1.41
+    Memory [%]                                                                           %                           7.93
+    Duration                                                                       usecond                         123.62
+    SOL L2                                                                               %                           0.54
+    SM Active Cycles                                                                 cycle                      174093.50
+    SM [%]                                                                               %                          40.55
+    SOL TEX                                                                              %                           3.40
+    ---------------------------------------------------------------------- --------------- ------------------------------
+
+    Section: Compute Workload Analysis
+    ---------------------------------------------------------------------- --------------- ------------------------------
+    Executed Ipc Active                                                         inst/cycle                           1.07
+    Executed Ipc Elapsed                                                        inst/cycle                           1.05
+    Issued Ipc Active                                                           inst/cycle                           1.07
+    Issue Slots Busy                                                                     %                          17.90
+    SM Busy                                                                              %                          40.55
+    ---------------------------------------------------------------------- --------------- ------------------------------
+
+    Section: Memory Workload Analysis
+    ---------------------------------------------------------------------- --------------- ------------------------------
+    Memory Throughput                                                         Mbyte/second                         920.79
+    Mem Busy                                                                             %                           7.93
+    Max Bandwidth                                                                        %                           7.93
+    L2 Hit Rate                                                                          %                          92.85
+    Mem Pipes Busy                                                                       %                          41.33
+    L1 Hit Rate                                                                          %                          83.46
+    ---------------------------------------------------------------------- --------------- ------------------------------
+
+    Section: Scheduler Statistics
+    ---------------------------------------------------------------------- --------------- ------------------------------
+    Active Warps Per Scheduler                                                  warp/cycle                           6.39
+    Eligible Warps Per Scheduler                                                warp/cycle                           0.31
+    No Eligible                                                                          %                          74.49
+    Instructions Per Active Issue Slot                                          inst/issue                           1.04
+    Issued Warp Per Scheduler                                                  issue/cycle                           0.26
+    One or More Eligible                                                                 %                          25.94
+    ---------------------------------------------------------------------- --------------- ------------------------------
+
+    Section: Warp State Statistics
+    ---------------------------------------------------------------------- --------------- ------------------------------
+    Avg. Not Predicated Off Threads Per Warp                                   thread/inst                          21.69
+    Avg. Active Threads Per Warp                                               thread/inst                          29.46
+    Warp Cycles Per Executed Instruction                                        cycle/inst                          23.42
+    Warp Cycles Per Issued Instruction                                          cycle/inst                          23.42
+    Warp Cycles Per Issue Active                                               cycle/issue                          24.42
+    ---------------------------------------------------------------------- --------------- ------------------------------
+
+    Section: Instruction Statistics
+    ---------------------------------------------------------------------- --------------- ------------------------------
+    Avg. Executed Instructions Per Scheduler                                          inst                       45835.20
+    Executed Instructions                                                             inst                        1833408
+    Avg. Issued Instructions Per Scheduler                                            inst                       45849.60
+    Issued Instructions                                                               inst                        1833984
+    ---------------------------------------------------------------------- --------------- ------------------------------
+
+    Section: Launch Statistics
+    ---------------------------------------------------------------------- --------------- ------------------------------
+    Block Size                                                                                                        128
+    Grid Size                                                                                                          64
+    Registers Per Thread                                                   register/thread                             17
+    Shared Memory Configuration Size                                                 Kbyte                          12.29
+    Dynamic Shared Memory Per Block                                             byte/block                              0
+    Static Shared Memory Per Block                                              byte/block                            524
+    Threads                                                                         thread                           8192
+    Waves Per SM                                                                                                     0.40
+    ---------------------------------------------------------------------- --------------- ------------------------------
+
+    Section: Occupancy
+    ---------------------------------------------------------------------- --------------- ------------------------------
+    Block Limit SM                                                                   block                             32
+    Block Limit Registers                                                            block                             21
+    Block Limit Shared Mem                                                           block                            128
+    Block Limit Warps                                                                block                             16
+    Achieved Active Warps Per SM                                                warp/cycle                          25.52
+    Achieved Occupancy                                                                   %                          39.87
+    Theoretical Active Warps per SM                                             warp/cycle                             64
+    Theoretical Occupancy                                                                %                            100
+    ---------------------------------------------------------------------- --------------- ------------------------------
+

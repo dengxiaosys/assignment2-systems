@@ -1,0 +1,1043 @@
+{
+  "analysis_date": "2026-10-11",
+  "source_commit": "be1e825df74e09adb947fb90182805e2d846080f",
+  "live_counters_collected": true,
+  "live_collection_failure": null,
+  "live_collection": {
+    "date": "2026-10-11",
+    "profiler": "nvprof 12.8.90 (21)",
+    "driver_version": "570.211.01",
+    "identity": "sudo",
+    "shape": [16384, 64],
+    "causal": false,
+    "warmup": 5,
+    "cpu_threads": 1,
+    "captured_forward_calls_per_run": 1,
+    "kernel_replay": true,
+    "custom_summary_exit_code": 0,
+    "custom_detailed_exit_code": 0,
+    "efficient_detailed_exit_code": 0,
+    "overflowed_metrics": {"custom": ["sm_efficiency"], "efficient": []},
+    "counter_data_file": "counters.json"
+  },
+  "live_evidence_sha256": {
+    "nvprof-custom-s16384-d64.csv": "331e2a97aa1d6d009c9484dd12a5a6b54b71bee4b6932fc52618985671d2c97f",
+    "nvprof-efficient-s16384-d64.csv": "af94bf8ca7b39ba72a8dda0db5e39567e0c02f89efae2211c95802b1e0703fd4",
+    "nvprof-custom-summary-s16384-d64.csv": "a36e5a215a53be7fd6cb777f9251ee4f2f5c541a6f75ca2c6656582797d1df75",
+    "nvprof-detailed-process.log": "0fdced2921a81131a942883fdc7ac7b97aceaf7059cd19eb75af825027e6092c",
+    "nvprof-custom-summary-process.log": "49a780564adef9413683fd4365078c495abe83c7408255b4b72e07ebf7916fe3",
+    "nvprof-supported-metrics.txt": "ea55395b5bf87d5186e723fea84e83b8619c7e94f39374bec25f4a093b1fe938",
+    "counters.json": "2bb7dc01fc70ea8f7e0543ca26e76fdc4e3e791a384b489310917096af050ccf",
+    "benchmark-recheck-native.json": "cb6834f4196f3da6bab11eeb6084f77ca41539c482f4839cbb5d0e7c2a177673",
+    "benchmark-recheck-efficient.json": "74a6c1f1b051acad8fef1edbb482a0816a46cf7ab7759d2b04d1a484c8206592",
+    "benchmark-recheck-custom.json": "d5321ac793b1939967b7ab42160e167a6047dbbd3f45547c29b3c7f00d0eaf07",
+    "cuda-validation.log": "6038f2c95028c18d0c865b16510ef82622b30e0ef2e48d6077f4556c0cef094d"
+  },
+  "binary_sha256": "29f397f8fa5bad4d2bd7f4f3ba54be87cee2d8bb5eaa4a505db283f60f957d6a",
+  "benchmark_records": [
+    {
+      "implementation": "native",
+      "backend": "pytorch_dense_attention",
+      "device": "cuda",
+      "gpu_name": "NVIDIA GeForce GTX 1060",
+      "compute_capability": [
+        6,
+        1
+      ],
+      "torch_version": "2.6.0+cu124",
+      "torch_cuda_build": "12.4",
+      "dtype": "torch.float32",
+      "tf32": false,
+      "qkv_shape": [
+        16384,
+        64
+      ],
+      "causal": false,
+      "cpu_threads": 1,
+      "seed": 0,
+      "warmup": 5,
+      "iterations_per_repeat": 20,
+      "repeats": 5,
+      "verified": false,
+      "verification_rtol": null,
+      "verification_atol": null,
+      "max_abs_error_vs_cpu_fp64": null,
+      "materializes_full_attention_matrices": true,
+      "native_s_matrix_bytes": 1073741824,
+      "native_p_matrix_bytes": 1073741824,
+      "native_s_plus_p_bytes": 2147483648,
+      "peak_additional_cuda_allocated_bytes": 2151677952,
+      "wall_ms_mean": 65.52790536999964,
+      "wall_ms_median": 65.49376784987544,
+      "wall_ms_samples": [
+        65.40879469994252,
+        65.46358610012248,
+        65.49376784987544,
+        65.74844269998721,
+        65.52493550007057
+      ],
+      "cuda_event_ms_mean": 65.525908203125,
+      "cuda_event_ms_median": 65.49180297851562,
+      "cuda_event_ms_samples": [
+        65.4065673828125,
+        65.46159057617187,
+        65.49180297851562,
+        65.746533203125,
+        65.523046875
+      ]
+    },
+    {
+      "implementation": "efficient",
+      "backend": "pytorch_sdpa_efficient_attention",
+      "device": "cuda",
+      "gpu_name": "NVIDIA GeForce GTX 1060",
+      "compute_capability": [
+        6,
+        1
+      ],
+      "torch_version": "2.6.0+cu124",
+      "torch_cuda_build": "12.4",
+      "dtype": "torch.float32",
+      "tf32": false,
+      "qkv_shape": [
+        16384,
+        64
+      ],
+      "causal": false,
+      "cpu_threads": 1,
+      "seed": 0,
+      "warmup": 5,
+      "iterations_per_repeat": 20,
+      "repeats": 5,
+      "verified": false,
+      "verification_rtol": null,
+      "verification_atol": null,
+      "max_abs_error_vs_cpu_fp64": null,
+      "materializes_full_attention_matrices": false,
+      "native_s_matrix_bytes": 1073741824,
+      "native_p_matrix_bytes": 1073741824,
+      "native_s_plus_p_bytes": 2147483648,
+      "peak_additional_cuda_allocated_bytes": 4194304,
+      "wall_ms_mean": 35.91488009009481,
+      "wall_ms_median": 35.933733850106364,
+      "wall_ms_samples": [
+        35.990502150161774,
+        35.841546849951555,
+        35.81583735012828,
+        35.933733850106364,
+        35.99278025012609
+      ],
+      "cuda_event_ms_mean": 35.91298278808594,
+      "cuda_event_ms_median": 35.93195495605469,
+      "cuda_event_ms_samples": [
+        35.988458251953126,
+        35.83959045410156,
+        35.813726806640624,
+        35.93195495605469,
+        35.99118347167969
+      ]
+    },
+    {
+      "implementation": "cuda_fa2",
+      "backend": "custom_cpp_cuda_fa2_baseline_fp32",
+      "device": "cuda",
+      "gpu_name": "NVIDIA GeForce GTX 1060",
+      "compute_capability": [
+        6,
+        1
+      ],
+      "torch_version": "2.6.0+cu124",
+      "torch_cuda_build": "12.4",
+      "dtype": "torch.float32",
+      "tf32": false,
+      "qkv_shape": [
+        16384,
+        64
+      ],
+      "causal": false,
+      "cpu_threads": 1,
+      "seed": 0,
+      "warmup": 5,
+      "iterations_per_repeat": 20,
+      "repeats": 5,
+      "verified": false,
+      "verification_rtol": null,
+      "verification_atol": null,
+      "max_abs_error_vs_cpu_fp64": null,
+      "materializes_full_attention_matrices": false,
+      "native_s_matrix_bytes": 1073741824,
+      "native_p_matrix_bytes": 1073741824,
+      "native_s_plus_p_bytes": 2147483648,
+      "peak_additional_cuda_allocated_bytes": 4194304,
+      "wall_ms_mean": 2922.30183620999,
+      "wall_ms_median": 2916.7910428999676,
+      "wall_ms_samples": [
+        2893.619048649998,
+        2907.4966018999476,
+        2916.7910428999676,
+        2945.7892373000504,
+        2947.813250299987
+      ],
+      "cuda_event_ms_mean": 2922.2971875000003,
+      "cuda_event_ms_median": 2916.776953125,
+      "cuda_event_ms_samples": [
+        2893.60546875,
+        2907.4826171875,
+        2916.776953125,
+        2945.774609375,
+        2947.8462890625
+      ]
+    }
+  ],
+  "nsys_report_path_base": "evidence_directory",
+  "nsys_reports": [
+    {
+      "label": "custom_16384",
+      "report": "../profiles/custom_cuda_fa2_s16384_d64_fp32.nsys-rep",
+      "report_sha256": "f3d010d5978d7f7b89f3d04ce06a2e54c54d93a35b6c26a64363c16b823ff90e",
+      "kernels": [
+        {
+          "start": 9141161,
+          "end": 2873191320,
+          "deviceId": 0,
+          "contextId": 1,
+          "greenContextId": 0,
+          "streamId": 7,
+          "correlationId": 11,
+          "globalPid": 285347191717888,
+          "demangledName": 27,
+          "shortName": 28,
+          "mangledName": 20,
+          "launchType": 1,
+          "cacheConfig": 1,
+          "registersPerThread": 17,
+          "gridX": 16384,
+          "gridY": 1,
+          "gridZ": 1,
+          "blockX": 128,
+          "blockY": 1,
+          "blockZ": 1,
+          "staticSharedMemory": 524,
+          "dynamicSharedMemory": 0,
+          "localMemoryPerThread": 0,
+          "localMemoryTotal": 16384000,
+          "gridId": 5,
+          "sharedMemoryExecuted": 12288,
+          "graphNodeId": null,
+          "sharedMemoryLimitConfig": 0,
+          "name": "<unnamed>::fa2_forward_fp32_kernel(const float *, const float *, const float *, float *, int, int, float, bool)",
+          "duration_ms": 2864.050159
+        }
+      ],
+      "apis": [
+        {
+          "start": 8854582,
+          "end": 8856873,
+          "correlationId": 1,
+          "name": "cuProfilerStart",
+          "duration_ms": 0.002291
+        },
+        {
+          "start": 9116897,
+          "end": 9144705,
+          "correlationId": 11,
+          "name": "cudaLaunchKernel_v7000",
+          "duration_ms": 0.027808
+        },
+        {
+          "start": 9194945,
+          "end": 2873198171,
+          "correlationId": 17,
+          "name": "cudaDeviceSynchronize_v3020",
+          "duration_ms": 2864.003226
+        }
+      ],
+      "gpu": [
+        {
+          "vmId": 281474976710656,
+          "id": 0,
+          "name": "NVIDIA GeForce GTX 1060",
+          "busLocation": "0000:01:00.0",
+          "isDiscrete": 1,
+          "l2CacheSize": 1572864,
+          "totalMemory": 6360465408,
+          "memoryBandwidth": 192192000000,
+          "clockRate": 1733000000,
+          "smCount": 10,
+          "pwGpuId": 0,
+          "uuid": "98c7600c-07cd-9f41-6c0f-c5e3322ec3a9",
+          "luid": 0,
+          "chipName": "GP106",
+          "cuDevice": 0,
+          "ctxswDevPath": "",
+          "ctrlDevPath": "",
+          "revision": 161,
+          "nodeMask": 0,
+          "constantMemory": 65536,
+          "maxIPC": 6,
+          "maxRegistersPerBlock": 65536,
+          "maxShmemPerBlock": 49152,
+          "maxShmemPerBlockOptin": 49152,
+          "maxShmemPerSm": 98304,
+          "maxRegistersPerSm": 65536,
+          "threadsPerWarp": 32,
+          "asyncEngines": 2,
+          "maxWarpsPerSm": 64,
+          "maxBlocksPerSm": 32,
+          "maxThreadsPerBlock": 1024,
+          "maxBlockDimX": 1024,
+          "maxBlockDimY": 1024,
+          "maxBlockDimZ": 64,
+          "maxGridDimX": 2147483647,
+          "maxGridDimY": 65535,
+          "maxGridDimZ": 65535,
+          "computeMajor": 6,
+          "computeMinor": 1,
+          "smMajor": 6,
+          "smMinor": 1
+        }
+      ],
+      "session": [
+        {
+          "utcEpochNs": 1791656121527925329,
+          "utcTime": "2026-10-10T18:15:21",
+          "localTime": "2026-10-11T02:15:21"
+        }
+      ],
+      "diagnostics": [
+        {
+          "timestamp": -4933517101,
+          "timestampType": 1,
+          "source": 2,
+          "severity": 1,
+          "text": "Process was launched by the profiler, see /tmp/nvidia/nsight_systems/quadd_session_10230789/streams/pid_230802_stdout.log and stderr.log for program output",
+          "globalPid": 285347191717888
+        },
+        {
+          "timestamp": -4844321344,
+          "timestampType": 1,
+          "source": 1,
+          "severity": 1,
+          "text": "Common injection library initialized successfully.",
+          "globalPid": 285347191717888
+        },
+        {
+          "timestamp": -3649674985,
+          "timestampType": 1,
+          "source": 1,
+          "severity": 1,
+          "text": "Buffers holding CUDA trace data will be flushed on CudaProfilerStop() call. See --flush-on-cudaprofilerstop to control this behavior.",
+          "globalPid": 285347191717888
+        },
+        {
+          "timestamp": -3611564347,
+          "timestampType": 1,
+          "source": 1,
+          "severity": 1,
+          "text": "Loaded CUPTI library: /opt/nvidia/nsight-systems/2024.6.2/target-linux-x64/libcupti.so.12.8",
+          "globalPid": 285347191717888
+        },
+        {
+          "timestamp": -3386008196,
+          "timestampType": 1,
+          "source": 1,
+          "severity": 1,
+          "text": "Enabling trace for device graph launch",
+          "globalPid": 285347191717888
+        },
+        {
+          "timestamp": -3385998806,
+          "timestampType": 1,
+          "source": 1,
+          "severity": 1,
+          "text": "CUDA injection initialized successfully.",
+          "globalPid": 285347191717888
+        },
+        {
+          "timestamp": 0,
+          "timestampType": 1,
+          "source": 3,
+          "severity": 1,
+          "text": "Profiling has started.",
+          "globalPid": -144115188075855872
+        },
+        {
+          "timestamp": 8848888,
+          "timestampType": 1,
+          "source": 1,
+          "severity": 1,
+          "text": "Profiling started due to cudaProfilerStart API invoked in the application.",
+          "globalPid": 285347191717888
+        },
+        {
+          "timestamp": 8954755,
+          "timestampType": 1,
+          "source": 1,
+          "severity": 1,
+          "text": "NVTX injection initialized successfully.",
+          "globalPid": 285347191717888
+        },
+        {
+          "timestamp": 19497997,
+          "timestampType": 2,
+          "source": 3,
+          "severity": 2,
+          "text": "Not all NVTX events might have been collected.",
+          "globalPid": 285347191717888
+        },
+        {
+          "timestamp": 19502090,
+          "timestampType": 2,
+          "source": 3,
+          "severity": 1,
+          "text": "Number of NVTX events collected: \t3.",
+          "globalPid": 285347191717888
+        },
+        {
+          "timestamp": 19504011,
+          "timestampType": 2,
+          "source": 3,
+          "severity": 2,
+          "text": "Not all CUDA events might have been collected.",
+          "globalPid": 285347191717888
+        },
+        {
+          "timestamp": 19504497,
+          "timestampType": 2,
+          "source": 3,
+          "severity": 1,
+          "text": "Number of CUDA events collected: \t4.",
+          "globalPid": 285347191717888
+        },
+        {
+          "timestamp": 2874492336,
+          "timestampType": 1,
+          "source": 3,
+          "severity": 1,
+          "text": "Profiling has stopped.",
+          "globalPid": -144115188075855872
+        },
+        {
+          "timestamp": 2875558679,
+          "timestampType": 1,
+          "source": 1,
+          "severity": 1,
+          "text": "Number of CUPTI events produced: \t15, CUPTI buffers: 50.",
+          "globalPid": 285347191717888
+        }
+      ]
+    },
+    {
+      "label": "efficient_16384",
+      "report": "../profiles/memory_efficient_attention_s16384_d64_fp32.nsys-rep",
+      "report_sha256": "fc1531aa4d5da6d72da4e01e705ec61615d636f94d7666f35901d6e926264322",
+      "kernels": [
+        {
+          "start": 9264985,
+          "end": 48780277,
+          "deviceId": 0,
+          "contextId": 1,
+          "greenContextId": 0,
+          "streamId": 7,
+          "correlationId": 36,
+          "globalPid": 289995436851200,
+          "demangledName": 31,
+          "shortName": 32,
+          "mangledName": 20,
+          "launchType": 1,
+          "cacheConfig": 1,
+          "registersPerThread": 168,
+          "gridX": 256,
+          "gridY": 1,
+          "gridZ": 1,
+          "blockX": 32,
+          "blockY": 4,
+          "blockZ": 1,
+          "staticSharedMemory": 0,
+          "dynamicSharedMemory": 22016,
+          "localMemoryPerThread": 0,
+          "localMemoryTotal": 20316160,
+          "gridId": 9,
+          "sharedMemoryExecuted": 66048,
+          "graphNodeId": null,
+          "sharedMemoryLimitConfig": 0,
+          "name": "fmha_cutlassF_f32_aligned_64x64_rf_sm50(PyTorchMemEffAttention::AttentionKernel<float, cutlass::arch::Sm50, (bool)1, (int)64, (int)64, (int)64, (bool)1, (bool)1>::Params)",
+          "duration_ms": 39.515292
+        }
+      ],
+      "apis": [
+        {
+          "start": 8876075,
+          "end": 8878228,
+          "correlationId": 1,
+          "name": "cuProfilerStart",
+          "duration_ms": 0.002153
+        },
+        {
+          "start": 9202768,
+          "end": 9206135,
+          "correlationId": 21,
+          "name": "cudaStreamIsCapturing_v10000",
+          "duration_ms": 0.003367
+        },
+        {
+          "start": 9240668,
+          "end": 9267374,
+          "correlationId": 36,
+          "name": "cudaLaunchKernel_v7000",
+          "duration_ms": 0.026706
+        },
+        {
+          "start": 9374640,
+          "end": 48786579,
+          "correlationId": 49,
+          "name": "cudaDeviceSynchronize_v3020",
+          "duration_ms": 39.411939
+        }
+      ],
+      "gpu": [
+        {
+          "vmId": 281474976710656,
+          "id": 0,
+          "name": "NVIDIA GeForce GTX 1060",
+          "busLocation": "0000:01:00.0",
+          "isDiscrete": 1,
+          "l2CacheSize": 1572864,
+          "totalMemory": 6360465408,
+          "memoryBandwidth": 192192000000,
+          "clockRate": 1733000000,
+          "smCount": 10,
+          "pwGpuId": 0,
+          "uuid": "98c7600c-07cd-9f41-6c0f-c5e3322ec3a9",
+          "luid": 0,
+          "chipName": "GP106",
+          "cuDevice": 0,
+          "ctxswDevPath": "",
+          "ctrlDevPath": "",
+          "revision": 161,
+          "nodeMask": 0,
+          "constantMemory": 65536,
+          "maxIPC": 6,
+          "maxRegistersPerBlock": 65536,
+          "maxShmemPerBlock": 49152,
+          "maxShmemPerBlockOptin": 49152,
+          "maxShmemPerSm": 98304,
+          "maxRegistersPerSm": 65536,
+          "threadsPerWarp": 32,
+          "asyncEngines": 2,
+          "maxWarpsPerSm": 64,
+          "maxBlocksPerSm": 32,
+          "maxThreadsPerBlock": 1024,
+          "maxBlockDimX": 1024,
+          "maxBlockDimY": 1024,
+          "maxBlockDimZ": 64,
+          "maxGridDimX": 2147483647,
+          "maxGridDimY": 65535,
+          "maxGridDimZ": 65535,
+          "computeMajor": 6,
+          "computeMinor": 1,
+          "smMajor": 6,
+          "smMinor": 1
+        }
+      ],
+      "session": [
+        {
+          "utcEpochNs": 1791563528318164129,
+          "utcTime": "2026-10-09T16:32:08",
+          "localTime": "2026-10-10T00:32:08"
+        }
+      ],
+      "diagnostics": [
+        {
+          "timestamp": -2182977036,
+          "timestampType": 1,
+          "source": 2,
+          "severity": 1,
+          "text": "Process was launched by the profiler, see /tmp/nvidia/nsight_systems/quadd_session_10507842/streams/pid_507859_stdout.log and stderr.log for program output",
+          "globalPid": 289995436851200
+        },
+        {
+          "timestamp": -2153899080,
+          "timestampType": 1,
+          "source": 1,
+          "severity": 1,
+          "text": "Common injection library initialized successfully.",
+          "globalPid": 289995436851200
+        },
+        {
+          "timestamp": -937127710,
+          "timestampType": 1,
+          "source": 1,
+          "severity": 1,
+          "text": "Buffers holding CUDA trace data will be flushed on CudaProfilerStop() call. See --flush-on-cudaprofilerstop to control this behavior.",
+          "globalPid": 289995436851200
+        },
+        {
+          "timestamp": -928068958,
+          "timestampType": 1,
+          "source": 1,
+          "severity": 1,
+          "text": "Loaded CUPTI library: /opt/nvidia/nsight-systems/2024.6.2/target-linux-x64/libcupti.so.12.8",
+          "globalPid": 289995436851200
+        },
+        {
+          "timestamp": -701921863,
+          "timestampType": 1,
+          "source": 1,
+          "severity": 1,
+          "text": "Enabling trace for device graph launch",
+          "globalPid": 289995436851200
+        },
+        {
+          "timestamp": -701912387,
+          "timestampType": 1,
+          "source": 1,
+          "severity": 1,
+          "text": "CUDA injection initialized successfully.",
+          "globalPid": 289995436851200
+        },
+        {
+          "timestamp": 0,
+          "timestampType": 1,
+          "source": 3,
+          "severity": 1,
+          "text": "Profiling has started.",
+          "globalPid": -144115188075855872
+        },
+        {
+          "timestamp": 8870042,
+          "timestampType": 1,
+          "source": 1,
+          "severity": 1,
+          "text": "Profiling started due to cudaProfilerStart API invoked in the application.",
+          "globalPid": 289995436851200
+        },
+        {
+          "timestamp": 8971807,
+          "timestampType": 1,
+          "source": 1,
+          "severity": 1,
+          "text": "NVTX injection initialized successfully.",
+          "globalPid": 289995436851200
+        },
+        {
+          "timestamp": 15966527,
+          "timestampType": 2,
+          "source": 3,
+          "severity": 2,
+          "text": "Not all NVTX events might have been collected.",
+          "globalPid": 289995436851200
+        },
+        {
+          "timestamp": 15970864,
+          "timestampType": 2,
+          "source": 3,
+          "severity": 1,
+          "text": "Number of NVTX events collected: \t32.",
+          "globalPid": 289995436851200
+        },
+        {
+          "timestamp": 15972746,
+          "timestampType": 2,
+          "source": 3,
+          "severity": 2,
+          "text": "Not all CUDA events might have been collected.",
+          "globalPid": 289995436851200
+        },
+        {
+          "timestamp": 15973357,
+          "timestampType": 2,
+          "source": 3,
+          "severity": 1,
+          "text": "Number of CUDA events collected: \t5.",
+          "globalPid": 289995436851200
+        },
+        {
+          "timestamp": 50096971,
+          "timestampType": 1,
+          "source": 3,
+          "severity": 1,
+          "text": "Profiling has stopped.",
+          "globalPid": -144115188075855872
+        },
+        {
+          "timestamp": 51521475,
+          "timestampType": 1,
+          "source": 1,
+          "severity": 1,
+          "text": "Number of CUPTI events produced: \t16, CUPTI buffers: 50.",
+          "globalPid": 289995436851200
+        }
+      ]
+    },
+    {
+      "label": "native_16384",
+      "report": "../profiles/baseline_naive_attention_s16384_d64.nsys-rep",
+      "report_sha256": "7c466d80fcf4cf411be9540401b821d0c490d062d32b64bcb72066e173147487",
+      "kernels": [
+        {
+          "start": 9029288,
+          "end": 21660865,
+          "deviceId": 0,
+          "contextId": 1,
+          "greenContextId": 0,
+          "streamId": 7,
+          "correlationId": 11,
+          "globalPid": 288180712505344,
+          "demangledName": 28,
+          "shortName": 28,
+          "mangledName": 28,
+          "launchType": 1,
+          "cacheConfig": 1,
+          "registersPerThread": 128,
+          "gridX": 4,
+          "gridY": 64,
+          "gridZ": 64,
+          "blockX": 256,
+          "blockY": 1,
+          "blockZ": 1,
+          "staticSharedMemory": 16912,
+          "dynamicSharedMemory": 0,
+          "localMemoryPerThread": 0,
+          "localMemoryTotal": 21626880,
+          "gridId": 24,
+          "sharedMemoryExecuted": 34304,
+          "graphNodeId": null,
+          "sharedMemoryLimitConfig": 0,
+          "name": "sgemm_128x128x8_NT_vec",
+          "duration_ms": 12.631577
+        },
+        {
+          "start": 21661313,
+          "end": 35806088,
+          "deviceId": 0,
+          "contextId": 1,
+          "greenContextId": 0,
+          "streamId": 7,
+          "correlationId": 21,
+          "globalPid": 288180712505344,
+          "demangledName": 33,
+          "shortName": 34,
+          "mangledName": 29,
+          "launchType": 1,
+          "cacheConfig": 1,
+          "registersPerThread": 14,
+          "gridX": 524288,
+          "gridY": 1,
+          "gridZ": 1,
+          "blockX": 128,
+          "blockY": 1,
+          "blockZ": 1,
+          "staticSharedMemory": 0,
+          "dynamicSharedMemory": 0,
+          "localMemoryPerThread": 0,
+          "localMemoryTotal": 21626880,
+          "gridId": 25,
+          "sharedMemoryExecuted": 0,
+          "graphNodeId": null,
+          "sharedMemoryLimitConfig": 0,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::BUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)",
+          "duration_ms": 14.144775
+        },
+        {
+          "start": 35806536,
+          "end": 61263284,
+          "deviceId": 0,
+          "contextId": 1,
+          "greenContextId": 0,
+          "streamId": 7,
+          "correlationId": 32,
+          "globalPid": 288180712505344,
+          "demangledName": 35,
+          "shortName": 36,
+          "mangledName": 30,
+          "launchType": 1,
+          "cacheConfig": 1,
+          "registersPerThread": 32,
+          "gridX": 16384,
+          "gridY": 1,
+          "gridZ": 1,
+          "blockX": 1024,
+          "blockY": 1,
+          "blockZ": 1,
+          "staticSharedMemory": 0,
+          "dynamicSharedMemory": 128,
+          "localMemoryPerThread": 0,
+          "localMemoryTotal": 21626880,
+          "gridId": 26,
+          "sharedMemoryExecuted": 512,
+          "graphNodeId": null,
+          "sharedMemoryLimitConfig": 0,
+          "name": "void at::native::<unnamed>::cunn_SoftMaxForward<(int)4, float, float, float, at::native::<unnamed>::SoftMaxForwardEpilogue>(T4 *, const T2 *, int)",
+          "duration_ms": 25.456748
+        },
+        {
+          "start": 61263732,
+          "end": 74058056,
+          "deviceId": 0,
+          "contextId": 1,
+          "greenContextId": 0,
+          "streamId": 7,
+          "correlationId": 45,
+          "globalPid": 288180712505344,
+          "demangledName": 31,
+          "shortName": 31,
+          "mangledName": 31,
+          "launchType": 1,
+          "cacheConfig": 1,
+          "registersPerThread": 153,
+          "gridX": 8,
+          "gridY": 1,
+          "gridZ": 128,
+          "blockX": 128,
+          "blockY": 1,
+          "blockZ": 1,
+          "staticSharedMemory": 16912,
+          "dynamicSharedMemory": 0,
+          "localMemoryPerThread": 0,
+          "localMemoryTotal": 21626880,
+          "gridId": 27,
+          "sharedMemoryExecuted": 51456,
+          "graphNodeId": null,
+          "sharedMemoryLimitConfig": 0,
+          "name": "sgemm_32x32x32_NN_vec",
+          "duration_ms": 12.794324
+        }
+      ],
+      "apis": [
+        {
+          "start": 8764398,
+          "end": 8767066,
+          "correlationId": 1,
+          "name": "cuProfilerStart",
+          "duration_ms": 0.002668
+        },
+        {
+          "start": 9003690,
+          "end": 9032242,
+          "correlationId": 11,
+          "name": "cudaLaunchKernel_v7000",
+          "duration_ms": 0.028552
+        },
+        {
+          "start": 9078234,
+          "end": 9089339,
+          "correlationId": 21,
+          "name": "cudaLaunchKernel_v7000",
+          "duration_ms": 0.011105
+        },
+        {
+          "start": 9125334,
+          "end": 9132824,
+          "correlationId": 32,
+          "name": "cudaLaunchKernel_v7000",
+          "duration_ms": 0.00749
+        },
+        {
+          "start": 9150420,
+          "end": 9156067,
+          "correlationId": 45,
+          "name": "cudaLaunchKernel_v7000",
+          "duration_ms": 0.005647
+        },
+        {
+          "start": 9207665,
+          "end": 74067232,
+          "correlationId": 51,
+          "name": "cudaDeviceSynchronize_v3020",
+          "duration_ms": 64.859567
+        }
+      ],
+      "gpu": [
+        {
+          "vmId": 281474976710656,
+          "id": 0,
+          "name": "NVIDIA GeForce GTX 1060",
+          "busLocation": "0000:01:00.0",
+          "isDiscrete": 1,
+          "l2CacheSize": 1572864,
+          "totalMemory": 6360465408,
+          "memoryBandwidth": 192192000000,
+          "clockRate": 1733000000,
+          "smCount": 10,
+          "pwGpuId": 0,
+          "uuid": "98c7600c-07cd-9f41-6c0f-c5e3322ec3a9",
+          "luid": 0,
+          "chipName": "GP106",
+          "cuDevice": 0,
+          "ctxswDevPath": "",
+          "ctrlDevPath": "",
+          "revision": 161,
+          "nodeMask": 0,
+          "constantMemory": 65536,
+          "maxIPC": 6,
+          "maxRegistersPerBlock": 65536,
+          "maxShmemPerBlock": 49152,
+          "maxShmemPerBlockOptin": 49152,
+          "maxShmemPerSm": 98304,
+          "maxRegistersPerSm": 65536,
+          "threadsPerWarp": 32,
+          "asyncEngines": 2,
+          "maxWarpsPerSm": 64,
+          "maxBlocksPerSm": 32,
+          "maxThreadsPerBlock": 1024,
+          "maxBlockDimX": 1024,
+          "maxBlockDimY": 1024,
+          "maxBlockDimZ": 64,
+          "maxGridDimX": 2147483647,
+          "maxGridDimY": 65535,
+          "maxGridDimZ": 65535,
+          "computeMajor": 6,
+          "computeMinor": 1,
+          "smMajor": 6,
+          "smMinor": 1
+        }
+      ],
+      "session": [
+        {
+          "utcEpochNs": 1791560985914514620,
+          "utcTime": "2026-10-09T15:49:45",
+          "localTime": "2026-10-09T23:49:45"
+        }
+      ],
+      "diagnostics": [
+        {
+          "timestamp": -2261088275,
+          "timestampType": 1,
+          "source": 2,
+          "severity": 1,
+          "text": "Process was launched by the profiler, see /tmp/nvidia/nsight_systems/quadd_session_10399651/streams/pid_399693_stdout.log and stderr.log for program output",
+          "globalPid": 288180712505344
+        },
+        {
+          "timestamp": -2242224844,
+          "timestampType": 1,
+          "source": 1,
+          "severity": 1,
+          "text": "Common injection library initialized successfully.",
+          "globalPid": 288180712505344
+        },
+        {
+          "timestamp": -1067619601,
+          "timestampType": 1,
+          "source": 1,
+          "severity": 1,
+          "text": "Buffers holding CUDA trace data will be flushed on CudaProfilerStop() call. See --flush-on-cudaprofilerstop to control this behavior.",
+          "globalPid": 288180712505344
+        },
+        {
+          "timestamp": -1058584931,
+          "timestampType": 1,
+          "source": 1,
+          "severity": 1,
+          "text": "Loaded CUPTI library: /opt/nvidia/nsight-systems/2024.6.2/target-linux-x64/libcupti.so.12.8",
+          "globalPid": 288180712505344
+        },
+        {
+          "timestamp": -831080835,
+          "timestampType": 1,
+          "source": 1,
+          "severity": 1,
+          "text": "Enabling trace for device graph launch",
+          "globalPid": 288180712505344
+        },
+        {
+          "timestamp": -831070876,
+          "timestampType": 1,
+          "source": 1,
+          "severity": 1,
+          "text": "CUDA injection initialized successfully.",
+          "globalPid": 288180712505344
+        },
+        {
+          "timestamp": 0,
+          "timestampType": 1,
+          "source": 3,
+          "severity": 1,
+          "text": "Profiling has started.",
+          "globalPid": -144115188075855872
+        },
+        {
+          "timestamp": 8759144,
+          "timestampType": 1,
+          "source": 1,
+          "severity": 1,
+          "text": "Profiling started due to cudaProfilerStart API invoked in the application.",
+          "globalPid": 288180712505344
+        },
+        {
+          "timestamp": 8860756,
+          "timestampType": 1,
+          "source": 1,
+          "severity": 1,
+          "text": "NVTX injection initialized successfully.",
+          "globalPid": 288180712505344
+        },
+        {
+          "timestamp": 15987378,
+          "timestampType": 2,
+          "source": 3,
+          "severity": 2,
+          "text": "Not all NVTX events might have been collected.",
+          "globalPid": 288180712505344
+        },
+        {
+          "timestamp": 15991698,
+          "timestampType": 2,
+          "source": 3,
+          "severity": 1,
+          "text": "Number of NVTX events collected: \t11.",
+          "globalPid": 288180712505344
+        },
+        {
+          "timestamp": 15993793,
+          "timestampType": 2,
+          "source": 3,
+          "severity": 2,
+          "text": "Not all CUDA events might have been collected.",
+          "globalPid": 288180712505344
+        },
+        {
+          "timestamp": 15994351,
+          "timestampType": 2,
+          "source": 3,
+          "severity": 1,
+          "text": "Number of CUDA events collected: \t10.",
+          "globalPid": 288180712505344
+        },
+        {
+          "timestamp": 76226981,
+          "timestampType": 1,
+          "source": 3,
+          "severity": 1,
+          "text": "Profiling has stopped.",
+          "globalPid": -144115188075855872
+        },
+        {
+          "timestamp": 77821466,
+          "timestampType": 1,
+          "source": 1,
+          "severity": 1,
+          "text": "Number of CUPTI events produced: \t21, CUPTI buffers: 50.",
+          "globalPid": 288180712505344
+        }
+      ]
+    }
+  ],
+  "sass_key_loop_range": "0x0118..0x06f8",
+  "sass_key_loop_static_instruction_counts": {
+    "BAR.SYNC": 10,
+    "MEMBAR.CTA": 10,
+    "MUFU.EX2": 2,
+    "SHFL": 0,
+    "LDG.E.CI": 2
+  },
+  "analytical_counts": {
+    "seq_len": 16384,
+    "head_dim": 64,
+    "query_key_pairs": 268435456,
+    "cta_barrier_instances": 2684370944,
+    "kv_logical_load_bytes": 137438953472,
+    "matmul_flops_convention": 68719476736
+  }
+}

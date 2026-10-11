@@ -1,0 +1,72 @@
+{
+  "query_date": "2026-10-11",
+  "device": "NVIDIA GeForce GTX 1060",
+  "compute_capability": [6, 1],
+  "cupti_library": "libcupti.so.2025.1.1",
+  "query_method": "cuptiMetricGetIdFromName + cuptiMetricGetAttribute(CUPTI_METRIC_ATTR_EVALUATION_MODE); cuptiDeviceEnumEventDomains + cuptiDeviceGetEventDomainAttribute",
+  "metadata_only": true,
+  "kernels_launched": 0,
+  "performance_counters_collected": false,
+  "evaluation_mode_bits": {
+    "1": "CUPTI_METRIC_EVALUATION_MODE_PER_INSTANCE",
+    "2": "CUPTI_METRIC_EVALUATION_MODE_AGGREGATE"
+  },
+  "metrics": {
+    "achieved_occupancy": 3,
+    "sm_efficiency": 3,
+    "warp_execution_efficiency": 3,
+    "warp_nonpred_execution_efficiency": 3,
+    "eligible_warps_per_cycle": 3,
+    "issue_slot_utilization": 3,
+    "stall_sync": 3,
+    "stall_exec_dependency": 3,
+    "stall_memory_dependency": 3,
+    "stall_other": 3,
+    "stall_not_selected": 3,
+    "stall_inst_fetch": 3,
+    "stall_pipe_busy": 3,
+    "stall_texture": 3,
+    "stall_memory_throttle": 3,
+    "stall_constant_memory_dependency": 3,
+    "dram_read_throughput": 2,
+    "dram_write_throughput": 2,
+    "l2_read_throughput": 2,
+    "l2_tex_read_hit_rate": 2,
+    "dram_read_transactions": 2,
+    "l2_read_transactions": 2,
+    "gld_efficiency": 2
+  },
+  "metric_event_dependencies": {
+    "sm_efficiency": ["active_cycles", "elapsed_cycles_sm"],
+    "achieved_occupancy": ["active_warps", "active_cycles"]
+  },
+  "relevant_events": [
+    {
+      "name": "elapsed_cycles_sm",
+      "id": 83886133,
+      "domain": "domain_a",
+      "domain_id": 20054018,
+      "total_instances": 10
+    },
+    {
+      "name": "active_cycles",
+      "id": 83886159,
+      "domain": "domain_d",
+      "domain_id": 20054031,
+      "total_instances": 10
+    },
+    {
+      "name": "active_warps",
+      "id": 83886160,
+      "domain": "domain_d",
+      "domain_id": 20054031,
+      "total_instances": 10
+    }
+  ],
+  "limitations": [
+    "Capability metadata does not contain measured per-instance values.",
+    "Actual collection may still report permissions, overflow or other collection errors.",
+    "Do not assume displayed instance order maps directly to the physical SM ID exposed by %smid.",
+    "Aggregate-only memory metrics do not imply that all their underlying events lack per-instance collection; their instances may represent memory units rather than SMs."
+  ]
+}

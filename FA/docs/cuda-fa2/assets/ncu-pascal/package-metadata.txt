@@ -1,0 +1,19 @@
+Package: nsight-compute-2019.5.0
+Version: 2019.5.0.14-1
+Architecture: amd64
+Priority: optional
+Section: multiverse/devel
+Source: nsight-compute
+Maintainer: cudatools <cudatools@nvidia.com>
+Installed-Size: 485624
+Provides: nsight-compute
+Filename: ./nsight-compute-2019.5.0_2019.5.0.14-1_amd64.deb
+Size: 214391146
+MD5sum: 0021f3aa01965cd450aee08cb73a03df
+SHA1: 8d7147a842524a52fd8cfffd15d8444ea2b7edc6
+SHA256: 2b934b30e88de4861773bdf274f994099ccf06c0119627e6db2f9909d70ca763
+SHA512: c6fbd98adeef68796baab25fd0ae8187405439f5c852c0493d23104dd3a7459c6b21f34f0bf7f3d903ea3a93c201b5f9160a6692d2e1ead8980859c600f7c3c3
+Description: NVIDIA Nsight Compute
+ NVIDIA Nsight Compute is an interactive kernel profiler for CUDA
+ applications on x86_64 platforms. It provides detailed performance
+ metrics and API debugging via a user interface and command line tool.

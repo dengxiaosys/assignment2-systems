@@ -1,0 +1,22 @@
+{
+  "/usr/local/cuda": {
+    "realpath": "/usr/local/cuda-12.8",
+    "sha256": null
+  },
+  "/usr/local/cuda-12.8/bin/ncu": {
+    "realpath": "/usr/local/cuda-12.8/bin/ncu",
+    "sha256": "02fffd2174c647582a6faa3829bcab06ca66dfb026c7b0e8f863fbbfb0cca877"
+  },
+  "/usr/local/cuda-12.8/bin/nvcc": {
+    "realpath": "/usr/local/cuda-12.8/bin/nvcc",
+    "sha256": "59e4e55f9a38b78c590df1e28a69dad91052958f18a03868ca4a547c043fbba7"
+  },
+  "/usr/lib/x86_64-linux-gnu/libcuda.so.1": {
+    "realpath": "/usr/lib/x86_64-linux-gnu/libcuda.so.570.211.01",
+    "sha256": "9e10c86a1aa39002a87c97b39d78a00a2f3695026ec76c09783a3f1e7e97c906"
+  },
+  "/home/dengxiao/code_repos/institutionalized/stanford_cs336/assignments/assignment2-systems/FA/src/cuda_fa2_extension.cpython-311-x86_64-linux-gnu.so": {
+    "realpath": "/home/dengxiao/code_repos/institutionalized/stanford_cs336/assignments/assignment2-systems/FA/src/cuda_fa2_extension.cpython-311-x86_64-linux-gnu.so",
+    "sha256": "29f397f8fa5bad4d2bd7f4f3ba54be87cee2d8bb5eaa4a505db283f60f957d6a"
+  }
+}

@@ -1,0 +1,135 @@
+{
+  "collection_date": "2026-10-11",
+  "profiler": "nvprof 12.8.90 (21)",
+  "driver_version": "570.211.01",
+  "device": "NVIDIA GeForce GTX 1060",
+  "compute_capability": [6, 1],
+  "input": {
+    "shape": [16384, 64],
+    "dtype": "float32",
+    "causal": false,
+    "tf32": false,
+    "seed": 0,
+    "cpu_threads": 1,
+    "warmup": 5,
+    "captured_forward_calls": 1
+  },
+  "binary": {
+    "path": "src/cuda_fa2_extension.cpython-311-x86_64-linux-gnu.so",
+    "sha256": "29f397f8fa5bad4d2bd7f4f3ba54be87cee2d8bb5eaa4a505db283f60f957d6a",
+    "matches_previous_baseline": true,
+    "rebuilt_during_collection": false,
+    "reference_commit": "be1e825df74e09adb947fb90182805e2d846080f",
+    "current_source_sha256": "c9e04d84abe5eaee67bcda67d67c4ebc060ce7b33bca99e772d63f9a23833ef1",
+    "current_source_note": "The working tree contains variable renames, const qualifiers and formatting changes; measurements identify the prebuilt binary by SHA-256."
+  },
+  "collection_method": {
+    "identity": "sudo",
+    "capture_range": "cudaProfilerStart/cudaProfilerStop",
+    "replay": "kernel replay for multiple event groups",
+    "gpu_trace": true,
+    "raw_custom": "nvprof-custom-s16384-d64.csv",
+    "raw_efficient": "nvprof-efficient-s16384-d64.csv",
+    "process_log": "nvprof-detailed-process.log",
+    "filter_warning": "The detailed command placed --kernels after --metrics, so that filter had no effect. Capture contains exactly one forward and the trace has exactly one intended kernel per implementation.",
+    "overflow": {
+      "custom": ["sm_efficiency"],
+      "efficient": []
+    },
+    "stall_semantics": "Each stall metric is a proportion of recorded stall reasons, not a percentage of wall-clock kernel duration.",
+    "throughput_semantics": "Throughput values belong to the profiling pass; do not multiply them by an independent benchmark duration."
+  },
+  "metrics": {
+    "custom": {
+      "achieved_occupancy": 0.997961,
+      "sm_efficiency_pct": null,
+      "warp_execution_efficiency_pct": 92.145628,
+      "warp_nonpred_execution_efficiency_pct": 67.779263,
+      "eligible_warps_per_cycle": 3.110919,
+      "issue_slot_utilization_pct": 54.201824,
+      "stall_sync_pct": 45.266341,
+      "stall_memory_dependency_pct": 9.338987,
+      "stall_exec_dependency_pct": 20.619948,
+      "stall_other_pct": 18.159877,
+      "stall_not_selected_pct": 1.530019,
+      "stall_inst_fetch_pct": 5.001215,
+      "stall_pipe_busy_pct": 0.082793,
+      "stall_texture_pct": 0.0,
+      "stall_memory_throttle_pct": 0.000016,
+      "stall_constant_memory_dependency_pct": 0.000806,
+      "dram_read_throughput_gb_per_s": 1.588894,
+      "dram_write_throughput_mb_per_s": 2.846625,
+      "l2_read_throughput_gb_per_s": 22.637489,
+      "l2_tex_read_hit_rate_pct": 86.939724,
+      "dram_read_transactions": 155720747,
+      "l2_read_transactions": 2218604078,
+      "gld_efficiency_pct": 100.0
+    },
+    "efficient": {
+      "achieved_occupancy": 0.186290,
+      "sm_efficiency_pct": 95.302411,
+      "warp_execution_efficiency_pct": 99.573523,
+      "warp_nonpred_execution_efficiency_pct": 97.896062,
+      "eligible_warps_per_cycle": 4.327752,
+      "issue_slot_utilization_pct": 67.121107,
+      "stall_sync_pct": 23.046328,
+      "stall_memory_dependency_pct": 0.844083,
+      "stall_exec_dependency_pct": 37.350955,
+      "stall_other_pct": 4.245361,
+      "stall_not_selected_pct": 17.773436,
+      "stall_inst_fetch_pct": 12.682526,
+      "stall_pipe_busy_pct": 4.045380,
+      "stall_texture_pct": 0.0,
+      "stall_memory_throttle_pct": 0.000044,
+      "stall_constant_memory_dependency_pct": 0.011886,
+      "dram_read_throughput_gb_per_s": 6.804241,
+      "dram_write_throughput_mb_per_s": 110.795123,
+      "l2_read_throughput_gb_per_s": 79.820898,
+      "l2_tex_read_hit_rate_pct": 96.487041,
+      "dram_read_transactions": 8586931,
+      "l2_read_transactions": 100733727,
+      "gld_efficiency_pct": 100.0
+    }
+  },
+  "repeat_check": {
+    "raw_file": "nvprof-custom-summary-s16384-d64.csv",
+    "custom": {
+      "achieved_occupancy": 0.994933,
+      "stall_sync_pct": 45.104406,
+      "stall_exec_dependency_pct": 20.653300,
+      "stall_memory_dependency_pct": 9.366298,
+      "dram_read_throughput_gb_per_s": 1.469597,
+      "l2_read_throughput_gb_per_s": 28.813287
+    }
+  },
+  "derived": {
+    "custom_over_efficient_dram_read_transactions": 18.134621903914216,
+    "custom_over_efficient_l2_read_transactions": 22.02444150607075,
+    "custom_dram_read_throughput_pct_of_nominal_192_192_gb_per_s": 0.826722236097236
+  },
+  "unprofiled_recheck": {
+    "warmup": 5,
+    "iterations_per_repeat": 1,
+    "repeats": 3,
+    "cpu_threads": 1,
+    "cuda_event_mean_ms": {
+      "native": 66.54237620035808,
+      "efficient": 36.13387807210287,
+      "custom": 2896.6222330729165
+    },
+    "raw_records": [
+      "benchmark-recheck-native.json",
+      "benchmark-recheck-efficient.json",
+      "benchmark-recheck-custom.json"
+    ],
+    "note": "Short same-shape validation run; historical 20 iterations x 5 repeats remains the formal baseline."
+  },
+  "correctness": {
+    "command": "/home/dengxiao/miniconda3/envs/nanovllm/bin/python -E -s -B -m tests.test_cuda_fa2_forward --device cuda",
+    "raw_file": "cuda-validation.log",
+    "tests_run": 4,
+    "passed": true,
+    "numerical_reference": "CPU FP64, existing small-shape cases with both causal and non-causal execution",
+    "large_shape_reference_verified": false
+  }
+}

@@ -25,7 +25,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--impl", choices=tuple(IMPLEMENTATION_BACKENDS), default="native")
     parser.add_argument("--seq-len", type=int, default=16384, help="Sequence length S")
     parser.add_argument("--head-dim", type=int, default=64, help="Feature dimension d")
-    parser.add_argument("--causal", action="store_true")
+    parser.add_argument(
+        "--causal", action=argparse.BooleanOptionalAction, default=True,
+        help="Enable causal attention (default); use --no-causal to disable",
+    )
     parser.add_argument("--warmup", type=int, default=5)
     parser.add_argument("--iterations", type=int, default=20)
     parser.add_argument("--repeats", type=int, default=5)
