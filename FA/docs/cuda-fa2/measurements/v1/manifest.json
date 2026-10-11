@@ -223,10 +223,11 @@
     "Primary speedup compares archived V0 baseline with newly measured V1 using matching recorded parameters; run conditions may differ."
   ],
   "files_sha256": {
+    "assets/faq-device-launch.svg": "3fb50407fa429a37eeb072a64a94c0ed9d55961a6cdb63801736dba1fef96cae",
     "assets/warp-key-protocol.svg": "d0f9c109da4165c68943373341e1760b9476bb14d5bde59d0c7784534d07a42f",
     "assets/warp-query-mapping.svg": "db411f8c6ceed3a637915e01c75954c2a70de2c9e6d6a008c6877f2d4d74fe1d",
     "binaries/cuda_fa2_v1_extension.cpython-311-x86_64-linux-gnu.so": "078da892a4215b62df43f75642e84e1e107529f1ee370089326494f247ccaa47",
-    "build-and-run.md": "3539104b6c7c0f548384ef3f90693c15c45d1d0842d9555c2287771cd411aa06",
+    "build-and-run.md": "c7c22b7d647aecbfa22148eb83f4d07ff5eccc92d468cb82960c0696208bb40f",
     "data/benchmark-custom-causal.json": "0a1874fa5ec04d831b8a26b0d22e14a5871d2bd2b4ae8a089e2884f99cda5ff0",
     "data/benchmark-custom.json": "374d8a66c806d0c6aa79f30f23103302a432a24a0e805015b6751f547188f1aa",
     "data/benchmark-efficient.json": "5674b5a80b7a014c5b1f98ff6a8f641c9c28bb0372ad75c3488fd9b210d04495",
@@ -245,8 +246,9 @@
     "data/row-validation.json": "b11583cebcec620789700c9c824a5557412e91773da51b03beecb37593b4cf1d",
     "data/sass.txt": "d7029a0a9f9303eec60fb7be90423667f70425e91dbee27e8c2f82f67e40d8d2",
     "data/synccheck.log": "6bd74ecbfb4408dd35c6e7dd4d88a11c6ba6e25ee8dfda9b7fbf33348589be45",
+    "faq.md": "b7a0cb8b318b5883e7c4f2b6c1a3c97955fe3ae109647c407f99356fcce2cb28",
     "optimization-design.md": "16862b06de79352ca9afa4fd5f462949987a67adceedb664b1addb03fc4e806d",
-    "perf_v1.md": "48e9b7efc2a3546390ade8e9e3ec51b8e66e117cd945620fae20d0cc38ac8a06",
+    "perf_v1.md": "1b1a2112ed335c057335d1d2da76ceef0c14f954ece2c3d2f111b05d48cd5f08",
     "profiles/forward.nvvp": "cd0839037638a640106715b1e528280263a0a913fc71ba940090b1bb2584c89d",
     "snapshot/fa2_forward.cu": "bd3691b7ba0441c68e9f9d4b8bb2a09f4fbc3964fdbbd633aa416414164b6687"
   },

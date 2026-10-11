@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="670" viewBox="0 0 1200 670" role="img" aria-labelledby="title desc">
+  <title id="title">CUDAGuard 作用域与 GPU kernel 异步执行的关系</title>
+  <desc id="desc">CPU 线程进入函数时当前设备为 CUDA 0，Q 位于 CUDA 1。设备 guard 保存 CUDA 0 并选择 CUDA 1，函数获取该设备的当前 stream 后提交 kernel，退出作用域恢复 CUDA 0。GPU 上已提交到 CUDA 1 的 kernel 保持原设备和 stream 归属，可能在 CPU 返回之后继续执行。示意位置不代表真实时间比例。</desc>
+  <defs>
+    <style>
+      text { font-family: "Noto Sans CJK SC", "Microsoft YaHei", sans-serif; fill: #18263c; }
+      .title { font-size: 26px; font-weight: 700; }
+      .heading { font-size: 20px; font-weight: 700; }
+      .label { font-size: 17px; font-weight: 600; }
+      .body { font-size: 16px; }
+      .small { font-size: 14px; fill: #58677b; }
+      .flow { fill: none; stroke: #536c91; stroke-width: 2.5; marker-end: url(#arrow); }
+      .submit { fill: none; stroke: #138565; stroke-width: 2.5; marker-end: url(#green-arrow); }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0L10 5L0 10Z" fill="#536c91"/>
+    </marker>
+    <marker id="green-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0L10 5L0 10Z" fill="#138565"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="670" rx="18" fill="#f7f9fc"/>
+  <text x="28" y="44" class="title">设备 guard 管理 host 状态；已提交的 GPU 工作保持原设备和 stream</text>
+  <text x="28" y="76" class="small">例：进入函数前当前设备为 cuda:0，Q / K / V 已位于 cuda:1。图示不按实际耗时比例绘制。</text>
+
+  <rect x="202" y="113" width="744" height="214" rx="14" fill="#eaf2ff" stroke="#9ab5df"/>
+  <text x="222" y="143" class="heading">device_guard 的作用域：当前设备为 cuda:1</text>
+  <text x="28" y="183" class="heading">CPU 线程</text>
+  <text x="28" y="210" class="small">host wrapper</text>
+
+  <rect x="28" y="232" width="154" height="74" rx="9" fill="#ffffff" stroke="#c9d4e2"/>
+  <text x="42" y="258" class="label">进入函数</text>
+  <text x="42" y="286" class="body">当前 cuda:0</text>
+  <path d="M183 269H214" class="flow"/>
+
+  <rect x="218" y="173" width="210" height="133" rx="9" fill="#ffffff" stroke="#9ab5df"/>
+  <text x="233" y="201" class="label">构造 guard</text>
+  <text x="233" y="233" class="body">保存 cuda:0</text>
+  <text x="233" y="260" class="body">选择 q.device()</text>
+  <text x="233" y="287" class="body">Q 数据位置不变</text>
+  <path d="M430 240H460" class="flow"/>
+
+  <rect x="464" y="173" width="224" height="133" rx="9" fill="#ffffff" stroke="#9ab5df"/>
+  <text x="479" y="201" class="label">获取 current stream</text>
+  <text x="479" y="233" class="body">属于 cuda:1</text>
+  <text x="479" y="260" class="body">可能为非默认 stream</text>
+  <text x="479" y="287" class="body">尊重 PyTorch 的选择</text>
+  <path d="M690 240H722" class="flow"/>
+
+  <rect x="726" y="173" width="198" height="133" rx="9" fill="#e8f5f0" stroke="#91c6b0"/>
+  <text x="741" y="201" class="label">提交 kernel</text>
+  <text x="741" y="233" class="body">grid / block / 0</text>
+  <text x="741" y="260" class="body">使用指定 stream</text>
+  <text x="741" y="287" class="body">通常异步返回</text>
+  <path d="M926 240H960" class="flow"/>
+
+  <rect x="964" y="173" width="208" height="133" rx="9" fill="#fff3e5" stroke="#d8b689"/>
+  <text x="979" y="201" class="label">退出作用域</text>
+  <text x="979" y="233" class="body">正常 return / 异常</text>
+  <text x="979" y="260" class="body">析构并恢复 cuda:0</text>
+  <text x="979" y="287" class="body">不等于 GPU 已完成</text>
+
+  <text x="28" y="385" class="heading">GPU cuda:1</text>
+  <text x="28" y="412" class="small">选定 stream</text>
+  <path d="M825 308V419" class="submit"/>
+  <text x="843" y="366" class="small">工作入队</text>
+  <rect x="222" y="423" width="520" height="87" rx="10" fill="#edf1f7" stroke="#c5d1df"/>
+  <text x="239" y="454" class="label">该 stream 中此前提交的操作</text>
+  <text x="239" y="484" class="body">其顺序关系独立于 host 之后恢复当前设备</text>
+  <path d="M744 466H776" class="submit"/>
+  <rect x="780" y="423" width="392" height="87" rx="10" fill="#e8f5f0" stroke="#91c6b0"/>
+  <text x="797" y="454" class="label">本次 kernel 的设备工作</text>
+  <text x="797" y="484" class="body">可在 CPU 返回后继续；仍属于 cuda:1</text>
+  <path d="M1068 310V421" fill="none" stroke="#b98540" stroke-width="2" stroke-dasharray="6 5"/>
+  <text x="966" y="552" class="small" text-anchor="middle">虚线只对齐 host 退出位置，不表示完成同步</text>
+
+  <rect x="28" y="579" width="1144" height="63" rx="10" fill="#ffffff" stroke="#c9d4e2"/>
+  <text x="46" y="604" class="body">CUDAGuard 不搬移 Tensor、不锁住 GPU，也没有表达等待 kernel 完成的同步操作。</text>
+  <text x="46" y="629" class="small">需要确认设备工作已完成时，在明确边界使用 stream / event 等待；block 内 shared 协作使用另一个同步协议。</text>
+</svg>

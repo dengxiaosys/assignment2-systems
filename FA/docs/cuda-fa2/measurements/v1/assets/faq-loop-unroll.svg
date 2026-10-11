@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="350" viewBox="0 0 1040 350" role="img" aria-labelledby="title desc">
+  <title id="title">循环展开如何帮助线程私有数组进入寄存器</title>
+  <desc id="desc">以 DIMS_PER_LANE 等于 2 为例，编译器将 ri 循环展开成下标为 0 和 1 的两组操作，随后可以把 q_dim 的两个元素分配给当前线程的两个寄存器。展开没有增加线程数，寄存器分配仍取决于编译结果。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0 0 L8 4 L0 8 Z" fill="#64748b"/>
+    </marker>
+  </defs>
+  <rect width="1040" height="350" rx="16" fill="#f8fafc"/>
+  <g font-family="sans-serif" fill="#0f172a">
+    <text x="28" y="38" font-size="21" font-weight="700">DIMS_PER_LANE = 2：编译同一个线程的操作</text>
+    <text x="28" y="66" font-size="14" fill="#475569">示意编译变换；省略边界判断和 z 初始化，非实际 PTX / SASS。</text>
+    <rect x="28" y="92" width="290" height="170" rx="12" fill="#eff6ff" stroke="#93c5fd"/>
+    <text x="46" y="119" font-size="16" font-weight="700">源码：固定长度循环</text>
+    <g font-family="monospace" font-size="15">
+      <text x="46" y="154">#pragma unroll</text>
+      <text x="46" y="182">for (ri = 0; ri &lt; 2; ++ri)</text>
+      <text x="46" y="210">  q_dim[ri] = ...;</text>
+    </g>
+    <path d="M327 176 H357" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+    <rect x="369" y="92" width="300" height="170" rx="12" fill="#f0fdf4" stroke="#86efac"/>
+    <text x="387" y="119" font-size="16" font-weight="700">展开：下标成为常量</text>
+    <g font-family="monospace" font-size="15">
+      <text x="387" y="154">q_dim[0] = Q[qi, lanei];</text>
+      <text x="387" y="182">q_dim[1] = Q[qi, lanei+32];</text>
+    </g>
+    <text x="387" y="227" font-size="14" fill="#475569">每个线程执行这两组操作</text>
+    <path d="M678 176 H708" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+    <rect x="720" y="92" width="292" height="170" rx="12" fill="#faf5ff" stroke="#d8b4fe"/>
+    <text x="738" y="119" font-size="16" font-weight="700">标量化与寄存器分配</text>
+    <g font-family="monospace" font-size="15">
+      <text x="738" y="154">q_dim[0] → q0</text>
+      <text x="738" y="182">q_dim[1] → q1</text>
+    </g>
+    <text x="738" y="227" font-size="14" fill="#475569">q0 / q1 是线程私有值</text>
+    <text x="28" y="299" font-size="15" font-weight="700">展开改变指令组织，不改变 grid / block / warp，也不执行线程同步。</text>
+    <text x="28" y="326" font-size="14" fill="#475569">固定下标有利于寄存器分配；最终是否使用 local memory 或 spill，需检查编译资源与机器码。</text>
+  </g>
+</svg>

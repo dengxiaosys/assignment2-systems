@@ -1,6 +1,6 @@
 # 1. V1 编译、正确性验证与性能采集
 
-V1 的开发源码位于 [cpp_cuda/fa2/v1/fa2_forward.cu](../../../../cpp_cuda/fa2/v1/fa2_forward.cu)，使用独立模块 `src.cuda_fa2_v1_extension`。既有 `cuda_fa2` 继续加载 V0 扩展，新增 `cuda_fa2_v1` 用于 V1；两版可在同一 Python 环境中运行。算法原理与优化前预期见 [优化设计](optimization-design.md)，本次测量结果见 [V1 性能与 profile 分析](perf_v1.md)。
+V1 的开发源码位于 [cpp_cuda/fa2/v1/fa2_forward.cu](../../../../cpp_cuda/fa2/v1/fa2_forward.cu)，使用独立模块 `src.cuda_fa2_v1_extension`。既有 `cuda_fa2` 继续加载 V0 扩展，新增 `cuda_fa2_v1` 用于 V1；两版可在同一 Python 环境中运行。设备、launch 和 shared memory 背景见 [初学者 FAQ](faq.md)，算法原理与优化前预期见 [优化设计](optimization-design.md)，本次测量结果见 [V1 性能与 profile 分析](perf_v1.md)。
 
 ## 1.1 源码与产物位置
 
@@ -24,6 +24,7 @@ FA/
 ├── tests/
 │   └── test_cuda_fa2_forward.py    常规验证及可选长序列抽样检查
 └── docs/cuda-fa2/measurements/v1/
+    ├── faq.md                      设备、launch 与 shared memory 问答
     ├── build-and-run.md             本文：复现操作
     ├── optimization-design.md       优化前模型与假设
     ├── perf_v1.md                   V1 实测与解释
@@ -115,8 +116,8 @@ env -u LD_LIBRARY_PATH -u LD_PRELOAD OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 \
   /home/dengxiao/miniconda3/envs/nanovllm/bin/python -E -s -B \
   -m scripts.benchmark_attention \
   --device cuda --impl cuda_fa2_v1 --seq-len 16384 --head-dim 64 \
-  --warmup 5 --iterations 20 --repeats 5 --threads 1 --seed 0 \
-  --no-causal --no-verify --output-json /tmp/fa2-v1-benchmark.json
+  --warmup 1 --iterations 4 --repeats 3 --threads 1 --seed 0 \
+  --no-causal --no-verify
 ```
 
 `--no-causal` 与 V0 计数器基线保持相同工作量；脚本默认 causal，省略该参数会改变比较口径。`--no-verify` 仅跳过计时入口的全矩阵 FP64 验证，独立验证按 §1.3 执行。正式结果为每组 20 次 forward 的 Event/wall 时间除以 20，再对 5 组计算均值与中位数，所有组样本均保留。

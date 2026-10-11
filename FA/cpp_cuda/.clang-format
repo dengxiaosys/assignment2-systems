@@ -3,3 +3,4 @@ IndentWidth: 4
 NamespaceIndentation: None
 BreakBeforeBraces: Attach
 ColumnLimit: 110
+OneLineFormatOffRegex: '^// fmt: skip$'

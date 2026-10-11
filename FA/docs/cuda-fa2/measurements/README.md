@@ -7,7 +7,7 @@
 | 版本 | 代码版本与范围 | 阅读入口 | 状态 |
 |---|---|---|---|
 | V0 | custom 参考提交 `be1e825df74e09adb947fb90182805e2d846080f`；GTX 1060，FP32，`S=16384, d=64` | [版本清单](v0/manifest.json)、[性能分析](v0/perf_v0.md)、[指标解释](v0/nvprof-readable.md)、[原始 benchmark 记录](v0/opt_routine1.md) | baseline 已归档；硬件计数器与时间线对比为 non-causal，原始 benchmark 文档另保留 causal 记录 |
-| V1 | 以 V0 为父版本；warp 内归约、一个 warp 一个 query、四个 query / CTA | [编译执行](v1/build-and-run.md)、[实测分析](v1/perf_v1.md)、[版本清单](v1/manifest.json)、[优化前设计](v1/optimization-design.md) | 已编译、验证与采集；主形状 non-causal 348.178 ms，相比 V0 原基线快 8.393 倍 |
+| V1 | 以 V0 为父版本；warp 内归约、一个 warp 一个 query、四个 query / CTA | [初学者 FAQ](v1/faq.md)、[编译执行](v1/build-and-run.md)、[实测分析](v1/perf_v1.md)、[版本清单](v1/manifest.json)、[优化前设计](v1/optimization-design.md) | 已编译、验证与采集；主形状 non-causal 348.178 ms，相比 V0 原基线快 8.393 倍 |
 
 后续版本先添加优化前设计，再补充各自实验与证据。通用工具说明见 [性能调优工具与学习路线](../profiling-tools.md)。
 
@@ -28,6 +28,7 @@ measurements/
 │   ├── snapshot/          参考源码与实际测量二进制
 │   └── profiles/          原始 profiler 报告；SQLite 导出不追踪
 └── v1/
+    ├── faq.md                  设备、kernel 发射、shared 与同步背景
     ├── optimization-design.md  优化前数学模型、实现规格与验证协议
     ├── build-and-run.md        构建、测试、benchmark 与 profile 复现
     ├── perf_v1.md              V1 性能与计数器分析
