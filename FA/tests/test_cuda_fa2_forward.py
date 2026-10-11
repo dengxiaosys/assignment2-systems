@@ -12,7 +12,7 @@ from src.cuda_fa2_forward import (
     implementation_metadata,
 )
 from src.forward_registry import get_attention_forward, validate_implementation
-from src.numerical_verification import REFERENCE_TOLERANCE, verify_against_cpu_fp64
+from src.numerical_verification import REFERENCE_TOLERANCE, reference_row, verify_against_cpu_fp64
 
 
 DEVICE = torch.device("cpu")
@@ -157,6 +157,31 @@ class CudaFa2NumericalTests(unittest.TestCase):
                 with self.subTest(head_dim=head_dim, causal=causal):
                     verify_against_cpu_fp64(FORWARD, q, k, v, is_causal=causal)
 
+    def test_subnormal_probabilities_preserve_large_value_contributions(self):
+        for head_dim in (33, 64):
+            for score_gap in (86.0, 88.0, 90.0, 96.0):
+                q = torch.zeros(65, head_dim, device=DEVICE)
+                q[:, 0] = 1.0
+                k = torch.zeros_like(q)
+                k[:64, 0] = -score_gap * head_dim**0.5
+                v = torch.zeros_like(q)
+                v[:64] = 1e36
+                for causal in (False, True):
+                    with self.subTest(head_dim=head_dim, score_gap=score_gap, causal=causal):
+                        verify_against_cpu_fp64(FORWARD, q, k, v, is_causal=causal)
+
+    def test_contiguous_inputs_with_unaligned_storage_offset(self):
+        for head_dim in (4, 32, 64, 128):
+            for offset in (1, 2, 3):
+                inputs = [
+                    torch.randn(65 * head_dim + offset, device=DEVICE)[offset:].view(65, head_dim)
+                    for _ in range(3)
+                ]
+                self.assertTrue(all(tensor.is_contiguous() for tensor in inputs))
+                for causal in (False, True):
+                    with self.subTest(head_dim=head_dim, offset=offset, causal=causal):
+                        verify_against_cpu_fp64(FORWARD, *inputs, is_causal=causal)
+
     def test_rejects_noncontiguous_inputs(self):
         q, k, v = [
             torch.randn(64, 17, device=DEVICE).T
@@ -173,13 +198,6 @@ class CudaFa2NumericalTests(unittest.TestCase):
         ]
         with self.assertRaisesRegex(ValueError, "d <= 128"):
             validate_cuda_fa2_support(q, k, v)
-
-
-def reference_row(q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, qi: int, causal: bool) -> torch.Tensor:
-    """CPU FP64 reference for one query, without a full attention matrix."""
-    key_limit = qi + 1 if causal else q.shape[0]
-    scores = (k[:key_limit] @ q[qi]) / q.shape[1] ** 0.5
-    return scores.softmax(0) @ v[:key_limit]
 
 
 class CudaFa2LongSequenceTests(unittest.TestCase):
@@ -225,7 +243,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
     parser.add_argument(
-        "--impl", choices=("cuda_fa2", "cuda_fa2_v1", "cuda_fa2_v2", "cuda_fa2_v3"),
+        "--impl", choices=("cuda_fa2", "cuda_fa2_v1", "cuda_fa2_v2", "cuda_fa2_v3", "cuda_fa2_v4"),
         default="cuda_fa2",
     )
     parser.add_argument("--long-sequence", action="store_true", help="Also check sampled rows at S=16384, d=64")

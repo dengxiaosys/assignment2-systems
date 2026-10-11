@@ -1,0 +1,7 @@
+==1474017== NVPROF is profiling process 1474017, command: /home/dengxiao/miniconda3/envs/nanovllm/bin/python -m scripts.profile_attention --impl cuda_fa2_v4 --no-causal
+==1474017== Profiling application: /home/dengxiao/miniconda3/envs/nanovllm/bin/python -m scripts.profile_attention --impl cuda_fa2_v4 --no-causal
+==1474017== Profiling result:
+"Start","Duration","Grid X","Grid Y","Grid Z","Block X","Block Y","Block Z","Registers Per Thread","Static SMem","Dynamic SMem","Device","Context","Stream","Name","Correlation_ID"
+ms,ms,,,,,,,,KB,B,,,,,
+380.353813,32.936765,256,1,1,128,1,1,157,21.250000,0,"NVIDIA GeForce GTX 1060 (0)","1","7","void _GLOBAL__N__03350f35_14_fa2_forward_cu_26943507::fa2_forward_fp32_kernel<int=2, bool=1>(float const *, float const , float const , float*, int, int, float, bool)",19
+==1474017== Generated result file: /home/dengxiao/code_repos/institutionalized/stanford_cs336/assignments/assignment2-systems/FA/docs/cuda-fa2/measurements/v4/profiles/forward.nvvp

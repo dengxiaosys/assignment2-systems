@@ -10,6 +10,13 @@ from torch.nn.attention import SDPBackend, sdpa_kernel
 REFERENCE_TOLERANCE = 2e-5
 
 
+def reference_row(q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, qi: int, causal: bool) -> torch.Tensor:
+    """Compute one CPU FP64 attention row without an S x S intermediate."""
+    key_limit = qi + 1 if causal else q.shape[0]
+    scores = (k[:key_limit] @ q[qi]) / q.shape[1] ** 0.5
+    return scores.softmax(0) @ v[:key_limit]
+
+
 @torch.no_grad()
 def verify_against_cpu_fp64(
     kernel: Callable[..., torch.Tensor],

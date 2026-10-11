@@ -1,6 +1,6 @@
 # CUDA FA2 测量索引
 
-每个代码版本的测量单独归档到 `v0/`、`v1/`、`v2/`、`v3/` 等目录。目录名和文件名不使用日期；测量日期保留在文档与 `manifest.json` 中。不同版本各自记录源码、实际加载的二进制、运行环境、理论预期和原始结果。
+每个代码版本的测量单独归档到`v0/`、`v1/`、`v2/`、`v3/`、`v4/`等目录。目录名和文件名不使用日期；测量日期保留在文档与 `manifest.json` 中。不同版本各自记录源码、实际加载的二进制、运行环境、理论预期和原始结果。
 
 ## 1. 版本与测量状态
 
@@ -10,6 +10,7 @@
 | V1 | 以 V0 为父版本；warp 内归约、一个 warp 一个 query、四个 query / CTA | [初学者 FAQ](v1/faq.md)、[编译执行](v1/build-and-run.md)、[实测分析](v1/perf_v1.md)、[版本清单](v1/manifest.json)、[优化前设计](v1/optimization-design.md) | 已编译、验证与采集；主形状 non-causal 348.178 ms，相比 V0 原基线快 8.393 倍 |
 | V2 | 以 V1 为父版本；八个 query / CTA 共享 32-key K/V tile，分块 online softmax | [简明 FAQ](v2/faq.md)、[优化设计](v2/optimization-design.md)、[编译执行](v2/build-and-run.md)、[实测分析](v2/perf_v2.md)、[版本清单](v2/manifest.json) | 已编译、验证、三类 sanitizer 与 29 项 counters；non-causal 143.560 ms，相比 V1 快 2.425 倍 |
 | V3 | 以 V2 为父版本；64 query / CTA、寄存器微矩阵、shared 阶段复用与受控展开 | [优化设计](v3/optimization-design.md)、[efficient 分析](v3/efficient-analysis.md)、[编译执行](v3/build-and-run.md)、[实测分析](v3/perf_v3.md)、[版本清单](v3/manifest.json) | non-causal 47.459 ms，相比 V2 快 3.025 倍；全数值/三类 sanitizer/29 项 counters，保留消融与失败记录 |
+| V4 | 64×64 SIMT tile、stage8预取、P置换、aligned向量搬运 | [理论与消融](v4/optimization-design.md)、[编译执行](v4/build-and-run.md)、[实测分析](v4/perf_v4.md)、[版本清单](v4/manifest.json) | 主形状均值32.886 ms，对同轮efficient36.103 ms；30组交替计时全部领先，48案例抽样校验和三类sanitizer/29项counters通过；d>64等边界见报告 |
 
 后续版本先添加优化前设计，再补充各自实验与证据。通用工具说明见 [性能调优工具与学习路线](../profiling-tools.md)。
 
@@ -46,7 +47,9 @@ measurements/
 
 V3 延续 V2 的核心快照与二进制布局，增加 `efficient-analysis.md`、`efficient-reference/`，并用 `run1/`..`run6/` 保存优化探索、消融和资源失败记录；主目录承载最终选定实现。每轮资源与状态集中记录在 V3 manifest。相同源码与验证输出仅保存一份，manifest 明确各轮引用；不同哈希的实测二进制和原始 profiler 报告保留。
 
-FA2 的 [源码目录](../../../cpp_cuda/fa2/README.md) 使用 `common/`、`v0/`、`v1/`、`v2/`、`v3/` 与单一 `build_extension.py --version` 入口。每版 `snapshot/` 仅保留核心 CUDA 实现，公共绑定、脚本和测试直接引用工作区；实际扩展单独归档，V0 历史目录保持原有二进制位置。多轮独立采集用 `run1/`、`run2/` 区分，保留各轮条件与原始输出。
+V4保留run1–run21的探索与消融，最终选定run20，主目录保存最终源码、二进制和独立计时。manifest集中记录每轮状态、资源、哈希及去重后的路径映射；byte-identical的stdout/JSON或验证输出只留一份。`benchmark-paired.json`保存主形状交替顺序的全部批次，`benchmark-matrix.json`保存多形状计时和CPU FP64抽样行证据。
+
+FA2的[源码目录](../../../cpp_cuda/fa2/README.md)使用`common/`、`v0/`至`v4/`与单一`build_extension.py --version`入口。每版 `snapshot/` 仅保留核心 CUDA 实现，公共绑定、脚本和测试直接引用工作区；实际扩展单独归档，V0 历史目录保持原有二进制位置。多轮独立采集用 `run1/`、`run2/` 区分，保留各轮条件与原始输出。
 
 ## 3. 优化前后比较
 

@@ -1,0 +1,3374 @@
+{
+  "measurement_id": "V4",
+  "measurement_date": "2026-10-12",
+  "parent_measurement": "V3",
+  "working_head": "55404a90822c143e68f1259f742c07fafbe23275",
+  "committed": false,
+  "selected_run": "run20",
+  "development_source": "../../../../cpp_cuda/fa2/v4/fa2_forward.cu",
+  "core_source_snapshot": "snapshot/fa2_forward.cu",
+  "core_source_sha256": "9306cf84e5c2a1d9713ac6ecba8ba798844ab78d650893f51826e2880ac0b012",
+  "measured_binary": {
+    "module": "src.cuda_fa2_v4_extension",
+    "runtime_path_relative_to_fa": "src/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so",
+    "archive_path": "binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so",
+    "sha256": "5001866545e06b3648b5097d911bbfa8eb4bb3a90c0bd64e18bcd54faef7d376",
+    "size_bytes": 1367040,
+    "architecture": "sm_61"
+  },
+  "snapshot_policy": {
+    "core_source_only": true,
+    "shared_files": "Workspace hashes; no duplicate copies of binding/build/Python/tests.",
+    "identical_content": "Byte-identical measurement files stored once; explicit path redirects recorded.",
+    "derived_exports": "Resources, SASS and counter summaries in manifest; full derived dumps not retained."
+  },
+  "environment": {
+    "gpu": "NVIDIA GeForce GTX 1060",
+    "compute_capability": [
+      6,
+      1
+    ],
+    "sm_count": 10,
+    "driver": "570.211.01",
+    "torch": "2.6.0+cu124",
+    "torch_cuda_build": "12.4",
+    "nvcc": "12.8.93",
+    "nvprof": "12.8.90 (21)",
+    "gxx": "13.3.0",
+    "compute_sanitizer": "2025.1.0.0",
+    "cpu_threads": 1,
+    "max_build_jobs": 1,
+    "execution_identity": "sudo",
+    "concurrent_gpu_runs": false,
+    "clock_policy": "Dynamic clocks; no clock or power changes.",
+    "device_attributes": {
+      "max_shared_per_block": 49152,
+      "max_shared_per_sm": 98304,
+      "max_regs_per_sm": 65536,
+      "max_threads_per_sm": 2048
+    },
+    "note": "GPU child processes run under authorized sudo because ordinary sandboxed CUDA initialization fails."
+  },
+  "build": {
+    "command": "sudo env -u LD_LIBRARY_PATH -u LD_PRELOAD -u PYTHONPATH -u PYTHONHOME PATH=/usr/local/cuda/bin:/usr/bin:/bin TORCH_CUDA_ARCH_LIST=6.1 MAX_JOBS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 /home/dengxiao/miniconda3/envs/nanovllm/bin/python cpp_cuda/fa2/build_extension.py --version v4 build_ext --inplace --build-temp /tmp/fa2-v4-build/temp --build-lib /tmp/fa2-v4-build/lib",
+    "cxx_flags": [
+      "-O2"
+    ],
+    "nvcc_flags": [
+      "-O2",
+      "-lineinfo",
+      "--ptxas-options=-v"
+    ],
+    "fast_math": false,
+    "log": "data/build.log"
+  },
+  "kernel": {
+    "queries_per_cta": 64,
+    "keys_per_tile": 64,
+    "warps_per_cta": 4,
+    "threads_per_cta": 128,
+    "query_warps": 2,
+    "column_warps": 2,
+    "lanes_per_row": 8,
+    "rows_per_thread": 8,
+    "scores_per_thread": 32,
+    "main_output_accumulators_per_thread": 32,
+    "reduction_stage": 8,
+    "query_stride": 68,
+    "key_stride": 68,
+    "probability_stride": 64,
+    "probability_swizzle": "queryi XOR (((keyi/4)%8)*4)",
+    "aligned_condition": "head_dim % 4 == 0 and every Q/K/V start address % 16 == 0",
+    "head_dim_supported": [
+      1,
+      128
+    ],
+    "compiled_resources": [
+      {
+        "dims_per_lane": 4,
+        "aligned": false,
+        "REG": 166,
+        "STACK": 0,
+        "SHARED": 25856,
+        "LOCAL": 0
+      },
+      {
+        "dims_per_lane": 4,
+        "aligned": true,
+        "REG": 162,
+        "STACK": 0,
+        "SHARED": 25856,
+        "LOCAL": 0
+      },
+      {
+        "dims_per_lane": 3,
+        "aligned": false,
+        "REG": 166,
+        "STACK": 0,
+        "SHARED": 25856,
+        "LOCAL": 0
+      },
+      {
+        "dims_per_lane": 3,
+        "aligned": true,
+        "REG": 162,
+        "STACK": 0,
+        "SHARED": 25856,
+        "LOCAL": 0
+      },
+      {
+        "dims_per_lane": 2,
+        "aligned": false,
+        "REG": 161,
+        "STACK": 0,
+        "SHARED": 21760,
+        "LOCAL": 0
+      },
+      {
+        "dims_per_lane": 2,
+        "aligned": true,
+        "REG": 157,
+        "STACK": 0,
+        "SHARED": 21760,
+        "LOCAL": 0
+      },
+      {
+        "dims_per_lane": 1,
+        "aligned": false,
+        "REG": 161,
+        "STACK": 0,
+        "SHARED": 21760,
+        "LOCAL": 0
+      },
+      {
+        "dims_per_lane": 1,
+        "aligned": true,
+        "REG": 157,
+        "STACK": 0,
+        "SHARED": 21760,
+        "LOCAL": 0
+      }
+    ],
+    "sass_counts": [
+      {
+        "dims_per_lane": 4,
+        "aligned": false,
+        "static_instruction_count": 3822,
+        "opcodes": {
+          "BAR.SYNC": 8,
+          "BFE": 2,
+          "BFE.U32": 5,
+          "BRA": 19,
+          "BRK": 10,
+          "CAL": 64,
+          "DEPBAR": 1,
+          "DEPBAR.LE": 9,
+          "EXIT": 3,
+          "FADD": 91,
+          "FADD.FTZ": 2,
+          "FCHK.DIVIDE": 64,
+          "FFMA": 1097,
+          "FFMA.RM": 1,
+          "FFMA.RP": 1,
+          "FFMA.RZ": 1,
+          "FMNMX": 58,
+          "FMUL": 163,
+          "FSET.GTU.FTZ.AND": 2,
+          "FSET.NEU.FTZ.AND": 1,
+          "FSETP.GEU.AND": 42,
+          "FSETP.NEU.FTZ.AND": 3,
+          "IADD": 65,
+          "IADD.X": 40,
+          "IADD3": 10,
+          "IADD32I": 101,
+          "ICMP.NE": 9,
+          "ISCADD": 77,
+          "ISCADD32I": 1,
+          "ISET.LT.AND": 8,
+          "ISETP.GE.AND": 134,
+          "ISETP.GE.OR": 32,
+          "ISETP.GE.U32.AND": 1,
+          "ISETP.GT.AND": 2,
+          "ISETP.GT.U32.AND": 5,
+          "ISETP.GT.U32.OR": 1,
+          "ISETP.LT.AND": 1,
+          "ISETP.NE.AND": 3,
+          "LDC.U8": 2,
+          "LDG.E.CI": 32,
+          "LDS.U.128": 56,
+          "LDS.U.32": 87,
+          "LEA.HI": 12,
+          "LOP.AND": 9,
+          "LOP.AND.NZ": 3,
+          "LOP.OR": 1,
+          "LOP.OR.NZ": 1,
+          "LOP3.LUT": 32,
+          "LOP3.LUT.NZ": 1,
+          "LOP32I.AND": 33,
+          "LOP32I.OR": 12,
+          "LOP32I.XOR": 1,
+          "MEMBAR.CTA": 8,
+          "MOV": 403,
+          "MOV32I": 5,
+          "MUFU.EX2": 33,
+          "MUFU.RCP": 65,
+          "MUFU.RSQ": 1,
+          "NOP": 4,
+          "PBK": 2,
+          "PSET.AND.AND": 4,
+          "PSETP.AND.AND": 6,
+          "PSETP.OR.AND": 3,
+          "RET": 1,
+          "RRO.EX2": 33,
+          "S2R": 2,
+          "SEL": 42,
+          "SHFL.BFLY": 48,
+          "SHL": 23,
+          "SHR": 60,
+          "SHR.U32": 5,
+          "SSY": 128,
+          "STG.E": 64,
+          "STS": 54,
+          "STS.128": 8,
+          "SYNC": 263,
+          "XMAD": 50,
+          "XMAD.MRG": 40,
+          "XMAD.PSL": 8,
+          "XMAD.PSL.CBCC": 40
+        }
+      },
+      {
+        "dims_per_lane": 4,
+        "aligned": true,
+        "static_instruction_count": 3540,
+        "opcodes": {
+          "BAR.SYNC": 8,
+          "BFE": 3,
+          "BFE.U32": 5,
+          "BRA": 19,
+          "BRK": 10,
+          "CAL": 64,
+          "DEPBAR": 1,
+          "DEPBAR.LE": 4,
+          "EXIT": 3,
+          "FADD": 91,
+          "FADD.FTZ": 2,
+          "FCHK.DIVIDE": 64,
+          "FFMA": 1097,
+          "FFMA.RM": 1,
+          "FFMA.RP": 1,
+          "FFMA.RZ": 1,
+          "FMNMX": 58,
+          "FMUL": 163,
+          "FSET.GTU.FTZ.AND": 2,
+          "FSET.NEU.FTZ.AND": 1,
+          "FSETP.GEU.AND": 42,
+          "FSETP.NEU.FTZ.AND": 3,
+          "IADD": 37,
+          "IADD.X": 16,
+          "IADD3": 12,
+          "IADD32I": 97,
+          "ICMP.NE": 9,
+          "ISCADD": 53,
+          "ISCADD32I": 1,
+          "ISET.LT.AND": 8,
+          "ISETP.GE.AND": 115,
+          "ISETP.GE.OR": 8,
+          "ISETP.GE.U32.AND": 1,
+          "ISETP.GT.AND": 2,
+          "ISETP.GT.U32.AND": 3,
+          "ISETP.GT.U32.OR": 1,
+          "ISETP.LT.AND": 1,
+          "ISETP.NE.AND": 3,
+          "LDC.U8": 2,
+          "LDG.E.CI.128": 8,
+          "LDS.U.128": 56,
+          "LDS.U.32": 87,
+          "LEA.HI": 12,
+          "LOP.AND": 9,
+          "LOP.AND.NZ": 3,
+          "LOP.OR": 1,
+          "LOP.OR.NZ": 1,
+          "LOP.XOR": 10,
+          "LOP3.LUT": 22,
+          "LOP3.LUT.NZ": 1,
+          "LOP32I.AND": 33,
+          "LOP32I.OR": 11,
+          "LOP32I.XOR": 1,
+          "MEMBAR.CTA": 8,
+          "MOV": 371,
+          "MOV32I": 5,
+          "MUFU.EX2": 33,
+          "MUFU.RCP": 65,
+          "MUFU.RSQ": 1,
+          "NOP": 7,
+          "PBK": 2,
+          "PSETP.AND.AND": 6,
+          "PSETP.OR.AND": 3,
+          "RET": 1,
+          "RRO.EX2": 33,
+          "S2R": 2,
+          "SEL": 42,
+          "SHFL.BFLY": 48,
+          "SHL": 23,
+          "SHR": 35,
+          "SHR.U32": 5,
+          "SSY": 128,
+          "STG.E": 64,
+          "STS": 54,
+          "STS.128": 8,
+          "SYNC": 263,
+          "XMAD": 26,
+          "XMAD.MRG": 16,
+          "XMAD.PSL": 8,
+          "XMAD.PSL.CBCC": 16
+        }
+      },
+      {
+        "dims_per_lane": 3,
+        "aligned": false,
+        "static_instruction_count": 3822,
+        "opcodes": {
+          "BAR.SYNC": 8,
+          "BFE": 2,
+          "BFE.U32": 5,
+          "BRA": 19,
+          "BRK": 10,
+          "CAL": 64,
+          "DEPBAR": 1,
+          "DEPBAR.LE": 9,
+          "EXIT": 3,
+          "FADD": 91,
+          "FADD.FTZ": 2,
+          "FCHK.DIVIDE": 64,
+          "FFMA": 1097,
+          "FFMA.RM": 1,
+          "FFMA.RP": 1,
+          "FFMA.RZ": 1,
+          "FMNMX": 58,
+          "FMUL": 163,
+          "FSET.GTU.FTZ.AND": 2,
+          "FSET.NEU.FTZ.AND": 1,
+          "FSETP.GEU.AND": 42,
+          "FSETP.NEU.FTZ.AND": 3,
+          "IADD": 65,
+          "IADD.X": 40,
+          "IADD3": 10,
+          "IADD32I": 101,
+          "ICMP.NE": 9,
+          "ISCADD": 77,
+          "ISCADD32I": 1,
+          "ISET.LT.AND": 8,
+          "ISETP.GE.AND": 134,
+          "ISETP.GE.OR": 32,
+          "ISETP.GE.U32.AND": 1,
+          "ISETP.GT.AND": 2,
+          "ISETP.GT.U32.AND": 5,
+          "ISETP.GT.U32.OR": 1,
+          "ISETP.LT.AND": 1,
+          "ISETP.NE.AND": 3,
+          "LDC.U8": 2,
+          "LDG.E.CI": 32,
+          "LDS.U.128": 56,
+          "LDS.U.32": 87,
+          "LEA.HI": 12,
+          "LOP.AND": 9,
+          "LOP.AND.NZ": 3,
+          "LOP.OR": 1,
+          "LOP.OR.NZ": 1,
+          "LOP3.LUT": 32,
+          "LOP3.LUT.NZ": 1,
+          "LOP32I.AND": 33,
+          "LOP32I.OR": 12,
+          "LOP32I.XOR": 1,
+          "MEMBAR.CTA": 8,
+          "MOV": 403,
+          "MOV32I": 5,
+          "MUFU.EX2": 33,
+          "MUFU.RCP": 65,
+          "MUFU.RSQ": 1,
+          "NOP": 4,
+          "PBK": 2,
+          "PSET.AND.AND": 4,
+          "PSETP.AND.AND": 6,
+          "PSETP.OR.AND": 3,
+          "RET": 1,
+          "RRO.EX2": 33,
+          "S2R": 2,
+          "SEL": 42,
+          "SHFL.BFLY": 48,
+          "SHL": 23,
+          "SHR": 60,
+          "SHR.U32": 5,
+          "SSY": 128,
+          "STG.E": 64,
+          "STS": 54,
+          "STS.128": 8,
+          "SYNC": 263,
+          "XMAD": 50,
+          "XMAD.MRG": 40,
+          "XMAD.PSL": 8,
+          "XMAD.PSL.CBCC": 40
+        }
+      },
+      {
+        "dims_per_lane": 3,
+        "aligned": true,
+        "static_instruction_count": 3540,
+        "opcodes": {
+          "BAR.SYNC": 8,
+          "BFE": 3,
+          "BFE.U32": 5,
+          "BRA": 19,
+          "BRK": 10,
+          "CAL": 64,
+          "DEPBAR": 1,
+          "DEPBAR.LE": 4,
+          "EXIT": 3,
+          "FADD": 91,
+          "FADD.FTZ": 2,
+          "FCHK.DIVIDE": 64,
+          "FFMA": 1097,
+          "FFMA.RM": 1,
+          "FFMA.RP": 1,
+          "FFMA.RZ": 1,
+          "FMNMX": 58,
+          "FMUL": 163,
+          "FSET.GTU.FTZ.AND": 2,
+          "FSET.NEU.FTZ.AND": 1,
+          "FSETP.GEU.AND": 42,
+          "FSETP.NEU.FTZ.AND": 3,
+          "IADD": 37,
+          "IADD.X": 16,
+          "IADD3": 12,
+          "IADD32I": 97,
+          "ICMP.NE": 9,
+          "ISCADD": 53,
+          "ISCADD32I": 1,
+          "ISET.LT.AND": 8,
+          "ISETP.GE.AND": 115,
+          "ISETP.GE.OR": 8,
+          "ISETP.GE.U32.AND": 1,
+          "ISETP.GT.AND": 2,
+          "ISETP.GT.U32.AND": 3,
+          "ISETP.GT.U32.OR": 1,
+          "ISETP.LT.AND": 1,
+          "ISETP.NE.AND": 3,
+          "LDC.U8": 2,
+          "LDG.E.CI.128": 8,
+          "LDS.U.128": 56,
+          "LDS.U.32": 87,
+          "LEA.HI": 12,
+          "LOP.AND": 9,
+          "LOP.AND.NZ": 3,
+          "LOP.OR": 1,
+          "LOP.OR.NZ": 1,
+          "LOP.XOR": 10,
+          "LOP3.LUT": 22,
+          "LOP3.LUT.NZ": 1,
+          "LOP32I.AND": 33,
+          "LOP32I.OR": 11,
+          "LOP32I.XOR": 1,
+          "MEMBAR.CTA": 8,
+          "MOV": 371,
+          "MOV32I": 5,
+          "MUFU.EX2": 33,
+          "MUFU.RCP": 65,
+          "MUFU.RSQ": 1,
+          "NOP": 7,
+          "PBK": 2,
+          "PSETP.AND.AND": 6,
+          "PSETP.OR.AND": 3,
+          "RET": 1,
+          "RRO.EX2": 33,
+          "S2R": 2,
+          "SEL": 42,
+          "SHFL.BFLY": 48,
+          "SHL": 23,
+          "SHR": 35,
+          "SHR.U32": 5,
+          "SSY": 128,
+          "STG.E": 64,
+          "STS": 54,
+          "STS.128": 8,
+          "SYNC": 263,
+          "XMAD": 26,
+          "XMAD.MRG": 16,
+          "XMAD.PSL": 8,
+          "XMAD.PSL.CBCC": 16
+        }
+      },
+      {
+        "dims_per_lane": 2,
+        "aligned": false,
+        "static_instruction_count": 2628,
+        "opcodes": {
+          "BAR.SYNC": 8,
+          "BFE": 1,
+          "BFE.U32": 5,
+          "BRA": 19,
+          "BRK": 10,
+          "CAL": 32,
+          "DEPBAR": 1,
+          "DEPBAR.LE": 6,
+          "EXIT": 3,
+          "FADD": 91,
+          "FADD.FTZ": 2,
+          "FCHK.DIVIDE": 32,
+          "FFMA": 681,
+          "FFMA.RM": 1,
+          "FFMA.RP": 1,
+          "FFMA.RZ": 1,
+          "FMNMX": 58,
+          "FMUL": 131,
+          "FSET.GTU.FTZ.AND": 2,
+          "FSET.NEU.FTZ.AND": 1,
+          "FSETP.GEU.AND": 42,
+          "FSETP.NEU.FTZ.AND": 3,
+          "IADD": 41,
+          "IADD.X": 32,
+          "IADD3": 10,
+          "IADD32I": 66,
+          "ICMP.NE": 9,
+          "ISCADD": 76,
+          "ISCADD32I": 1,
+          "ISET.LT.AND": 8,
+          "ISETP.GE.AND": 97,
+          "ISETP.GE.OR": 20,
+          "ISETP.GE.U32.AND": 1,
+          "ISETP.GT.AND": 2,
+          "ISETP.GT.U32.AND": 5,
+          "ISETP.GT.U32.OR": 1,
+          "ISETP.LT.AND": 5,
+          "ISETP.NE.AND": 6,
+          "LDC.U8": 1,
+          "LDG.E.CI": 24,
+          "LDS.U.128": 48,
+          "LDS.U.32": 55,
+          "LEA": 1,
+          "LEA.HI": 8,
+          "LOP.AND": 9,
+          "LOP.AND.NZ": 3,
+          "LOP.OR": 1,
+          "LOP.OR.NZ": 1,
+          "LOP.XOR": 10,
+          "LOP3.LUT": 17,
+          "LOP3.LUT.NZ": 1,
+          "LOP32I.AND": 24,
+          "LOP32I.OR": 3,
+          "LOP32I.XOR": 2,
+          "MEMBAR.CTA": 8,
+          "MOV": 229,
+          "MOV32I": 5,
+          "MUFU.EX2": 33,
+          "MUFU.RCP": 33,
+          "MUFU.RSQ": 1,
+          "NOP": 3,
+          "PBK": 2,
+          "PSET.AND.AND": 4,
+          "PSETP.AND.AND": 6,
+          "PSETP.OR.AND": 3,
+          "RET": 1,
+          "RRO.EX2": 33,
+          "S2R": 3,
+          "SEL": 42,
+          "SHFL.BFLY": 48,
+          "SHL": 14,
+          "SHR": 44,
+          "SHR.U32": 3,
+          "SSY": 64,
+          "STG.E": 32,
+          "STS": 46,
+          "STS.128": 8,
+          "SYNC": 135,
+          "XMAD": 40,
+          "XMAD.MRG": 30,
+          "XMAD.PSL": 9,
+          "XMAD.PSL.CBCC": 30
+        }
+      },
+      {
+        "dims_per_lane": 2,
+        "aligned": true,
+        "static_instruction_count": 2448,
+        "opcodes": {
+          "BAR.SYNC": 8,
+          "BFE": 2,
+          "BFE.U32": 5,
+          "BRA": 19,
+          "BRK": 10,
+          "CAL": 32,
+          "DEPBAR.LE": 2,
+          "EXIT": 3,
+          "FADD": 91,
+          "FADD.FTZ": 2,
+          "FCHK.DIVIDE": 32,
+          "FFMA": 681,
+          "FFMA.RM": 1,
+          "FFMA.RP": 1,
+          "FFMA.RZ": 1,
+          "FMNMX": 58,
+          "FMUL": 131,
+          "FSET.GTU.FTZ.AND": 2,
+          "FSET.NEU.FTZ.AND": 1,
+          "FSETP.GEU.AND": 42,
+          "FSETP.NEU.FTZ.AND": 3,
+          "IADD": 32,
+          "IADD.X": 14,
+          "IADD3": 7,
+          "IADD32I": 66,
+          "ICMP.NE": 9,
+          "ISCADD": 48,
+          "ISCADD32I": 1,
+          "ISET.LT.AND": 8,
+          "ISETP.GE.AND": 83,
+          "ISETP.GE.OR": 5,
+          "ISETP.GE.U32.AND": 1,
+          "ISETP.GT.AND": 2,
+          "ISETP.GT.U32.AND": 3,
+          "ISETP.GT.U32.OR": 1,
+          "ISETP.LT.AND": 2,
+          "ISETP.NE.AND": 3,
+          "LDC.U8": 1,
+          "LDG.E.CI.128": 6,
+          "LDS.U.128": 48,
+          "LDS.U.32": 55,
+          "LEA": 1,
+          "LEA.HI": 8,
+          "LOP.AND": 9,
+          "LOP.AND.NZ": 3,
+          "LOP.OR": 1,
+          "LOP.OR.NZ": 1,
+          "LOP.XOR": 10,
+          "LOP3.LUT": 17,
+          "LOP3.LUT.NZ": 1,
+          "LOP32I.AND": 24,
+          "LOP32I.OR": 3,
+          "LOP32I.XOR": 2,
+          "MEMBAR.CTA": 8,
+          "MOV": 234,
+          "MOV32I": 5,
+          "MUFU.EX2": 33,
+          "MUFU.RCP": 33,
+          "MUFU.RSQ": 1,
+          "NOP": 3,
+          "PBK": 2,
+          "PSETP.AND.AND": 6,
+          "PSETP.OR.AND": 3,
+          "RET": 1,
+          "RRO.EX2": 33,
+          "S2R": 3,
+          "SEL": 42,
+          "SHFL.BFLY": 48,
+          "SHL": 17,
+          "SHR": 25,
+          "SHR.U32": 3,
+          "SSY": 65,
+          "STG.E": 32,
+          "STS": 46,
+          "STS.128": 8,
+          "SYNC": 137,
+          "XMAD": 23,
+          "XMAD.MRG": 13,
+          "XMAD.PSL": 9,
+          "XMAD.PSL.CBCC": 13
+        }
+      },
+      {
+        "dims_per_lane": 1,
+        "aligned": false,
+        "static_instruction_count": 2628,
+        "opcodes": {
+          "BAR.SYNC": 8,
+          "BFE": 1,
+          "BFE.U32": 5,
+          "BRA": 19,
+          "BRK": 10,
+          "CAL": 32,
+          "DEPBAR": 1,
+          "DEPBAR.LE": 6,
+          "EXIT": 3,
+          "FADD": 91,
+          "FADD.FTZ": 2,
+          "FCHK.DIVIDE": 32,
+          "FFMA": 681,
+          "FFMA.RM": 1,
+          "FFMA.RP": 1,
+          "FFMA.RZ": 1,
+          "FMNMX": 58,
+          "FMUL": 131,
+          "FSET.GTU.FTZ.AND": 2,
+          "FSET.NEU.FTZ.AND": 1,
+          "FSETP.GEU.AND": 42,
+          "FSETP.NEU.FTZ.AND": 3,
+          "IADD": 41,
+          "IADD.X": 32,
+          "IADD3": 10,
+          "IADD32I": 66,
+          "ICMP.NE": 9,
+          "ISCADD": 76,
+          "ISCADD32I": 1,
+          "ISET.LT.AND": 8,
+          "ISETP.GE.AND": 97,
+          "ISETP.GE.OR": 20,
+          "ISETP.GE.U32.AND": 1,
+          "ISETP.GT.AND": 2,
+          "ISETP.GT.U32.AND": 5,
+          "ISETP.GT.U32.OR": 1,
+          "ISETP.LT.AND": 5,
+          "ISETP.NE.AND": 6,
+          "LDC.U8": 1,
+          "LDG.E.CI": 24,
+          "LDS.U.128": 48,
+          "LDS.U.32": 55,
+          "LEA": 1,
+          "LEA.HI": 8,
+          "LOP.AND": 9,
+          "LOP.AND.NZ": 3,
+          "LOP.OR": 1,
+          "LOP.OR.NZ": 1,
+          "LOP.XOR": 10,
+          "LOP3.LUT": 17,
+          "LOP3.LUT.NZ": 1,
+          "LOP32I.AND": 24,
+          "LOP32I.OR": 3,
+          "LOP32I.XOR": 2,
+          "MEMBAR.CTA": 8,
+          "MOV": 229,
+          "MOV32I": 5,
+          "MUFU.EX2": 33,
+          "MUFU.RCP": 33,
+          "MUFU.RSQ": 1,
+          "NOP": 3,
+          "PBK": 2,
+          "PSET.AND.AND": 4,
+          "PSETP.AND.AND": 6,
+          "PSETP.OR.AND": 3,
+          "RET": 1,
+          "RRO.EX2": 33,
+          "S2R": 3,
+          "SEL": 42,
+          "SHFL.BFLY": 48,
+          "SHL": 14,
+          "SHR": 44,
+          "SHR.U32": 3,
+          "SSY": 64,
+          "STG.E": 32,
+          "STS": 46,
+          "STS.128": 8,
+          "SYNC": 135,
+          "XMAD": 40,
+          "XMAD.MRG": 30,
+          "XMAD.PSL": 9,
+          "XMAD.PSL.CBCC": 30
+        }
+      },
+      {
+        "dims_per_lane": 1,
+        "aligned": true,
+        "static_instruction_count": 2448,
+        "opcodes": {
+          "BAR.SYNC": 8,
+          "BFE": 2,
+          "BFE.U32": 5,
+          "BRA": 19,
+          "BRK": 10,
+          "CAL": 32,
+          "DEPBAR.LE": 2,
+          "EXIT": 3,
+          "FADD": 91,
+          "FADD.FTZ": 2,
+          "FCHK.DIVIDE": 32,
+          "FFMA": 681,
+          "FFMA.RM": 1,
+          "FFMA.RP": 1,
+          "FFMA.RZ": 1,
+          "FMNMX": 58,
+          "FMUL": 131,
+          "FSET.GTU.FTZ.AND": 2,
+          "FSET.NEU.FTZ.AND": 1,
+          "FSETP.GEU.AND": 42,
+          "FSETP.NEU.FTZ.AND": 3,
+          "IADD": 32,
+          "IADD.X": 14,
+          "IADD3": 7,
+          "IADD32I": 66,
+          "ICMP.NE": 9,
+          "ISCADD": 48,
+          "ISCADD32I": 1,
+          "ISET.LT.AND": 8,
+          "ISETP.GE.AND": 83,
+          "ISETP.GE.OR": 5,
+          "ISETP.GE.U32.AND": 1,
+          "ISETP.GT.AND": 2,
+          "ISETP.GT.U32.AND": 3,
+          "ISETP.GT.U32.OR": 1,
+          "ISETP.LT.AND": 2,
+          "ISETP.NE.AND": 3,
+          "LDC.U8": 1,
+          "LDG.E.CI.128": 6,
+          "LDS.U.128": 48,
+          "LDS.U.32": 55,
+          "LEA": 1,
+          "LEA.HI": 8,
+          "LOP.AND": 9,
+          "LOP.AND.NZ": 3,
+          "LOP.OR": 1,
+          "LOP.OR.NZ": 1,
+          "LOP.XOR": 10,
+          "LOP3.LUT": 17,
+          "LOP3.LUT.NZ": 1,
+          "LOP32I.AND": 24,
+          "LOP32I.OR": 3,
+          "LOP32I.XOR": 2,
+          "MEMBAR.CTA": 8,
+          "MOV": 234,
+          "MOV32I": 5,
+          "MUFU.EX2": 33,
+          "MUFU.RCP": 33,
+          "MUFU.RSQ": 1,
+          "NOP": 3,
+          "PBK": 2,
+          "PSETP.AND.AND": 6,
+          "PSETP.OR.AND": 3,
+          "RET": 1,
+          "RRO.EX2": 33,
+          "S2R": 3,
+          "SEL": 42,
+          "SHFL.BFLY": 48,
+          "SHL": 17,
+          "SHR": 25,
+          "SHR.U32": 3,
+          "SSY": 65,
+          "STG.E": 32,
+          "STS": 46,
+          "STS.128": 8,
+          "SYNC": 137,
+          "XMAD": 23,
+          "XMAD.MRG": 13,
+          "XMAD.PSL": 9,
+          "XMAD.PSL.CBCC": 13
+        }
+      }
+    ],
+    "spill_stores_bytes": 0,
+    "spill_loads_bytes": 0
+  },
+  "correctness": {
+    "cuda_tests": {
+      "count": 15,
+      "passed": true,
+      "log": "data/cuda-final-process.log"
+    },
+    "registry_tests": {
+      "count": 5,
+      "passed": true,
+      "log": "data/registry-process.log"
+    },
+    "rtol": 2e-05,
+    "atol": 2e-05,
+    "all_supported_head_dims_tested": true,
+    "large_sequence_all_rows_verified": false,
+    "large_sequence_data": "data/row-validation.json",
+    "large_sequence_max_abs_error": 1.6755074949692528e-07,
+    "sanitizer_scope": "14 regular tests; no long-sequence sanitizer run",
+    "sanitizer": {
+      "memcheck": {
+        "exit_code": 0,
+        "errors": 0,
+        "log": "data/memcheck.log"
+      },
+      "synccheck": {
+        "exit_code": 0,
+        "errors": 0,
+        "log": "data/synccheck.log"
+      },
+      "racecheck": {
+        "exit_code": 0,
+        "errors": 0,
+        "log": "data/racecheck.log"
+      }
+    },
+    "matrix_case_count": 48,
+    "matrix_reference": "CPU FP64 sampled rows for both implementations",
+    "matrix_v4_max_abs_error": 5.200558632623142e-07
+  },
+  "benchmark": {
+    "shape": [
+      16384,
+      64
+    ],
+    "dtype": "float32",
+    "tf32": false,
+    "warmup": 5,
+    "iterations": 20,
+    "repeats": 5,
+    "records": {
+      "custom": "data/benchmark-custom.json",
+      "efficient": "data/benchmark-efficient.json",
+      "paired": "data/benchmark-paired.json",
+      "matrix": "data/benchmark-matrix.json"
+    },
+    "cuda_event_mean_ms": {
+      "custom": 32.886442260742186,
+      "efficient": 36.10302978515625
+    },
+    "paired_summary": [
+      {
+        "causal": false,
+        "pairs": 15,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 33.367171427408856,
+          "efficient": 36.55661153157552
+        },
+        "efficient_over_custom": 1.0955861695111129,
+        "min_ratio": 1.0907133210169377,
+        "max_ratio": 1.104093044811458,
+        "all_pairs_faster": true
+      },
+      {
+        "causal": true,
+        "pairs": 15,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 17.917243041992187,
+          "efficient": 19.399056193033854
+        },
+        "efficient_over_custom": 1.0827031897468142,
+        "min_ratio": 1.07520669699098,
+        "max_ratio": 1.0906046893240688,
+        "all_pairs_faster": true
+      }
+    ],
+    "matrix_summary": [
+      {
+        "shape": [
+          512,
+          32
+        ],
+        "causal": false,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 0.07621013323465983,
+          "efficient": 0.08923199971516926
+        },
+        "efficient_over_custom": 1.1708679138562006
+      },
+      {
+        "shape": [
+          512,
+          32
+        ],
+        "causal": true,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 0.07385493318239848,
+          "efficient": 0.08978880047798157
+        },
+        "efficient_over_custom": 1.2157454703294015
+      },
+      {
+        "shape": [
+          512,
+          64
+        ],
+        "causal": false,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 0.0880618671576182,
+          "efficient": 0.10024426778157552
+        },
+        "efficient_over_custom": 1.1383391133662037
+      },
+      {
+        "shape": [
+          512,
+          64
+        ],
+        "causal": true,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 0.0858954648176829,
+          "efficient": 0.10127893288930256
+        },
+        "efficient_over_custom": 1.1790952305138787
+      },
+      {
+        "shape": [
+          512,
+          96
+        ],
+        "causal": false,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 0.14730346600214642,
+          "efficient": 0.0901642660299937
+        },
+        "efficient_over_custom": 0.6120987406275958
+      },
+      {
+        "shape": [
+          512,
+          96
+        ],
+        "causal": true,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 0.147271466255188,
+          "efficient": 0.08509973486264547
+        },
+        "efficient_over_custom": 0.577842653614835
+      },
+      {
+        "shape": [
+          512,
+          128
+        ],
+        "causal": false,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 0.16618026892344157,
+          "efficient": 0.09822826584180196
+        },
+        "efficient_over_custom": 0.5910946376374877
+      },
+      {
+        "shape": [
+          512,
+          128
+        ],
+        "causal": true,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 0.16721919775009156,
+          "efficient": 0.08945599993069966
+        },
+        "efficient_over_custom": 0.5349624991287861
+      },
+      {
+        "shape": [
+          1024,
+          32
+        ],
+        "causal": false,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 0.16389120022455853,
+          "efficient": 0.19021866718928018
+        },
+        "efficient_over_custom": 1.1606399057951164
+      },
+      {
+        "shape": [
+          1024,
+          32
+        ],
+        "causal": true,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 0.1366698702176412,
+          "efficient": 0.15810240109761556
+        },
+        "efficient_over_custom": 1.1568197207317452
+      },
+      {
+        "shape": [
+          1024,
+          64
+        ],
+        "causal": false,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 0.18622613350550335,
+          "efficient": 0.20826773643493654
+        },
+        "efficient_over_custom": 1.1183593436352037
+      },
+      {
+        "shape": [
+          1024,
+          64
+        ],
+        "causal": true,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 0.1619680047035217,
+          "efficient": 0.18252693017323812
+        },
+        "efficient_over_custom": 1.1269320166495167
+      },
+      {
+        "shape": [
+          1024,
+          96
+        ],
+        "causal": false,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 0.3115338643391927,
+          "efficient": 0.3300927956899007
+        },
+        "efficient_over_custom": 1.0595727574916265
+      },
+      {
+        "shape": [
+          1024,
+          96
+        ],
+        "causal": true,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 0.29115520318349203,
+          "efficient": 0.1887509346008301
+        },
+        "efficient_over_custom": 0.6482828832767771
+      },
+      {
+        "shape": [
+          1024,
+          128
+        ],
+        "causal": false,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 0.3590336004892985,
+          "efficient": 0.3815359989802043
+        },
+        "efficient_over_custom": 1.0626749097027104
+      },
+      {
+        "shape": [
+          1024,
+          128
+        ],
+        "causal": true,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 0.3490197420120239,
+          "efficient": 0.2101749340693156
+        },
+        "efficient_over_custom": 0.602186377359923
+      },
+      {
+        "shape": [
+          4096,
+          32
+        ],
+        "causal": false,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 1.9109066645304362,
+          "efficient": 2.247117869059245
+        },
+        "efficient_over_custom": 1.1759432895229476
+      },
+      {
+        "shape": [
+          4096,
+          32
+        ],
+        "causal": true,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 1.0285866737365723,
+          "efficient": 1.165345064798991
+        },
+        "efficient_over_custom": 1.132957576210484
+      },
+      {
+        "shape": [
+          4096,
+          64
+        ],
+        "causal": false,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 2.4642090479532874,
+          "efficient": 2.808937581380208
+        },
+        "efficient_over_custom": 1.1398941918962777
+      },
+      {
+        "shape": [
+          4096,
+          64
+        ],
+        "causal": true,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 1.2924437204996744,
+          "efficient": 1.404806391398112
+        },
+        "efficient_over_custom": 1.0869381537596057
+      },
+      {
+        "shape": [
+          4096,
+          96
+        ],
+        "causal": false,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 4.380252838134766,
+          "efficient": 4.036088562011718
+        },
+        "efficient_over_custom": 0.9214282168538924
+      },
+      {
+        "shape": [
+          4096,
+          96
+        ],
+        "causal": true,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 2.4104106267293295,
+          "efficient": 2.093602116902669
+        },
+        "efficient_over_custom": 0.8685665810158928
+      },
+      {
+        "shape": [
+          4096,
+          128
+        ],
+        "causal": false,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 5.056206893920899,
+          "efficient": 4.508119328816732
+        },
+        "efficient_over_custom": 0.891601040740019
+      },
+      {
+        "shape": [
+          4096,
+          128
+        ],
+        "causal": true,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 2.9734570821126303,
+          "efficient": 2.436006355285645
+        },
+        "efficient_over_custom": 0.819250551803785
+      },
+      {
+        "shape": [
+          8192,
+          32
+        ],
+        "causal": false,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 7.263707733154297,
+          "efficient": 7.976448059082031
+        },
+        "efficient_over_custom": 1.0981234862568214
+      },
+      {
+        "shape": [
+          8192,
+          32
+        ],
+        "causal": true,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 3.634988784790039,
+          "efficient": 4.060180282592773
+        },
+        "efficient_over_custom": 1.1169718871160956
+      },
+      {
+        "shape": [
+          8192,
+          64
+        ],
+        "causal": false,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 8.95110829671224,
+          "efficient": 10.004700724283854
+        },
+        "efficient_over_custom": 1.117705248629223
+      },
+      {
+        "shape": [
+          8192,
+          64
+        ],
+        "causal": true,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 4.759275690714518,
+          "efficient": 5.165000534057618
+        },
+        "efficient_over_custom": 1.085249283653536
+      },
+      {
+        "shape": [
+          8192,
+          96
+        ],
+        "causal": false,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 15.644417826334635,
+          "efficient": 15.028973897298178
+        },
+        "efficient_over_custom": 0.9606604773748457
+      },
+      {
+        "shape": [
+          8192,
+          96
+        ],
+        "causal": true,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 8.725440979003906,
+          "efficient": 8.287458038330078
+        },
+        "efficient_over_custom": 0.9498039191683549
+      },
+      {
+        "shape": [
+          8192,
+          128
+        ],
+        "causal": false,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 18.797766113281252,
+          "efficient": 17.20969950358073
+        },
+        "efficient_over_custom": 0.9155183333950251
+      },
+      {
+        "shape": [
+          8192,
+          128
+        ],
+        "causal": true,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 10.290545145670572,
+          "efficient": 9.61453653971354
+        },
+        "efficient_over_custom": 0.9343077945446416
+      },
+      {
+        "shape": [
+          16384,
+          32
+        ],
+        "causal": false,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 26.57521769205729,
+          "efficient": 29.630075073242185
+        },
+        "efficient_over_custom": 1.1149513586900144
+      },
+      {
+        "shape": [
+          16384,
+          32
+        ],
+        "causal": true,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 13.75953877766927,
+          "efficient": 15.328374735514323
+        },
+        "efficient_over_custom": 1.1140180629012915
+      },
+      {
+        "shape": [
+          16384,
+          64
+        ],
+        "causal": false,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 34.1412109375,
+          "efficient": 37.26211853027344
+        },
+        "efficient_over_custom": 1.0914117427904557
+      },
+      {
+        "shape": [
+          16384,
+          64
+        ],
+        "causal": true,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 18.192928059895834,
+          "efficient": 19.61011199951172
+        },
+        "efficient_over_custom": 1.0778975179229064
+      },
+      {
+        "shape": [
+          16384,
+          96
+        ],
+        "causal": false,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 62.09777628580729,
+          "efficient": 62.032037353515626
+        },
+        "efficient_over_custom": 0.9989413641482249
+      },
+      {
+        "shape": [
+          16384,
+          96
+        ],
+        "causal": true,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 33.556826782226565,
+          "efficient": 32.850842285156254
+        },
+        "efficient_over_custom": 0.9789615239351465
+      },
+      {
+        "shape": [
+          16384,
+          128
+        ],
+        "causal": false,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 74.35868123372396,
+          "efficient": 71.99524739583333
+        },
+        "efficient_over_custom": 0.968215764471913
+      },
+      {
+        "shape": [
+          16384,
+          128
+        ],
+        "causal": true,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 39.457802327473956,
+          "efficient": 38.069664510091144
+        },
+        "efficient_over_custom": 0.9648196874762012
+      },
+      {
+        "shape": [
+          513,
+          31
+        ],
+        "causal": false,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 0.11053866942723592,
+          "efficient": 0.11161173582077026
+        },
+        "efficient_over_custom": 1.009707610912041
+      },
+      {
+        "shape": [
+          513,
+          31
+        ],
+        "causal": true,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 0.10440426270167033,
+          "efficient": 0.11105279922485352
+        },
+        "efficient_over_custom": 1.0636806999172153
+      },
+      {
+        "shape": [
+          513,
+          33
+        ],
+        "causal": false,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 0.11576319932937622,
+          "efficient": 0.1152949333190918
+        },
+        "efficient_over_custom": 0.9959549665783504
+      },
+      {
+        "shape": [
+          513,
+          33
+        ],
+        "causal": true,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 0.1097375988960266,
+          "efficient": 0.11410666704177856
+        },
+        "efficient_over_custom": 1.0398137756767536
+      },
+      {
+        "shape": [
+          513,
+          65
+        ],
+        "causal": false,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 0.18411840200424195,
+          "efficient": 0.11154133478800456
+        },
+        "efficient_over_custom": 0.6058130723154698
+      },
+      {
+        "shape": [
+          513,
+          65
+        ],
+        "causal": true,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 0.18655786911646527,
+          "efficient": 0.1018453319867452
+        },
+        "efficient_over_custom": 0.5459181779309705
+      },
+      {
+        "shape": [
+          513,
+          97
+        ],
+        "causal": false,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 0.20899519920349122,
+          "efficient": 0.11740906635920206
+        },
+        "efficient_over_custom": 0.5617787719845422
+      },
+      {
+        "shape": [
+          513,
+          97
+        ],
+        "causal": true,
+        "mean_cuda_event_ms": {
+          "cuda_fa2_v4": 0.18136106332143148,
+          "efficient": 0.0950272003809611
+        },
+        "efficient_over_custom": 0.5239669344711639
+      }
+    ],
+    "matrix_cases_faster_or_equal": 25,
+    "parent_baselines_rerun": false
+  },
+  "profile": {
+    "shape": [
+      16384,
+      64
+    ],
+    "causal": false,
+    "captured_forward_calls": 1,
+    "metric_count": 29,
+    "kernel_replay_for_counters": true,
+    "counter_overflows": [],
+    "counters": "data/nvprof-custom-s16384-d64.csv",
+    "metrics": {
+      "achieved_occupancy": {
+        "value": 0.18626,
+        "unit": "unitless"
+      },
+      "sm_efficiency": {
+        "value": 95.530482,
+        "unit": "%"
+      },
+      "warp_execution_efficiency": {
+        "value": 100.0,
+        "unit": "%"
+      },
+      "warp_nonpred_execution_efficiency": {
+        "value": 98.086304,
+        "unit": "%"
+      },
+      "eligible_warps_per_cycle": {
+        "value": 4.668475,
+        "unit": "unitless"
+      },
+      "issue_slot_utilization": {
+        "value": 71.987266,
+        "unit": "%"
+      },
+      "stall_sync": {
+        "value": 17.453546,
+        "unit": "%"
+      },
+      "stall_memory_dependency": {
+        "value": 7.675109,
+        "unit": "%"
+      },
+      "stall_exec_dependency": {
+        "value": 38.508673,
+        "unit": "%"
+      },
+      "stall_other": {
+        "value": 4.184446,
+        "unit": "%"
+      },
+      "stall_not_selected": {
+        "value": 19.839023,
+        "unit": "%"
+      },
+      "stall_inst_fetch": {
+        "value": 8.796854,
+        "unit": "%"
+      },
+      "stall_pipe_busy": {
+        "value": 3.533994,
+        "unit": "%"
+      },
+      "stall_texture": {
+        "value": 0.0,
+        "unit": "%"
+      },
+      "stall_memory_throttle": {
+        "value": 0.003526,
+        "unit": "%"
+      },
+      "stall_constant_memory_dependency": {
+        "value": 0.004829,
+        "unit": "%"
+      },
+      "dram_read_throughput": {
+        "value": 2.410777,
+        "unit": "GB/s"
+      },
+      "dram_write_throughput": {
+        "value": 133.15274,
+        "unit": "MB/s"
+      },
+      "l2_read_throughput": {
+        "value": 77.757518,
+        "unit": "GB/s"
+      },
+      "l2_write_throughput": {
+        "value": 486.539988,
+        "unit": "MB/s"
+      },
+      "l2_tex_read_hit_rate": {
+        "value": 96.068699,
+        "unit": "%"
+      },
+      "dram_read_transactions": {
+        "value": 2663198.0,
+        "unit": "unitless"
+      },
+      "l2_read_transactions": {
+        "value": 85899136.0,
+        "unit": "unitless"
+      },
+      "gld_efficiency": {
+        "value": 100.0,
+        "unit": "%"
+      },
+      "gst_efficiency": {
+        "value": 25.0,
+        "unit": "%"
+      },
+      "shared_load_throughput": {
+        "value": 990.599222,
+        "unit": "GB/s"
+      },
+      "shared_store_throughput": {
+        "value": 229.707875,
+        "unit": "GB/s"
+      },
+      "shared_load_transactions_per_request": {
+        "value": 2.576057,
+        "unit": "unitless"
+      },
+      "shared_store_transactions_per_request": {
+        "value": 1.975416,
+        "unit": "unitless"
+      }
+    },
+    "process_identity": "data/counters-process.log",
+    "timeline": "data/nvprof-timeline.csv",
+    "timeline_report": "profiles/forward.nvvp",
+    "timeline_kernel_ms": 32.936765,
+    "status": {
+      "counters": 0,
+      "timeline": 0,
+      "cuda-final": 0,
+      "registry": 0
+    }
+  },
+  "efficient_reference": {
+    "manifest": "../v3/manifest.json",
+    "section": "efficient_reference",
+    "rerun_counters": false
+  },
+  "exploratory_runs": [
+    {
+      "run": "run1",
+      "description": "Register probabilities, 64-key tile",
+      "status": {
+        "build": 0,
+        "cuda-validation": 0,
+        "benchmark-custom": 0,
+        "benchmark-efficient": 0
+      },
+      "core_source": "run1/snapshot/fa2_forward.cu",
+      "core_source_sha256": "83772743cb708cbcde7c66b8a94725d98ba764087bc79d3c3b1e35336671ea4a",
+      "build_log": "run1/data/build.log",
+      "binary": {
+        "archive_path": "run1/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so",
+        "sha256": "6e0ff19f3e58fa77f7574b0573dc02ebe828d9adbd0268ed6c03f4a006bd5c65",
+        "size_bytes": 894600
+      },
+      "compiled_resources": [
+        {
+          "dims_per_lane": 4,
+          "aligned": null,
+          "REG": 219,
+          "STACK": 0,
+          "SHARED": 33280,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 3,
+          "aligned": null,
+          "REG": 176,
+          "STACK": 0,
+          "SHARED": 24960,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 2,
+          "aligned": null,
+          "REG": 156,
+          "STACK": 0,
+          "SHARED": 16640,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 1,
+          "aligned": null,
+          "REG": 128,
+          "STACK": 0,
+          "SHARED": 8320,
+          "LOCAL": 0
+        }
+      ],
+      "benchmark_custom": {
+        "record": "run1/data/benchmark-custom.json",
+        "cuda_event_ms_mean": 46.9861279296875,
+        "cuda_event_ms_median": 47.02336120605469
+      },
+      "benchmark_efficient": {
+        "record": "run1/data/benchmark-efficient.json",
+        "cuda_event_ms_mean": 36.13254821777344,
+        "cuda_event_ms_median": 36.15272827148438
+      },
+      "cuda-validation.log": {
+        "path": "run1/data/cuda-validation.log",
+        "sha256": "4ccb92a9e73f39e0c329732d92adff9504e7398e88e1370c86ab7f5fc6bbfda7"
+      },
+      "row-validation.json": {
+        "path": "run1/data/row-validation.json",
+        "sha256": "732d8840b7f428df4e79069ed768723938792d5f367fe3bad6554c558e790a2a"
+      }
+    },
+    {
+      "run": "run2",
+      "description": "Expanded register tile",
+      "status": {
+        "build": 0,
+        "cuda-validation": 0,
+        "benchmark-custom": 0,
+        "benchmark-efficient": 0
+      },
+      "core_source": "run2/snapshot/fa2_forward.cu",
+      "core_source_sha256": "4ff086bf145325ee5257c767b8fdeb61d0b5e5651bedc235470a714e51df691c",
+      "build_log": "run2/data/build.log",
+      "binary": {
+        "archive_path": "run2/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so",
+        "sha256": "48a41b86c03960967abdce7af5c67ea0aff10fe9578fa250d9fc82c66d669eb9",
+        "size_bytes": 599688
+      },
+      "compiled_resources": [
+        {
+          "dims_per_lane": 4,
+          "aligned": null,
+          "REG": 128,
+          "STACK": 0,
+          "SHARED": 33280,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 3,
+          "aligned": null,
+          "REG": 120,
+          "STACK": 0,
+          "SHARED": 24960,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 2,
+          "aligned": null,
+          "REG": 96,
+          "STACK": 0,
+          "SHARED": 16640,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 1,
+          "aligned": null,
+          "REG": 80,
+          "STACK": 0,
+          "SHARED": 8320,
+          "LOCAL": 0
+        }
+      ],
+      "benchmark_custom": {
+        "record": "run2/data/benchmark-custom.json",
+        "cuda_event_ms_mean": 54.44881591796875,
+        "cuda_event_ms_median": 54.50050659179688
+      },
+      "benchmark_efficient": {
+        "record": "run2/data/benchmark-efficient.json",
+        "cuda_event_ms_mean": 36.19214233398437,
+        "cuda_event_ms_median": 36.209356689453124
+      },
+      "cuda-validation.log": {
+        "path": "run2/data/cuda-validation.log",
+        "sha256": "935950634ee6fd0716ac0d529147c5133d58438c2077d2f66bd44e8531a65397"
+      },
+      "row-validation.json": {
+        "path": "run2/data/row-validation.json",
+        "sha256": "c94bcf9841a9ab56bda4466e42c98131c5a082e9558dd8377830e7aeb1cbae59"
+      }
+    },
+    {
+      "run": "run3",
+      "description": "Unavailable device __exp2f; build failed",
+      "status": {
+        "build": 1
+      },
+      "core_source": "run3/snapshot/fa2_forward.cu",
+      "core_source_sha256": "f501c9184d0e020152f35896fd0fd989456d0d90910088031270e499baf88c30",
+      "build_log": "run3/data/build.log"
+    },
+    {
+      "run": "run4",
+      "description": "64-key register-P baseline; best early run",
+      "status": {
+        "build": 0,
+        "cuda-validation": 0,
+        "benchmark-custom": 0,
+        "benchmark-efficient": 0
+      },
+      "core_source": "run4/snapshot/fa2_forward.cu",
+      "core_source_sha256": "68297d69a7fb9e161aeaf7570a612259c5d8b8414b86ff0d6b1665856a40a7f8",
+      "build_log": "run4/data/build.log",
+      "binary": {
+        "archive_path": "run4/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so",
+        "sha256": "13f9e08d7ca89081617dda25d9cce94be1bd75104f305b9b0265f2e4a49ac3ef",
+        "size_bytes": 812680
+      },
+      "compiled_resources": [
+        {
+          "dims_per_lane": 4,
+          "aligned": null,
+          "REG": 215,
+          "STACK": 0,
+          "SHARED": 33280,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 3,
+          "aligned": null,
+          "REG": 186,
+          "STACK": 0,
+          "SHARED": 24960,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 2,
+          "aligned": null,
+          "REG": 155,
+          "STACK": 0,
+          "SHARED": 16640,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 1,
+          "aligned": null,
+          "REG": 122,
+          "STACK": 0,
+          "SHARED": 8320,
+          "LOCAL": 0
+        }
+      ],
+      "benchmark_custom": {
+        "record": "run4/data/benchmark-custom.json",
+        "cuda_event_ms_mean": 46.12828796386719,
+        "cuda_event_ms_median": 46.15929260253906
+      },
+      "benchmark_efficient": {
+        "record": "run4/data/benchmark-efficient.json",
+        "cuda_event_ms_mean": 36.18365295410156,
+        "cuda_event_ms_median": 36.19878234863281
+      },
+      "cuda-validation.log": {
+        "path": "run2/data/cuda-validation.log",
+        "sha256": "935950634ee6fd0716ac0d529147c5133d58438c2077d2f66bd44e8531a65397"
+      },
+      "row-validation.json": {
+        "path": "run4/data/row-validation.json",
+        "sha256": "3bdedc49e0728f0497ba9efbfdb61501c6336a4b15d7acc4d8557fc8c7b6193b"
+      }
+    },
+    {
+      "run": "run5",
+      "description": "Transpose/layout exploration",
+      "status": {
+        "build": 0,
+        "cuda-validation": 0,
+        "benchmark-custom": 0,
+        "benchmark-efficient": 0
+      },
+      "core_source": "run5/snapshot/fa2_forward.cu",
+      "core_source_sha256": "5d55de2beba07f237e216726c2568f15ce93af11e8ff0fb8f2241e86663361d4",
+      "build_log": "run5/data/build.log",
+      "binary": {
+        "archive_path": "run5/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so",
+        "sha256": "74daa10b65c046bc030839674331b9e9eb37d4eb13ac96cb341999456f2acf76",
+        "size_bytes": 677512
+      },
+      "compiled_resources": [
+        {
+          "dims_per_lane": 4,
+          "aligned": null,
+          "REG": 202,
+          "STACK": 0,
+          "SHARED": 26624,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 3,
+          "aligned": null,
+          "REG": 188,
+          "STACK": 0,
+          "SHARED": 43008,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 2,
+          "aligned": null,
+          "REG": 157,
+          "STACK": 0,
+          "SHARED": 34816,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 1,
+          "aligned": null,
+          "REG": 126,
+          "STACK": 0,
+          "SHARED": 26624,
+          "LOCAL": 0
+        }
+      ],
+      "benchmark_custom": {
+        "record": "run5/data/benchmark-custom.json",
+        "cuda_event_ms_mean": 59.95162475585938,
+        "cuda_event_ms_median": 60.00950317382812
+      },
+      "benchmark_efficient": {
+        "record": "run5/data/benchmark-efficient.json",
+        "cuda_event_ms_mean": 36.22429443359375,
+        "cuda_event_ms_median": 36.2147705078125
+      },
+      "cuda-validation.log": {
+        "path": "run5/data/cuda-validation.log",
+        "sha256": "bc22d21d93b298e20253ab29d03577bb751cac1fc4593a84978a1eed481ff7d8"
+      },
+      "row-validation.json": {
+        "path": "run5/data/row-validation.json",
+        "sha256": "5744a6c68614912c6163d7beb4afbed4b49cd73b5eded585d619966bcaf2a11e"
+      }
+    },
+    {
+      "run": "run6",
+      "description": "Vector/layout exploration",
+      "status": {
+        "build": 0,
+        "cuda-validation": 0,
+        "benchmark-custom": 0,
+        "benchmark-efficient": 0
+      },
+      "core_source": "run6/snapshot/fa2_forward.cu",
+      "core_source_sha256": "1f133e8281397c7213325a00edb32e0fea809ebb1f7e8186b74efd60530a0ded",
+      "build_log": "run6/data/build.log",
+      "binary": {
+        "archive_path": "run6/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so",
+        "sha256": "7c16d29a5e4a2c397c1c5bb989dff1846819ebdfed1272aaf1e69ce016544255",
+        "size_bytes": 517768
+      },
+      "compiled_resources": [
+        {
+          "dims_per_lane": 4,
+          "aligned": null,
+          "REG": 137,
+          "STACK": 0,
+          "SHARED": 43008,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 3,
+          "aligned": null,
+          "REG": 122,
+          "STACK": 0,
+          "SHARED": 34816,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 2,
+          "aligned": null,
+          "REG": 96,
+          "STACK": 0,
+          "SHARED": 26624,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 1,
+          "aligned": null,
+          "REG": 80,
+          "STACK": 0,
+          "SHARED": 18432,
+          "LOCAL": 0
+        }
+      ],
+      "benchmark_custom": {
+        "record": "run6/data/benchmark-custom.json",
+        "cuda_event_ms_mean": 72.26563598632812,
+        "cuda_event_ms_median": 72.28650512695313
+      },
+      "benchmark_efficient": {
+        "record": "run6/data/benchmark-efficient.json",
+        "cuda_event_ms_mean": 36.26236267089844,
+        "cuda_event_ms_median": 36.30888977050781
+      },
+      "cuda-validation.log": {
+        "path": "run6/data/cuda-validation.log",
+        "sha256": "8f2bd305f04dcc040a7345a0f1dedfa4a73c2e2d51dd291ef9579955835f23d1"
+      },
+      "row-validation.json": {
+        "path": "run6/data/row-validation.json",
+        "sha256": "afc008f9fa77aa1add7799b89abd29efe7b09ecf575b0c730f8a2dfef1a2bd7b"
+      }
+    },
+    {
+      "run": "run7",
+      "description": "Contiguous K/V float4 with register Q",
+      "status": {
+        "build": 0,
+        "cuda-validation": 0,
+        "benchmark-custom": 0,
+        "benchmark-efficient": 0
+      },
+      "core_source": "run7/snapshot/fa2_forward.cu",
+      "core_source_sha256": "909f0b1f4b6a73c220e9a1acea88247705a96df863455fadcae60fe5be53e37b",
+      "build_log": "run7/data/build.log",
+      "binary": {
+        "archive_path": "run7/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so",
+        "sha256": "37159ce2671b3ae232487415bc598c54250bac93102c53e605991a959431b521",
+        "size_bytes": 611976
+      },
+      "compiled_resources": [
+        {
+          "dims_per_lane": 4,
+          "aligned": null,
+          "REG": 210,
+          "STACK": 0,
+          "SHARED": 26624,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 3,
+          "aligned": null,
+          "REG": 168,
+          "STACK": 0,
+          "SHARED": 22528,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 2,
+          "aligned": null,
+          "REG": 150,
+          "STACK": 0,
+          "SHARED": 18432,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 1,
+          "aligned": null,
+          "REG": 96,
+          "STACK": 0,
+          "SHARED": 14336,
+          "LOCAL": 0
+        }
+      ],
+      "benchmark_custom": {
+        "record": "run7/data/benchmark-custom.json",
+        "cuda_event_ms_mean": 59.97124877929688,
+        "cuda_event_ms_median": 60.015411376953125
+      },
+      "benchmark_efficient": {
+        "record": "run7/data/benchmark-efficient.json",
+        "cuda_event_ms_mean": 36.20243347167969,
+        "cuda_event_ms_median": 36.263040161132814
+      },
+      "cuda-validation.log": {
+        "path": "run7/data/cuda-validation.log",
+        "sha256": "e7cc0cba4cd74adffcdbd32779f12a618b46391ce518decc720bfb6c86b7d0d6"
+      },
+      "row-validation.json": {
+        "path": "run7/data/row-validation.json",
+        "sha256": "efdb91b72b05f271f2f02647cb676264195e9033555407ca2c84cb6a830d2d5e"
+      }
+    },
+    {
+      "run": "run8",
+      "description": "Persistent shared Q and K/PV union",
+      "status": {
+        "build": 0,
+        "cuda-validation": 0,
+        "benchmark-custom": 0,
+        "benchmark-efficient": 0
+      },
+      "core_source": "run8/snapshot/fa2_forward.cu",
+      "core_source_sha256": "fb85986a5e25492eba5edbdf7457ccb937414db9cb72a7cac097746bd35564b7",
+      "build_log": "run8/data/build.log",
+      "binary": {
+        "archive_path": "run8/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so",
+        "sha256": "4ae045ddc28601b0f94be208f6aa4a3323315c42a905e07bee783b1364e28568",
+        "size_bytes": 603784
+      },
+      "compiled_resources": [
+        {
+          "dims_per_lane": 4,
+          "aligned": null,
+          "REG": 127,
+          "STACK": 0,
+          "SHARED": 45056,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 3,
+          "aligned": null,
+          "REG": 122,
+          "STACK": 0,
+          "SHARED": 45056,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 2,
+          "aligned": null,
+          "REG": 127,
+          "STACK": 0,
+          "SHARED": 49152,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 1,
+          "aligned": null,
+          "REG": 126,
+          "STACK": 0,
+          "SHARED": 32768,
+          "LOCAL": 0
+        }
+      ],
+      "benchmark_custom": {
+        "record": "run8/data/benchmark-custom.json",
+        "cuda_event_ms_mean": 46.8920458984375,
+        "cuda_event_ms_median": 46.947515869140624
+      },
+      "benchmark_efficient": {
+        "record": "run8/data/benchmark-efficient.json",
+        "cuda_event_ms_mean": 36.16921691894531,
+        "cuda_event_ms_median": 36.174435424804685
+      },
+      "cuda-validation.log": {
+        "path": "run1/data/cuda-validation.log",
+        "sha256": "4ccb92a9e73f39e0c329732d92adff9504e7398e88e1370c86ab7f5fc6bbfda7"
+      },
+      "row-validation.json": {
+        "path": "run8/data/row-validation.json",
+        "sha256": "12328ce79d85f876e6984c4d13c975997344b24e4acd620d8005eff033246115"
+      }
+    },
+    {
+      "run": "run9",
+      "description": "Eight warps with shared Q stages",
+      "status": {
+        "build": 0,
+        "cuda-validation": 0,
+        "benchmark-custom": 0,
+        "benchmark-efficient": 0
+      },
+      "core_source": "run9/snapshot/fa2_forward.cu",
+      "core_source_sha256": "57da2262fbb6393e2ec6a7844e3fc7211b1d3aa1a8cc5600d4356befc31c9617",
+      "build_log": "run9/data/build.log",
+      "binary": {
+        "archive_path": "run9/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so",
+        "sha256": "a2ab165ff9556fc9c3cd737a2407723fe3371b6c1c35d1f658be0e4f55e8720d",
+        "size_bytes": 521864
+      },
+      "compiled_resources": [
+        {
+          "dims_per_lane": 4,
+          "aligned": null,
+          "REG": 120,
+          "STACK": 0,
+          "SHARED": 32768,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 3,
+          "aligned": null,
+          "REG": 120,
+          "STACK": 0,
+          "SHARED": 32768,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 2,
+          "aligned": null,
+          "REG": 97,
+          "STACK": 0,
+          "SHARED": 40960,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 1,
+          "aligned": null,
+          "REG": 97,
+          "STACK": 0,
+          "SHARED": 40960,
+          "LOCAL": 0
+        }
+      ],
+      "benchmark_custom": {
+        "record": "run9/data/benchmark-custom.json",
+        "cuda_event_ms_mean": 58.57660400390625,
+        "cuda_event_ms_median": 58.72255859375
+      },
+      "benchmark_efficient": {
+        "record": "run9/data/benchmark-efficient.json",
+        "cuda_event_ms_mean": 36.23829956054688,
+        "cuda_event_ms_median": 36.267767333984374
+      },
+      "cuda-validation.log": {
+        "path": "run9/data/cuda-validation.log",
+        "sha256": "f590138f62ec249eb6dde3064b9a251cda4be7208546fd3a0c18ff1e83ee3944"
+      },
+      "row-validation.json": {
+        "path": "run9/data/row-validation.json",
+        "sha256": "2e9461e40bc768b06c1239392e22f727711623328991ad34d1a63c0affece8a2"
+      }
+    },
+    {
+      "run": "run10",
+      "description": "Four warps, shared Q/K union",
+      "status": {
+        "build": 0,
+        "cuda-validation": 0,
+        "benchmark-custom": 0,
+        "benchmark-efficient": 0
+      },
+      "core_source": "run10/snapshot/fa2_forward.cu",
+      "core_source_sha256": "10f258cb47a8bc4d0531713a1255f01749a685f785f7aed32559fbea1345504f",
+      "build_log": "run10/data/build.log",
+      "binary": {
+        "archive_path": "run10/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so",
+        "sha256": "80c339e8d44abcc7405314e2464941217295594ab9e9dad8ab4f97bec68c45dd",
+        "size_bytes": 611976
+      },
+      "compiled_resources": [
+        {
+          "dims_per_lane": 4,
+          "aligned": null,
+          "REG": 158,
+          "STACK": 0,
+          "SHARED": 27136,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 3,
+          "aligned": null,
+          "REG": 133,
+          "STACK": 0,
+          "SHARED": 22528,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 2,
+          "aligned": null,
+          "REG": 154,
+          "STACK": 0,
+          "SHARED": 34816,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 1,
+          "aligned": null,
+          "REG": 125,
+          "STACK": 0,
+          "SHARED": 25600,
+          "LOCAL": 0
+        }
+      ],
+      "benchmark_custom": {
+        "record": "run10/data/benchmark-custom.json",
+        "cuda_event_ms_mean": 52.601357421875,
+        "cuda_event_ms_median": 52.5711181640625
+      },
+      "benchmark_efficient": {
+        "record": "run10/data/benchmark-efficient.json",
+        "cuda_event_ms_mean": 36.269937133789064,
+        "cuda_event_ms_median": 36.32009582519531
+      },
+      "cuda-validation.log": {
+        "path": "run10/data/cuda-validation.log",
+        "sha256": "7084d048ad4e384b7bd1f72b91c3427df2411b91c57abfde52f584372fdb3a29"
+      },
+      "row-validation.json": {
+        "path": "run10/data/row-validation.json",
+        "sha256": "9450a34782b0910b2eb50493ffc58ebbed1026ae5df91adec4ae23b7d8fb1384"
+      }
+    },
+    {
+      "run": "run11",
+      "description": "2x2 SIMT warp layout, full K, no prefetch",
+      "status": {
+        "build": 0,
+        "cuda-validation": 0,
+        "benchmark-custom": 0,
+        "benchmark-efficient": 0
+      },
+      "core_source": "run11/snapshot/fa2_forward.cu",
+      "core_source_sha256": "3534d2a4df7473c8c3053c81ceb8bd5bf66b75278f99a6051e548837815f06ab",
+      "build_log": "run11/data/build.log",
+      "binary": {
+        "archive_path": "run11/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so",
+        "sha256": "70ff91b827f69e92ca91a0f40ccf523b29ce863bede9f2a26a2d305c4e83796b",
+        "size_bytes": 681608
+      },
+      "compiled_resources": [
+        {
+          "dims_per_lane": 4,
+          "aligned": null,
+          "REG": 158,
+          "STACK": 0,
+          "SHARED": 28416,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 3,
+          "aligned": null,
+          "REG": 158,
+          "STACK": 0,
+          "SHARED": 28416,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 2,
+          "aligned": null,
+          "REG": 136,
+          "STACK": 0,
+          "SHARED": 36096,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 1,
+          "aligned": null,
+          "REG": 136,
+          "STACK": 0,
+          "SHARED": 36096,
+          "LOCAL": 0
+        }
+      ],
+      "benchmark_custom": {
+        "record": "run11/data/benchmark-custom.json",
+        "cuda_event_ms_mean": 52.387703857421876,
+        "cuda_event_ms_median": 52.345037841796874
+      },
+      "benchmark_efficient": {
+        "record": "run11/data/benchmark-efficient.json",
+        "cuda_event_ms_mean": 36.20671325683594,
+        "cuda_event_ms_median": 36.19317626953125
+      },
+      "cuda-validation.log": {
+        "path": "run11/data/cuda-validation.log",
+        "sha256": "8795657b5153851994c376fd9556115d5543a1d6168fad6e8e307a58d87a3ca7"
+      },
+      "row-validation.json": {
+        "path": "run11/data/row-validation.json",
+        "sha256": "50e5aa0452f60d43980f345da01ad26d6e91de31b73fc538aed45d24007393b6"
+      },
+      "nvprof-diagnostic.csv": {
+        "path": "run11/data/nvprof-diagnostic.csv",
+        "sha256": "82230d4a0adf804d30a528f91c3ae4b90debd8b70cfd35512366e49c50071ca1"
+      }
+    },
+    {
+      "run": "run12",
+      "description": "Stage8 double buffers, fragment/global prefetch and P XOR",
+      "status": {
+        "build": 0,
+        "cuda-validation": 0,
+        "benchmark-custom": 0,
+        "benchmark-efficient": 0
+      },
+      "core_source": "run12/snapshot/fa2_forward.cu",
+      "core_source_sha256": "94fb16eeef5a10e8d526080e085ba90cc39dc069b768e42364fcfd3dd43f02a9",
+      "build_log": "run12/data/build.log",
+      "binary": {
+        "archive_path": "run12/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so",
+        "sha256": "439cb8d4dfa9f936880a253c7a1f35544363d1fdf820cc29066dea5fdabcb8b2",
+        "size_bytes": 943856
+      },
+      "compiled_resources": [
+        {
+          "dims_per_lane": 4,
+          "aligned": null,
+          "REG": 168,
+          "STACK": 0,
+          "SHARED": 25856,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 3,
+          "aligned": null,
+          "REG": 168,
+          "STACK": 0,
+          "SHARED": 25856,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 2,
+          "aligned": null,
+          "REG": 158,
+          "STACK": 0,
+          "SHARED": 21760,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 1,
+          "aligned": null,
+          "REG": 158,
+          "STACK": 0,
+          "SHARED": 21760,
+          "LOCAL": 0
+        }
+      ],
+      "benchmark_custom": {
+        "record": "run12/data/benchmark-custom.json",
+        "cuda_event_ms_mean": 38.19664978027344,
+        "cuda_event_ms_median": 38.21240234375
+      },
+      "benchmark_efficient": {
+        "record": "run12/data/benchmark-efficient.json",
+        "cuda_event_ms_mean": 36.07043151855469,
+        "cuda_event_ms_median": 36.13361511230469
+      },
+      "cuda-validation.log": {
+        "path": "run12/data/cuda-validation.log",
+        "sha256": "7d36139a9e6d02cc793cef20da3247ad59c7ec3a68c0c269e3eb402334fe171f"
+      },
+      "row-validation.json": {
+        "path": "run12/data/row-validation.json",
+        "sha256": "55635a6411ce5e9208807541af9bd6577af2373dd817eff49d9419013ccf705f"
+      },
+      "nvprof-diagnostic.csv": {
+        "path": "run12/data/nvprof-diagnostic.csv",
+        "sha256": "c1d7b9cf0c8e2caafb8d2d95041ae7044350fe7baab875ec41a19ce6f1039d75"
+      }
+    },
+    {
+      "run": "run13",
+      "description": "run12 without P XOR",
+      "status": {
+        "build": 0,
+        "cuda-validation": 0,
+        "benchmark-custom": 0,
+        "benchmark-efficient": 0
+      },
+      "core_source": "run13/snapshot/fa2_forward.cu",
+      "core_source_sha256": "4145ffc889293cbd39f5144688a2f4230bc39802be99d9a98461219391c4f25b",
+      "build_log": "run13/data/build.log",
+      "binary": {
+        "archive_path": "run13/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so",
+        "sha256": "a668b9aa2fb9013b7b2eb553931003e879fe8655f4aba58f9fd37d0c692405d3",
+        "size_bytes": 808688
+      },
+      "compiled_resources": [
+        {
+          "dims_per_lane": 4,
+          "aligned": null,
+          "REG": 167,
+          "STACK": 0,
+          "SHARED": 25856,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 3,
+          "aligned": null,
+          "REG": 167,
+          "STACK": 0,
+          "SHARED": 25856,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 2,
+          "aligned": null,
+          "REG": 154,
+          "STACK": 0,
+          "SHARED": 21760,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 1,
+          "aligned": null,
+          "REG": 154,
+          "STACK": 0,
+          "SHARED": 21760,
+          "LOCAL": 0
+        }
+      ],
+      "benchmark_custom": {
+        "record": "run13/data/benchmark-custom.json",
+        "cuda_event_ms_mean": 40.02946533203125,
+        "cuda_event_ms_median": 40.023806762695315
+      },
+      "benchmark_efficient": {
+        "record": "run13/data/benchmark-efficient.json",
+        "cuda_event_ms_mean": 36.14386657714844,
+        "cuda_event_ms_median": 36.193582153320314
+      },
+      "cuda-validation.log": {
+        "path": "run13/data/cuda-validation.log",
+        "sha256": "ee782daca2a8abd1ff3331f881ec588f7a5ab354f1c538bbfa92e79919d7765b"
+      },
+      "row-validation.json": {
+        "path": "run13/data/row-validation.json",
+        "sha256": "ba4a24d57ffa8cd6924ab213d4c95ed3bca19c4d8ec41e0698dd09cf03fef9b4"
+      }
+    },
+    {
+      "run": "run14",
+      "description": "run12 global loads after current FFMA",
+      "status": {
+        "build": 0,
+        "cuda-validation": 0,
+        "benchmark-custom": 0,
+        "benchmark-efficient": 0
+      },
+      "core_source": "run14/snapshot/fa2_forward.cu",
+      "core_source_sha256": "5e0c8eee151755dd3dcb0417c76bc91001dc77274878d4c0e83ede3a7405f033",
+      "build_log": "run14/data/build.log",
+      "binary": {
+        "archive_path": "run14/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so",
+        "sha256": "b8ecdab14f74268d8bd0142c93d450bae8976647460e3704c7ae56434c0a2152",
+        "size_bytes": 825072
+      },
+      "compiled_resources": [
+        {
+          "dims_per_lane": 4,
+          "aligned": null,
+          "REG": 173,
+          "STACK": 0,
+          "SHARED": 25856,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 3,
+          "aligned": null,
+          "REG": 173,
+          "STACK": 0,
+          "SHARED": 25856,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 2,
+          "aligned": null,
+          "REG": 168,
+          "STACK": 0,
+          "SHARED": 21760,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 1,
+          "aligned": null,
+          "REG": 168,
+          "STACK": 0,
+          "SHARED": 21760,
+          "LOCAL": 0
+        }
+      ],
+      "benchmark_custom": {
+        "record": "run14/data/benchmark-custom.json",
+        "cuda_event_ms_mean": 39.121348266601565,
+        "cuda_event_ms_median": 39.2156494140625
+      },
+      "benchmark_efficient": {
+        "record": "run14/data/benchmark-efficient.json",
+        "cuda_event_ms_mean": 36.171881103515624,
+        "cuda_event_ms_median": 36.21717529296875
+      },
+      "cuda-validation.log": {
+        "path": "run12/data/cuda-validation.log",
+        "sha256": "7d36139a9e6d02cc793cef20da3247ad59c7ec3a68c0c269e3eb402334fe171f"
+      },
+      "row-validation.json": {
+        "path": "run14/data/row-validation.json",
+        "sha256": "19019a4a4d4bf68a69f06d11c85225ea3beb6b4e581af93716bc5d63be57fde6"
+      }
+    },
+    {
+      "run": "run15",
+      "description": "run12 without explicit fragment double buffer",
+      "status": {
+        "build": 0,
+        "cuda-validation": 0,
+        "benchmark-custom": 0,
+        "benchmark-efficient": 0
+      },
+      "core_source": "run15/snapshot/fa2_forward.cu",
+      "core_source_sha256": "7cd2cee03cdea1ccf9765ba967a3380ddf16840f533023b283d1db6cfd89b3e2",
+      "build_log": "run15/data/build.log",
+      "binary": {
+        "archive_path": "run15/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so",
+        "sha256": "1f1ee714f2609aee9f114cbdd7259761664f9f8f6a31e896d6994689b80071cc",
+        "size_bytes": 829168
+      },
+      "compiled_resources": [
+        {
+          "dims_per_lane": 4,
+          "aligned": null,
+          "REG": 166,
+          "STACK": 0,
+          "SHARED": 25856,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 3,
+          "aligned": null,
+          "REG": 166,
+          "STACK": 0,
+          "SHARED": 25856,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 2,
+          "aligned": null,
+          "REG": 161,
+          "STACK": 0,
+          "SHARED": 21760,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 1,
+          "aligned": null,
+          "REG": 161,
+          "STACK": 0,
+          "SHARED": 21760,
+          "LOCAL": 0
+        }
+      ],
+      "benchmark_custom": {
+        "record": "run15/data/benchmark-custom.json",
+        "cuda_event_ms_mean": 37.47424682617188,
+        "cuda_event_ms_median": 37.563775634765626
+      },
+      "benchmark_efficient": {
+        "record": "run15/data/benchmark-efficient.json",
+        "cuda_event_ms_mean": 36.123671264648436,
+        "cuda_event_ms_median": 36.128717041015626
+      },
+      "cuda-validation.log": {
+        "path": "run15/data/cuda-validation.log",
+        "sha256": "0653c8afc1c14803869b8fb881e405df626fe6197a903c854f2923b866d2ae5e"
+      },
+      "row-validation.json": {
+        "path": "run15/data/row-validation.json",
+        "sha256": "922cc24d5c2399fbbd489ffa6b5636151a7ed272f956dd37bb9209e99e3e2481"
+      }
+    },
+    {
+      "run": "run16",
+      "description": "Base2 with unavailable device __exp2f; build failed",
+      "status": {
+        "build": 1
+      },
+      "core_source": "run16/snapshot/fa2_forward.cu",
+      "core_source_sha256": "795b218b4108bd925f201c750b530c8379db00783e45519df58c4b60fe35f0f4",
+      "build_log": "run16/data/build.log"
+    },
+    {
+      "run": "run17",
+      "description": "Base2 PTX ex2 without ftz",
+      "status": {
+        "build": 0,
+        "cuda-validation": 0,
+        "benchmark-custom": 0,
+        "benchmark-efficient": 0
+      },
+      "core_source": "run17/snapshot/fa2_forward.cu",
+      "core_source_sha256": "e44e7ed032e11d1141fcaec3bfcaf1dab6b3858248b8b4e6258475fc6e7b6628",
+      "build_log": "run17/data/build.log",
+      "binary": {
+        "archive_path": "run17/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so",
+        "sha256": "6f314dc7ac7f9b102afcb520264d0462ae187d4ca90596beed1444fe1eee9e25",
+        "size_bytes": 837448
+      },
+      "compiled_resources": [
+        {
+          "dims_per_lane": 4,
+          "aligned": null,
+          "REG": 166,
+          "STACK": 0,
+          "SHARED": 25856,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 3,
+          "aligned": null,
+          "REG": 166,
+          "STACK": 0,
+          "SHARED": 25856,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 2,
+          "aligned": null,
+          "REG": 161,
+          "STACK": 0,
+          "SHARED": 21760,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 1,
+          "aligned": null,
+          "REG": 161,
+          "STACK": 0,
+          "SHARED": 21760,
+          "LOCAL": 0
+        }
+      ],
+      "benchmark_custom": {
+        "record": "run17/data/benchmark-custom.json",
+        "cuda_event_ms_mean": 37.371199951171874,
+        "cuda_event_ms_median": 37.338983154296876
+      },
+      "benchmark_efficient": {
+        "record": "run17/data/benchmark-efficient.json",
+        "cuda_event_ms_mean": 36.1329296875,
+        "cuda_event_ms_median": 36.142947387695315
+      },
+      "cuda-validation.log": {
+        "path": "run17/data/cuda-validation.log",
+        "sha256": "e65c060b1c7a252748c98655688614f0015229a8d922dbacab1462f9b68475ef"
+      },
+      "row-validation.json": {
+        "path": "run17/data/row-validation.json",
+        "sha256": "cc1bfcc99c27408fe6e2d0da792e9f1b9fca843020c6377ebd2bafd4d9a39c0a"
+      }
+    },
+    {
+      "run": "run18",
+      "description": "Guarded normal-range exponential; regression",
+      "status": {
+        "build": 0,
+        "cuda-validation": 0,
+        "benchmark-custom": 0,
+        "benchmark-efficient": 0
+      },
+      "core_source": "run18/snapshot/fa2_forward.cu",
+      "core_source_sha256": "f151120a4fc32f42855a781404e83c21dd244f0f253f3c1ef1fbf80c3c351e5c",
+      "build_log": "run18/data/build.log",
+      "binary": {
+        "archive_path": "run18/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so",
+        "sha256": "6a9db1ddeb39a4128be7158bf3ee143b02462da4bea45ae91965f8515a3fdb7d",
+        "size_bytes": 853936
+      },
+      "compiled_resources": [
+        {
+          "dims_per_lane": 4,
+          "aligned": null,
+          "REG": 166,
+          "STACK": 0,
+          "SHARED": 25856,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 3,
+          "aligned": null,
+          "REG": 166,
+          "STACK": 0,
+          "SHARED": 25856,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 2,
+          "aligned": null,
+          "REG": 161,
+          "STACK": 0,
+          "SHARED": 21760,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 1,
+          "aligned": null,
+          "REG": 161,
+          "STACK": 0,
+          "SHARED": 21760,
+          "LOCAL": 0
+        }
+      ],
+      "benchmark_custom": {
+        "record": "run18/data/benchmark-custom.json",
+        "cuda_event_ms_mean": 38.18954895019531,
+        "cuda_event_ms_median": 38.10252685546875
+      },
+      "benchmark_efficient": {
+        "record": "run18/data/benchmark-efficient.json",
+        "cuda_event_ms_mean": 36.110354614257815,
+        "cuda_event_ms_median": 36.15882263183594
+      },
+      "cuda-validation.log": {
+        "path": "run18/data/cuda-validation.log",
+        "sha256": "a689eb49575203d8a8cdbb56696494e2f180f9b5ddc9f458d1d0a8763ff0a64f"
+      },
+      "row-validation.json": {
+        "path": "run18/data/row-validation.json",
+        "sha256": "b7a462a90bebe19bbf633ac26057b170148a73e83f946f2c1e18ad0cc28a1f47"
+      }
+    },
+    {
+      "run": "run19",
+      "description": "Aligned float4 global operand loads",
+      "status": {
+        "build": 0,
+        "cuda-validation": 0,
+        "benchmark-custom": 0,
+        "benchmark-efficient": 0
+      },
+      "core_source": "run19/snapshot/fa2_forward.cu",
+      "core_source_sha256": "cfa681e2eaf90dda3374fca1b4eae2b4fb1d908047dabe67d3a2cca77c52ebed",
+      "build_log": "run19/data/build.log",
+      "binary": {
+        "archive_path": "run19/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so",
+        "sha256": "74ddfd4c7fb31bc7d1f0702936e01df609b0e180b8ece1db24cf8494667557cd",
+        "size_bytes": 1367040
+      },
+      "compiled_resources": [
+        {
+          "dims_per_lane": 4,
+          "aligned": false,
+          "REG": 166,
+          "STACK": 0,
+          "SHARED": 25856,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 4,
+          "aligned": true,
+          "REG": 162,
+          "STACK": 0,
+          "SHARED": 25856,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 3,
+          "aligned": false,
+          "REG": 166,
+          "STACK": 0,
+          "SHARED": 25856,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 3,
+          "aligned": true,
+          "REG": 162,
+          "STACK": 0,
+          "SHARED": 25856,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 2,
+          "aligned": false,
+          "REG": 161,
+          "STACK": 0,
+          "SHARED": 21760,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 2,
+          "aligned": true,
+          "REG": 157,
+          "STACK": 0,
+          "SHARED": 21760,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 1,
+          "aligned": false,
+          "REG": 161,
+          "STACK": 0,
+          "SHARED": 21760,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 1,
+          "aligned": true,
+          "REG": 157,
+          "STACK": 0,
+          "SHARED": 21760,
+          "LOCAL": 0
+        }
+      ],
+      "benchmark_custom": {
+        "record": "run19/data/benchmark-custom.json",
+        "cuda_event_ms_mean": 32.89601989746094,
+        "cuda_event_ms_median": 32.90849304199219
+      },
+      "benchmark_efficient": {
+        "record": "run19/data/benchmark-efficient.json",
+        "cuda_event_ms_mean": 36.05968994140625,
+        "cuda_event_ms_median": 36.120574951171875
+      },
+      "cuda-validation.log": {
+        "path": "run19/data/cuda-validation.log",
+        "sha256": "57e0b983f37e3a3cf64f09b890d3457b28a35d6a08d204af8146ca182e732a5d"
+      },
+      "row-validation.json": {
+        "path": "run19/data/row-validation.json",
+        "sha256": "736cb8e3bb89f70d6fcf107e7a250e5693decc73e85e1546a8755fdb99f7fb4b"
+      }
+    },
+    {
+      "run": "run20",
+      "description": "Final: aligned pointer guard and unused fragment removal",
+      "status": {
+        "build": 0,
+        "cuda-validation": 0,
+        "benchmark-custom": 0,
+        "benchmark-efficient": 0
+      },
+      "core_source": "snapshot/fa2_forward.cu",
+      "core_source_sha256": "9306cf84e5c2a1d9713ac6ecba8ba798844ab78d650893f51826e2880ac0b012",
+      "build_log": "data/build.log",
+      "binary": {
+        "archive_path": "binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so",
+        "sha256": "5001866545e06b3648b5097d911bbfa8eb4bb3a90c0bd64e18bcd54faef7d376",
+        "size_bytes": 1367040
+      },
+      "compiled_resources": [
+        {
+          "dims_per_lane": 4,
+          "aligned": false,
+          "REG": 166,
+          "STACK": 0,
+          "SHARED": 25856,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 4,
+          "aligned": true,
+          "REG": 162,
+          "STACK": 0,
+          "SHARED": 25856,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 3,
+          "aligned": false,
+          "REG": 166,
+          "STACK": 0,
+          "SHARED": 25856,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 3,
+          "aligned": true,
+          "REG": 162,
+          "STACK": 0,
+          "SHARED": 25856,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 2,
+          "aligned": false,
+          "REG": 161,
+          "STACK": 0,
+          "SHARED": 21760,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 2,
+          "aligned": true,
+          "REG": 157,
+          "STACK": 0,
+          "SHARED": 21760,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 1,
+          "aligned": false,
+          "REG": 161,
+          "STACK": 0,
+          "SHARED": 21760,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 1,
+          "aligned": true,
+          "REG": 157,
+          "STACK": 0,
+          "SHARED": 21760,
+          "LOCAL": 0
+        }
+      ],
+      "benchmark_custom": {
+        "record": "data/benchmark-custom.json",
+        "cuda_event_ms_mean": 32.886442260742186,
+        "cuda_event_ms_median": 32.92375183105469
+      },
+      "benchmark_efficient": {
+        "record": "data/benchmark-efficient.json",
+        "cuda_event_ms_mean": 36.10302978515625,
+        "cuda_event_ms_median": 36.12630615234375
+      },
+      "cuda-validation.log": {
+        "path": "run20/data/cuda-validation.log",
+        "sha256": "2660ccb3cee564dbf4cd776214a007029eb40ebe2b3ad83aca578e26f47a86db"
+      },
+      "row-validation.json": {
+        "path": "data/row-validation.json",
+        "sha256": "25a08f2a50eb8d9d3937f1461f8ccaa4f39d0f5f48d228cbd5858f4439c761f3"
+      }
+    },
+    {
+      "run": "run21",
+      "description": "Final scalar-only dispatch ablation",
+      "status": {
+        "build": 0,
+        "cuda-validation": 0,
+        "benchmark-custom": 0,
+        "benchmark-efficient": 0
+      },
+      "core_source": "run21/snapshot/fa2_forward.cu",
+      "core_source_sha256": "c200bb8511dc01ee26dafaab6cc28d5b7bf0e1cbe4474c031bd35af50b3b3d07",
+      "build_log": "run21/data/build.log",
+      "binary": {
+        "archive_path": "run21/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so",
+        "sha256": "4a031ef41af676d44ad730000e0c8cb59bcc1ac6bd930666bb32fc32e838dd9d",
+        "size_bytes": 1362288
+      },
+      "compiled_resources": [
+        {
+          "dims_per_lane": 4,
+          "aligned": false,
+          "REG": 166,
+          "STACK": 0,
+          "SHARED": 25856,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 4,
+          "aligned": true,
+          "REG": 162,
+          "STACK": 0,
+          "SHARED": 25856,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 3,
+          "aligned": false,
+          "REG": 166,
+          "STACK": 0,
+          "SHARED": 25856,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 3,
+          "aligned": true,
+          "REG": 162,
+          "STACK": 0,
+          "SHARED": 25856,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 2,
+          "aligned": false,
+          "REG": 161,
+          "STACK": 0,
+          "SHARED": 21760,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 2,
+          "aligned": true,
+          "REG": 157,
+          "STACK": 0,
+          "SHARED": 21760,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 1,
+          "aligned": false,
+          "REG": 161,
+          "STACK": 0,
+          "SHARED": 21760,
+          "LOCAL": 0
+        },
+        {
+          "dims_per_lane": 1,
+          "aligned": true,
+          "REG": 157,
+          "STACK": 0,
+          "SHARED": 21760,
+          "LOCAL": 0
+        }
+      ],
+      "benchmark_custom": {
+        "record": "run21/data/benchmark-custom.json",
+        "cuda_event_ms_mean": 37.43706604003906,
+        "cuda_event_ms_median": 37.459710693359376
+      },
+      "benchmark_efficient": {
+        "record": "run21/data/benchmark-efficient.json",
+        "cuda_event_ms_mean": 36.198935546875,
+        "cuda_event_ms_median": 36.26785888671875
+      },
+      "cuda-validation.log": {
+        "path": "run21/data/cuda-validation.log",
+        "sha256": "f15d925c414d506043f735231389fcdb26551d04715abcdaa171a1ec8bb5f787"
+      },
+      "row-validation.json": {
+        "path": "run21/data/row-validation.json",
+        "sha256": "28595787d0383aabab9d3196fa322cbacff1da852ae6a070b3d442696855e4cd"
+      }
+    }
+  ],
+  "path_redirects": {
+    "data/timeline-process.log": "data/counters-process.log",
+    "run10/data/benchmark-custom.log": "run10/data/benchmark-custom.json",
+    "run10/data/benchmark-efficient.log": "run10/data/benchmark-efficient.json",
+    "run11/data/benchmark-custom.log": "run11/data/benchmark-custom.json",
+    "run11/data/benchmark-efficient.log": "run11/data/benchmark-efficient.json",
+    "run12/data/benchmark-custom.log": "run12/data/benchmark-custom.json",
+    "run12/data/benchmark-efficient.log": "run12/data/benchmark-efficient.json",
+    "run13/data/benchmark-custom.log": "run13/data/benchmark-custom.json",
+    "run13/data/benchmark-efficient.log": "run13/data/benchmark-efficient.json",
+    "run14/data/benchmark-custom.log": "run14/data/benchmark-custom.json",
+    "run14/data/benchmark-efficient.log": "run14/data/benchmark-efficient.json",
+    "run14/data/cuda-validation.log": "run12/data/cuda-validation.log",
+    "run15/data/benchmark-custom.log": "run15/data/benchmark-custom.json",
+    "run15/data/benchmark-efficient.log": "run15/data/benchmark-efficient.json",
+    "run17/data/benchmark-custom.log": "run17/data/benchmark-custom.json",
+    "run17/data/benchmark-efficient.log": "run17/data/benchmark-efficient.json",
+    "run18/data/benchmark-custom.log": "run18/data/benchmark-custom.json",
+    "run18/data/benchmark-efficient.log": "run18/data/benchmark-efficient.json",
+    "run19/data/benchmark-custom.log": "run19/data/benchmark-custom.json",
+    "run19/data/benchmark-efficient.log": "run19/data/benchmark-efficient.json",
+    "run20/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so": "binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so",
+    "run20/data/benchmark-custom.json": "data/benchmark-custom.json",
+    "run20/data/benchmark-custom.log": "data/benchmark-custom.json",
+    "run20/data/benchmark-efficient.json": "data/benchmark-efficient.json",
+    "run20/data/benchmark-efficient.log": "data/benchmark-efficient.json",
+    "run20/data/build.log": "data/build.log",
+    "run20/data/row-validation.json": "data/row-validation.json",
+    "run20/snapshot/fa2_forward.cu": "snapshot/fa2_forward.cu",
+    "run21/data/benchmark-custom.log": "run21/data/benchmark-custom.json",
+    "run21/data/benchmark-efficient.log": "run21/data/benchmark-efficient.json",
+    "run4/data/cuda-validation.log": "run2/data/cuda-validation.log",
+    "run7/data/benchmark-custom.log": "run7/data/benchmark-custom.json",
+    "run7/data/benchmark-efficient.log": "run7/data/benchmark-efficient.json",
+    "run8/data/benchmark-custom.log": "run8/data/benchmark-custom.json",
+    "run8/data/benchmark-efficient.log": "run8/data/benchmark-efficient.json",
+    "run8/data/cuda-validation.log": "run1/data/cuda-validation.log",
+    "run9/data/benchmark-custom.log": "run9/data/benchmark-custom.json",
+    "run9/data/benchmark-efficient.log": "run9/data/benchmark-efficient.json"
+  },
+  "validation_status": {
+    "paired": 0,
+    "matrix": 0,
+    "memcheck": 0,
+    "synccheck": 0,
+    "racecheck": 0
+  },
+  "shared_workspace_files": [
+    {
+      "path_relative_to_fa": "cpp_cuda/fa2/common/binding.cpp",
+      "sha256": "91d91b53e4acd1864bcdb0f4d43dbd8817c2a15b7dbfc1ef482595fd352ecb68"
+    },
+    {
+      "path_relative_to_fa": "cpp_cuda/fa2/build_extension.py",
+      "sha256": "b0a773f0511a5d707edefff6b5d5a39c3878cf3f0ffa901a13595d3140e92c3a"
+    },
+    {
+      "path_relative_to_fa": "src/cuda_fa2_forward.py",
+      "sha256": "958d43345a37558e5701fa3da6f49179a21bf342ceec53a32b6502aa142833e6"
+    },
+    {
+      "path_relative_to_fa": "src/forward_registry.py",
+      "sha256": "fdb6ba63f72243f4efa13d42a3feb48793b629d69254a2b1b3554abc4c53571d"
+    },
+    {
+      "path_relative_to_fa": "src/numerical_verification.py",
+      "sha256": "008ba43ea6e18cbec707339ae7d308eac7747acb159f2b247c7c63975d7ce05d"
+    },
+    {
+      "path_relative_to_fa": "src/benchmark_measurement.py",
+      "sha256": "ca6a0374a6cf7c8d639258d9152ff7cb72bea9c753b340ae3faf4bf646ce3027"
+    },
+    {
+      "path_relative_to_fa": "scripts/benchmark_attention_comparison.py",
+      "sha256": "901d2baafb18cdf3648f5a9f33ff5a994fc4e9e190868207a9b438e955463635"
+    },
+    {
+      "path_relative_to_fa": "scripts/benchmark_attention.py",
+      "sha256": "857d7567494234ea7790b2e5c3152f9a7868639391ccec91d81e133bc99ee578"
+    },
+    {
+      "path_relative_to_fa": "scripts/profile_attention.py",
+      "sha256": "7cd1e8fc85cd76d1f33b67062e859d047f2a14e7c06896ca214c3c7cdd7e0782"
+    },
+    {
+      "path_relative_to_fa": "tests/test_cuda_fa2_forward.py",
+      "sha256": "148787de5781f981e50cc50cb914b5fe4ae311656839a6bc6ab2818e535c167c"
+    },
+    {
+      "path_relative_to_fa": "tests/test_forward_registry.py",
+      "sha256": "68548321391caae20e2776fa3f8f29261b75495b46766a41b08ea7b03ddcdcef"
+    }
+  ],
+  "artifact_hashes": {
+    "assets/paired-latency.svg": "dc6a8089cb90846cd93050d82a6cb8905d194b0556ad25f52dc01afee54deb48",
+    "assets/shape-speedup.svg": "b44e48c6bbcdd326e67830dacd77eb20b2042f3a967a71c79b3cc2a212db8df9",
+    "binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so": "5001866545e06b3648b5097d911bbfa8eb4bb3a90c0bd64e18bcd54faef7d376",
+    "build-and-run.md": "ba8db0a81939344a50e50cbfe968ca41afef40125dd8b0ece18075b25de8d615",
+    "data/benchmark-custom.json": "ab091757b236307c0b17886734510cb017905bef32f460275c88837ba654795d",
+    "data/benchmark-efficient.json": "e1912da10a6e09bc7ad6070b7b79612dbf3080cfe4d42ba047520296a902d34b",
+    "data/benchmark-matrix.json": "c8f9f3522c7e8fa45b72bf2f63d62461fe8b0f263ecd0499fe10893cf20aff95",
+    "data/benchmark-paired.json": "a91f6f21306cbcac945c2039f0312d315415ee88e0812f2cf9913f99656a7eaa",
+    "data/build.log": "d8c30f3277dafd080fcfad9e7bd9cbce44d1aab59fbdff26700169a9322bf646",
+    "data/counters-process.log": "ca9fb84d18e2bfbe8eedaf80708bb54aa2ce1f5370c53bfd39e42e76272a13c0",
+    "data/cuda-final-process.log": "bf1a0c51e84081643b0d420acdbb5c1f35faa561960745b97f0b7d298698a650",
+    "data/matrix.log": "b05f3898320dc86792502cbdfc9a276ab2200c2afbe8182b0b007ce85f15c91b",
+    "data/memcheck.log": "5a9b68423525659cc8f85632e67c06f0a4511750b6cfc3c389a1c339a0987021",
+    "data/nvprof-custom-s16384-d64.csv": "24061a7a051b2f4182a1bb636ec1e22f31b9e4ae8c32ec5a03a79b3bbc434ffd",
+    "data/nvprof-timeline.csv": "498d96b3911db6bdbf960ed774befe2e9fea4974f4c27d2d28016ddfa72b7ccd",
+    "data/paired.log": "4aef22ed3fc958208ab9c2949bcd2de81c96042400a0eb074bedb3d6d8704291",
+    "data/racecheck.log": "f5a681b47ddcdc00374ad49ab23b523a87cec1c6d3d4608f55fd9c17eac5b3b8",
+    "data/registry-process.log": "0f7e4b97443e54aca647179972594d13bb587afcbf151fab8228148587ea844a",
+    "data/row-validation.json": "25a08f2a50eb8d9d3937f1461f8ccaa4f39d0f5f48d228cbd5858f4439c761f3",
+    "data/synccheck.log": "de107d3596c988f2a051a5ff4302ec4d223ea0b4e9bf9c8e2bda0355b511eb05",
+    "optimization-design.md": "1fbda5a02f0a12131ba74ad8c010958627f8b529fa8d6b76756a676bbf412802",
+    "perf_v4.md": "5bc9ab26bf1332dcc3b8e85605bc67dc0ad1e4878cd49d268eca334b4f5c4733",
+    "profiles/forward.nvvp": "14a77ac6e03985bab77da94654dd5cc61a2e79fa7392847cc2294273431c7cb5",
+    "run1/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so": "6e0ff19f3e58fa77f7574b0573dc02ebe828d9adbd0268ed6c03f4a006bd5c65",
+    "run1/data/benchmark-custom.json": "57c047dab08acc6b2b210f2ac783603bf93b55bfa9d76a5af82d86ac2588ea74",
+    "run1/data/benchmark-efficient.json": "8dc9fc6b3522c751cb92371436150856504bd02803ec666de45d80bc39ce8fc0",
+    "run1/data/build.log": "618c88cb466441e80d2d0ce03a63dc96e895b12922842147999e3b8ec894d3ab",
+    "run1/data/cuda-validation.log": "4ccb92a9e73f39e0c329732d92adff9504e7398e88e1370c86ab7f5fc6bbfda7",
+    "run1/data/row-validation.json": "732d8840b7f428df4e79069ed768723938792d5f367fe3bad6554c558e790a2a",
+    "run1/snapshot/fa2_forward.cu": "83772743cb708cbcde7c66b8a94725d98ba764087bc79d3c3b1e35336671ea4a",
+    "run10/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so": "80c339e8d44abcc7405314e2464941217295594ab9e9dad8ab4f97bec68c45dd",
+    "run10/data/benchmark-custom.json": "e08a7528f2fccaf06fbc8075b107266258c293e8f026e3ec9cafe290cb6f7608",
+    "run10/data/benchmark-efficient.json": "454b7d4feda1ad9d50b1b247a5fa4f191cb0f749fbb3d21d2bdd6e3a0aa38788",
+    "run10/data/build.log": "87602370b2345f4340d5e244770638ca7e34177411a1beafdefe59d1688a31fe",
+    "run10/data/cuda-validation.log": "7084d048ad4e384b7bd1f72b91c3427df2411b91c57abfde52f584372fdb3a29",
+    "run10/data/row-validation.json": "9450a34782b0910b2eb50493ffc58ebbed1026ae5df91adec4ae23b7d8fb1384",
+    "run10/snapshot/fa2_forward.cu": "10f258cb47a8bc4d0531713a1255f01749a685f785f7aed32559fbea1345504f",
+    "run11/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so": "70ff91b827f69e92ca91a0f40ccf523b29ce863bede9f2a26a2d305c4e83796b",
+    "run11/data/benchmark-custom.json": "986925596411a0305d62b3e01f8f2278f8d3914aef0f7987663541e8d1661fc8",
+    "run11/data/benchmark-efficient.json": "345d8c24b0a412bbca05fe878ee3cf91db5c429379951ebc601a68a9171028e9",
+    "run11/data/build.log": "988b210478d379ad5db3604b78610163da708c51fb542384e81206bf46635a81",
+    "run11/data/cuda-validation.log": "8795657b5153851994c376fd9556115d5543a1d6168fad6e8e307a58d87a3ca7",
+    "run11/data/nvprof-diagnostic.csv": "82230d4a0adf804d30a528f91c3ae4b90debd8b70cfd35512366e49c50071ca1",
+    "run11/data/row-validation.json": "50e5aa0452f60d43980f345da01ad26d6e91de31b73fc538aed45d24007393b6",
+    "run11/snapshot/fa2_forward.cu": "3534d2a4df7473c8c3053c81ceb8bd5bf66b75278f99a6051e548837815f06ab",
+    "run12/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so": "439cb8d4dfa9f936880a253c7a1f35544363d1fdf820cc29066dea5fdabcb8b2",
+    "run12/data/benchmark-custom.json": "db4bf73979d7c3bd2df1024e1f1a617419ebc9e69e543578079ca09393f8d5a4",
+    "run12/data/benchmark-efficient.json": "7719454e68f954843304179e98fef7a5845de5437cfd3c6fdcd1df5adad77659",
+    "run12/data/build.log": "8899d8c26a4f52f6c5adf5edf9f160e3d5131e36df3cd8e3b232fd8f0f1c21ac",
+    "run12/data/cuda-validation.log": "7d36139a9e6d02cc793cef20da3247ad59c7ec3a68c0c269e3eb402334fe171f",
+    "run12/data/nvprof-diagnostic.csv": "c1d7b9cf0c8e2caafb8d2d95041ae7044350fe7baab875ec41a19ce6f1039d75",
+    "run12/data/profile-diagnostic.log": "ce570600d0d70da38e53e97729efd842f523217aef47b09a3db47272ffcf4522",
+    "run12/data/row-validation.json": "55635a6411ce5e9208807541af9bd6577af2373dd817eff49d9419013ccf705f",
+    "run12/snapshot/fa2_forward.cu": "94fb16eeef5a10e8d526080e085ba90cc39dc069b768e42364fcfd3dd43f02a9",
+    "run13/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so": "a668b9aa2fb9013b7b2eb553931003e879fe8655f4aba58f9fd37d0c692405d3",
+    "run13/data/benchmark-custom.json": "ecba7ff4ca4990df5ac6ffb526a9bdf0a564ccecf05fab2d15936531f043f29a",
+    "run13/data/benchmark-efficient.json": "a629681415417977bed73a81553ae4735075aaf6b891b3ef8b1cd981dcaad12f",
+    "run13/data/build.log": "2e59bb247954943fa3741e79345d1609e7dc71beb8a2b5d0a03661b1e6a304bd",
+    "run13/data/cuda-validation.log": "ee782daca2a8abd1ff3331f881ec588f7a5ab354f1c538bbfa92e79919d7765b",
+    "run13/data/row-validation.json": "ba4a24d57ffa8cd6924ab213d4c95ed3bca19c4d8ec41e0698dd09cf03fef9b4",
+    "run13/snapshot/fa2_forward.cu": "4145ffc889293cbd39f5144688a2f4230bc39802be99d9a98461219391c4f25b",
+    "run14/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so": "b8ecdab14f74268d8bd0142c93d450bae8976647460e3704c7ae56434c0a2152",
+    "run14/data/benchmark-custom.json": "4ede26868d5fc87c425762a6452a92985ef644e30bf8050f46da876151d835fa",
+    "run14/data/benchmark-efficient.json": "4e653b68ac9ba33303d89aaaffa35b7d50fbfbfba685c8ebb1d09101c669cb84",
+    "run14/data/build.log": "d2c12b5cfb1dd44802f2085c78adf6277b3f42bf47362532aeb15cdf5a674910",
+    "run14/data/row-validation.json": "19019a4a4d4bf68a69f06d11c85225ea3beb6b4e581af93716bc5d63be57fde6",
+    "run14/snapshot/fa2_forward.cu": "5e0c8eee151755dd3dcb0417c76bc91001dc77274878d4c0e83ede3a7405f033",
+    "run15/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so": "1f1ee714f2609aee9f114cbdd7259761664f9f8f6a31e896d6994689b80071cc",
+    "run15/data/benchmark-custom.json": "2f6761551a4dc5457962a55a1b761530de02e136f117299021515baeaa3b7716",
+    "run15/data/benchmark-efficient.json": "addaaee54b0a4c8a079d31224c3e1e165345d2a15e1d5d44cc8ef916afe15489",
+    "run15/data/build.log": "2a4f0f2dd2e69ce2090f96077f24b88121710e8458ea087aa7677dfd94129c0d",
+    "run15/data/cuda-validation.log": "0653c8afc1c14803869b8fb881e405df626fe6197a903c854f2923b866d2ae5e",
+    "run15/data/row-validation.json": "922cc24d5c2399fbbd489ffa6b5636151a7ed272f956dd37bb9209e99e3e2481",
+    "run15/snapshot/fa2_forward.cu": "7cd2cee03cdea1ccf9765ba967a3380ddf16840f533023b283d1db6cfd89b3e2",
+    "run16/data/build.log": "3ae04e19262ea7de4b9f2c7eea3cd175bad099baeebea1c1ad54e7a03be5f6d0",
+    "run16/snapshot/fa2_forward.cu": "795b218b4108bd925f201c750b530c8379db00783e45519df58c4b60fe35f0f4",
+    "run17/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so": "6f314dc7ac7f9b102afcb520264d0462ae187d4ca90596beed1444fe1eee9e25",
+    "run17/data/benchmark-custom.json": "a5504705256c7b9d632abb7b3092adc67c04589fc71b81a424f1e79baf15c8f9",
+    "run17/data/benchmark-efficient.json": "54367d3897bba9488a93cb1574fb939acb52b118891a092a55e46fddbed72e85",
+    "run17/data/build.log": "d43a5eef094e00bffd18c783adb44f5b1c7dc855df0ec4987d161bdaf15996da",
+    "run17/data/cuda-validation.log": "e65c060b1c7a252748c98655688614f0015229a8d922dbacab1462f9b68475ef",
+    "run17/data/row-validation.json": "cc1bfcc99c27408fe6e2d0da792e9f1b9fca843020c6377ebd2bafd4d9a39c0a",
+    "run17/snapshot/fa2_forward.cu": "e44e7ed032e11d1141fcaec3bfcaf1dab6b3858248b8b4e6258475fc6e7b6628",
+    "run18/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so": "6a9db1ddeb39a4128be7158bf3ee143b02462da4bea45ae91965f8515a3fdb7d",
+    "run18/data/benchmark-custom.json": "a3a71a2ca66fa55d3fa1bca689f2222dc08c455bc296f0415e39770671025829",
+    "run18/data/benchmark-efficient.json": "bfde9c8ea0d8b91ad0c80869b5868b07f6c540765037e09970891d6f2b1b75aa",
+    "run18/data/build.log": "4083b62553b56778b8b932a8d7209d3de7223613e299e7726f01285e92bac9ee",
+    "run18/data/cuda-validation.log": "a689eb49575203d8a8cdbb56696494e2f180f9b5ddc9f458d1d0a8763ff0a64f",
+    "run18/data/row-validation.json": "b7a462a90bebe19bbf633ac26057b170148a73e83f946f2c1e18ad0cc28a1f47",
+    "run18/snapshot/fa2_forward.cu": "f151120a4fc32f42855a781404e83c21dd244f0f253f3c1ef1fbf80c3c351e5c",
+    "run19/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so": "74ddfd4c7fb31bc7d1f0702936e01df609b0e180b8ece1db24cf8494667557cd",
+    "run19/data/benchmark-custom.json": "f93034f6500b0c571e41e18b41505b7a74d2153f498fa1cae334b67197df0a37",
+    "run19/data/benchmark-efficient.json": "fef7abb8aa986114f042bb60ac737915b3e804712b1486c57621c2ee1c98d818",
+    "run19/data/build.log": "bdb568344ca3ccd9704f9f13ad02d1ebd04c4d086ed964c016d591ed78e183b3",
+    "run19/data/cuda-validation.log": "57e0b983f37e3a3cf64f09b890d3457b28a35d6a08d204af8146ca182e732a5d",
+    "run19/data/row-validation.json": "736cb8e3bb89f70d6fcf107e7a250e5693decc73e85e1546a8755fdb99f7fb4b",
+    "run19/snapshot/fa2_forward.cu": "cfa681e2eaf90dda3374fca1b4eae2b4fb1d908047dabe67d3a2cca77c52ebed",
+    "run2/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so": "48a41b86c03960967abdce7af5c67ea0aff10fe9578fa250d9fc82c66d669eb9",
+    "run2/data/benchmark-custom.json": "e41afce909feb87a0dc780ec4bbedce5f084cf833fc07e7eea7d05054aaa0a80",
+    "run2/data/benchmark-efficient.json": "3f57f5ee9c3766596e2a39135f4c72dd2c1594a8be07416d9e0d086f6d40e00b",
+    "run2/data/build.log": "6570c6d67d86f4958dbb0702e1c29c9dfebff3881575b7f44333a379d41df625",
+    "run2/data/cuda-validation.log": "935950634ee6fd0716ac0d529147c5133d58438c2077d2f66bd44e8531a65397",
+    "run2/data/row-validation.json": "c94bcf9841a9ab56bda4466e42c98131c5a082e9558dd8377830e7aeb1cbae59",
+    "run2/snapshot/fa2_forward.cu": "4ff086bf145325ee5257c767b8fdeb61d0b5e5651bedc235470a714e51df691c",
+    "run20/data/cuda-validation.log": "2660ccb3cee564dbf4cd776214a007029eb40ebe2b3ad83aca578e26f47a86db",
+    "run21/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so": "4a031ef41af676d44ad730000e0c8cb59bcc1ac6bd930666bb32fc32e838dd9d",
+    "run21/data/benchmark-custom.json": "0014a521c2affcbf1fd1be2f231e710669a174dac10fb2d68671e8c2f6a9bda2",
+    "run21/data/benchmark-efficient.json": "ffbe4576eef14b857b15ac307f45aea79ab0df9bb4fa6665d26838e6e38f6adc",
+    "run21/data/build.log": "2837046071bde7d885b8bebab77e0c6e8876e2531fd2dcef6fcc6c168198f6b8",
+    "run21/data/cuda-validation.log": "f15d925c414d506043f735231389fcdb26551d04715abcdaa171a1ec8bb5f787",
+    "run21/data/row-validation.json": "28595787d0383aabab9d3196fa322cbacff1da852ae6a070b3d442696855e4cd",
+    "run21/snapshot/fa2_forward.cu": "c200bb8511dc01ee26dafaab6cc28d5b7bf0e1cbe4474c031bd35af50b3b3d07",
+    "run3/data/build.log": "c48ddda6129e5e7a29af49c365c509e3e7f43a50ba3795caf0287a3a8ecd1a8a",
+    "run3/snapshot/fa2_forward.cu": "f501c9184d0e020152f35896fd0fd989456d0d90910088031270e499baf88c30",
+    "run4/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so": "13f9e08d7ca89081617dda25d9cce94be1bd75104f305b9b0265f2e4a49ac3ef",
+    "run4/data/benchmark-custom.json": "e77dbed1769392c14b869b9526c161f58c4e36c288aa82ce2ffabef60d162032",
+    "run4/data/benchmark-efficient.json": "adc0f9e0c5d5636a577332b75d94ca4f4c6b81302f09193756fb78a182f393d5",
+    "run4/data/build.log": "8aa5d63643978b389242725bf990982503e85a29e440310273ee6e8d8d27dac9",
+    "run4/data/row-validation.json": "3bdedc49e0728f0497ba9efbfdb61501c6336a4b15d7acc4d8557fc8c7b6193b",
+    "run4/snapshot/fa2_forward.cu": "68297d69a7fb9e161aeaf7570a612259c5d8b8414b86ff0d6b1665856a40a7f8",
+    "run5/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so": "74daa10b65c046bc030839674331b9e9eb37d4eb13ac96cb341999456f2acf76",
+    "run5/data/benchmark-custom.json": "272cb5c6a5f384ada7bd53665c907fb4e4bddd929e86606e236e4de1ec07a81b",
+    "run5/data/benchmark-efficient.json": "302a4253f4be4563313a4a873a14f9a5a9412ccd0a15600fdd3e920912169797",
+    "run5/data/build.log": "80948cc1196a11cff3701afb073fbc365a5ec9ce6a9069ec27ecbcd549d8bf8b",
+    "run5/data/cuda-validation.log": "bc22d21d93b298e20253ab29d03577bb751cac1fc4593a84978a1eed481ff7d8",
+    "run5/data/row-validation.json": "5744a6c68614912c6163d7beb4afbed4b49cd73b5eded585d619966bcaf2a11e",
+    "run5/snapshot/fa2_forward.cu": "5d55de2beba07f237e216726c2568f15ce93af11e8ff0fb8f2241e86663361d4",
+    "run6/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so": "7c16d29a5e4a2c397c1c5bb989dff1846819ebdfed1272aaf1e69ce016544255",
+    "run6/data/benchmark-custom.json": "4410971424a64f6cbfce3b16480f5c2e0e95ba821f7b5614f5ec59db6ada7ece",
+    "run6/data/benchmark-efficient.json": "cde8802792e0b60e7c7529cf52c424a3a4367e23bc2a97baff1795c4b6ead199",
+    "run6/data/build.log": "ab803fbf46b793f11d8cecdc0949b47b6fd976c94e907d8a1b773d2603d4e404",
+    "run6/data/cuda-validation.log": "8f2bd305f04dcc040a7345a0f1dedfa4a73c2e2d51dd291ef9579955835f23d1",
+    "run6/data/row-validation.json": "afc008f9fa77aa1add7799b89abd29efe7b09ecf575b0c730f8a2dfef1a2bd7b",
+    "run6/snapshot/fa2_forward.cu": "1f133e8281397c7213325a00edb32e0fea809ebb1f7e8186b74efd60530a0ded",
+    "run7/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so": "37159ce2671b3ae232487415bc598c54250bac93102c53e605991a959431b521",
+    "run7/data/benchmark-custom.json": "ab5daccc2ab3364b6fe7180334de26f2a042f12f0c6fc8b01ef693882fd1ca81",
+    "run7/data/benchmark-efficient.json": "0a18c732575c20db727a1932905341e10b13fd8e2b6e6c60962ac50b795831c6",
+    "run7/data/build.log": "3aa7d1a22e7e170b598336177ef1f7173dd123e6e0f6d7268a65283abfb09464",
+    "run7/data/cuda-validation.log": "e7cc0cba4cd74adffcdbd32779f12a618b46391ce518decc720bfb6c86b7d0d6",
+    "run7/data/row-validation.json": "efdb91b72b05f271f2f02647cb676264195e9033555407ca2c84cb6a830d2d5e",
+    "run7/snapshot/fa2_forward.cu": "909f0b1f4b6a73c220e9a1acea88247705a96df863455fadcae60fe5be53e37b",
+    "run8/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so": "4ae045ddc28601b0f94be208f6aa4a3323315c42a905e07bee783b1364e28568",
+    "run8/data/benchmark-custom.json": "bed392560853e731abb85518f2916268f7b72f363a920e253dad043a4cbf5a91",
+    "run8/data/benchmark-efficient.json": "6f03e4d99ba6d988d812d785e6a138c3cf580761751faabb805b371c86209528",
+    "run8/data/build.log": "d23707fe8f9d94f05afe81e363f2eaf4993b599fd47009d4fbf84310293d234b",
+    "run8/data/row-validation.json": "12328ce79d85f876e6984c4d13c975997344b24e4acd620d8005eff033246115",
+    "run8/snapshot/fa2_forward.cu": "fb85986a5e25492eba5edbdf7457ccb937414db9cb72a7cac097746bd35564b7",
+    "run9/binaries/cuda_fa2_v4_extension.cpython-311-x86_64-linux-gnu.so": "a2ab165ff9556fc9c3cd737a2407723fe3371b6c1c35d1f658be0e4f55e8720d",
+    "run9/data/benchmark-custom.json": "5419a1e7f7cfc5639384ed1b8cb75406eb26602d4ca7a3c40aa8949ea3b5e602",
+    "run9/data/benchmark-efficient.json": "fc8bd8c21b397febb75678ef71277a26eb1e7c35d4413199a11d24950e35b3df",
+    "run9/data/build.log": "eac5dce84521fbc3b0ba72da000fffac61723ec831e1688d42e8dfc0daa38db3",
+    "run9/data/cuda-validation.log": "f590138f62ec249eb6dde3064b9a251cda4be7208546fd3a0c18ff1e83ee3944",
+    "run9/data/row-validation.json": "2e9461e40bc768b06c1239392e22f727711623328991ad34d1a63c0affece8a2",
+    "run9/snapshot/fa2_forward.cu": "57da2262fbb6393e2ec6a7844e3fc7211b1d3aa1a8cc5600d4356befc31c9617",
+    "snapshot/fa2_forward.cu": "9306cf84e5c2a1d9713ac6ecba8ba798844ab78d650893f51826e2880ac0b012"
+  }
+}
