@@ -1,6 +1,6 @@
 > 目标很直观：自己用C++实现的FA forward kernel 在所测试的 QKV 形状上，性能不比 pytorch 的 efficient 实现版本差，火电不行用风电，再不行上核电。
 
-性能分析见 [FP32 custom baseline 性能分析](perf-baseline.md)，包含 Nsight 时间线、SASS 同步指令统计、访存判定边界与优化顺序。
+性能分析见 [V0 FP32 custom 性能分析](perf_v0.md)，包含 Nsight 时间线、SASS 同步指令统计、访存判定边界与优化顺序。
 
 ## native
 ```bach

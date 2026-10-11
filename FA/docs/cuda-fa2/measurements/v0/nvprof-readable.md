@@ -21,7 +21,7 @@
 
 后续优化复测先核对 [V0 的代码与二进制版本](#baseline-version)，再按 [理论预期与实测对照](#theory-validation) 记录实验。本文的 custom 数值固定属于 V0，未来版本另行归档。
 
-本文负责解释指标与判读方法。完整计时、时间线、二进制证据和优化方案见 [FA2 baseline 性能分析](perf-baseline.md)。
+本文负责解释指标与判读方法。完整计时、时间线、二进制证据和优化方案见 [V0 性能分析](perf_v0.md)。
 
 ### 1.2 本次采集条件与数据来源
 
@@ -65,7 +65,7 @@
 
 efficient 列对应上述 PyTorch 分发中的 memory-efficient attention kernel，不由这份 custom `.cu` 源码构建。后续若更换 PyTorch、驱动或编译工具链，应重新建立相同环境下的对照，避免把环境变化当成代码优化收益。
 
-本文用于说明 V0 算法的 `.cu` 行号链接指向归档快照，避免后续编辑开发源码后发生引用漂移；实际执行结构仍以 V0 的 SASS 与二进制为准。当前开发文件为 [工作区 fa2_forward.cu](../../../../cpp_cuda/fa2/fa2_forward.cu)，已有命名、限定符和排版变化。
+本文用于说明 V0 算法的 `.cu` 行号链接指向归档快照，避免后续编辑开发源码后发生引用漂移；实际执行结构仍以 V0 的 SASS 与二进制为准。当前开发文件为 [工作区 V0 fa2_forward.cu](../../../../cpp_cuda/fa2/v0/fa2_forward.cu)，已有命名、限定符和排版变化。
 
 ### 1.4 V0 的比较口径与结果索引
 
@@ -443,7 +443,7 @@ nvprof 的 **event** 通常对应底层硬件事件计数，**metric** 则由一
 
 **背景。** 这是设备显存读取，不能解释为 CPU 到 GPU 的 PCIe 传输速率。global load 命中缓存时可以不访问 DRAM，因此它也不是源码请求的全部逻辑字节数除以时间。
 
-**本次解读。** custom 为 **1.588894 GB/s**，efficient 为 **6.804241 GB/s**。设备记录的标称 memory bandwidth 为 **192.192 GB/s**，custom 读取约为其 **0.8267%**，见 [带宽属性与判定](perf-baseline.md#bandwidth-assessment)。标称带宽是上限参考，不是这个 kernel 的实测可持续吞吐；读写也应结合观察。
+**本次解读。** custom 为 **1.588894 GB/s**，efficient 为 **6.804241 GB/s**。设备记录的标称 memory bandwidth 为 **192.192 GB/s**，custom 读取约为其 **0.8267%**，见 [带宽属性与判定](perf_v0.md#bandwidth-assessment)。标称带宽是上限参考，不是这个 kernel 的实测可持续吞吐；读写也应结合观察。
 
 读取、写入都很低，且 memory throttle 接近零，当前没有 DRAM 带宽饱和的证据。低吞吐仍不能排除访存延迟：依赖链和同步可以使请求发不出去，即使每次请求都需要等待，整体速率仍低。
 
@@ -529,7 +529,7 @@ nvprof 的 **event** 通常对应底层硬件事件计数，**metric** 则由一
 
 ### 6.1 高 occupancy 与低执行效率同时出现
 
-正式无 profiler benchmark 中，custom 的单次 forward CUDA Event 均值为 **2922.297 ms**，efficient 为 **35.913 ms**，custom 约慢 **81.37 倍**。两者使用同形状与同一计时方案，见 [正式 benchmark](perf-baseline.md#formal-benchmark)。计时与本次计数器是不同运行，不能将指标比例机械换算成该次计时的成本。
+正式无 profiler benchmark 中，custom 的单次 forward CUDA Event 均值为 **2922.297 ms**，efficient 为 **35.913 ms**，custom 约慢 **81.37 倍**。两者使用同形状与同一计时方案，见 [正式 benchmark](perf_v0.md#formal-benchmark)。计时与本次计数器是不同运行，不能将指标比例机械换算成该次计时的成本。
 
 当前证据形成以下判断链：
 
@@ -543,7 +543,7 @@ nvprof 的 **event** 通常对应底层硬件事件计数，**metric** 则由一
 | DRAM/L2 读事务约为 efficient 的 18.13/22.02 倍 | K/V 数据复用值得改进 | 所有性能差距都来自显存流量 |
 | `gld_efficiency` 100% | 当前全局加载合并与事务利用良好 | 输入数据只被读取一次 |
 
-资源对照显示 custom 每线程使用 **17 个寄存器**、每 CTA **524 B shared**；efficient 为 **168 个寄存器**和 **22016 B dynamic shared**。更多片上资源可以用于保存与复用数据，不能仅追求资源数值更低。依据见 [资源与执行组织对照](perf-baseline.md#resource-comparison)。
+资源对照显示 custom 每线程使用 **17 个寄存器**、每 CTA **524 B shared**；efficient 为 **168 个寄存器**和 **22016 B dynamic shared**。更多片上资源可以用于保存与复用数据，不能仅追求资源数值更低。依据见 [资源与执行组织对照](perf_v0.md#resource-comparison)。
 
 ### 6.2 逐 key 循环为什么产生同步和依赖
 
@@ -553,7 +553,7 @@ nvprof 的 **event** 通常对应底层硬件事件计数，**metric** 则由一
 
 `d=64` 时，7 级归约实际执行加法的 lane 数依次为 `64, 32, 16, 8, 4, 2, 1`。后半段很少的线程计算，却仍要求整个 CTA 到齐；第一步还把有效的前 64 项与后 64 个零相加。
 
-一个 CTA 在 `S=16384` 的 non-causal 循环内执行 `16384 × 10 = 163840` 次屏障。所有 CTA 的屏障动态实例合计约 26.8 亿次；它们可以并行、重叠，不能乘一个固定屏障延迟推算总时间。完整计数与 SASS 证据见 [逐 key 同步成本](perf-baseline.md#key-loop-synchronization)。
+一个 CTA 在 `S=16384` 的 non-causal 循环内执行 `16384 × 10 = 163840` 次屏障。所有 CTA 的屏障动态实例合计约 26.8 亿次；它们可以并行、重叠，不能乘一个固定屏障延迟推算总时间。完整计数与 SASS 证据见 [逐 key 同步成本](perf_v0.md#key-loop-synchronization)。
 
 每行的 `m/l/z` 又依赖前一轮状态，因此仅增加 CTA 数量不能解决同一行的串行链。分块计算可以并行生成一组 scores，再每个 tile 更新一次跨 tile 状态；具体需要改变计算组织，不能只靠调大 block。
 
@@ -570,7 +570,7 @@ nvprof 的 **event** 通常对应底层硬件事件计数，**metric** 则由一
 
 **4 MiB 是输出存储容量，128 GiB 是源码结构推导的逻辑加载量，DRAM/L2 指标是硬件层面的实测。** 缓存可以显著减少到达 DRAM 的请求，因此三者不同。容量小不保证流量小，缓存命中高也不保证加载指令少。
 
-这里的逻辑量可用于评价算法组织，但不能当作实测显存字节数。依据见 [K/V 重复加载分析](perf-baseline.md#kv-logical-loads)。
+这里的逻辑量可用于评价算法组织，但不能当作实测显存字节数。依据见 [K/V 重复加载分析](perf_v0.md#kv-logical-loads)。
 
 ### 6.4 复杂度与可并行性
 
@@ -596,7 +596,7 @@ nvprof 的 **event** 通常对应底层硬件事件计数，**metric** 则由一
 | K/V 反复读取 | shared/register tiling，让多个 query 复用 K/V | 同形状下 DRAM/L2 事务、命中率、依赖与延迟 |
 | 部分指令 lane 参与不足 | 调整归约与维度映射、按 `d` 特化 | 两个 warp execution 指标、工作量与延迟 |
 
-GTX 1060 上的方案应按 FP32 SIMT 能力组织；优化实现与验证细节见 [baseline 优化顺序](perf-baseline.md#optimization-sequence)。本文尚无优化后的实测结果，不据这些指标预报加速比。
+GTX 1060 上的方案应按 FP32 SIMT 能力组织；优化实现与验证细节见 [V0 优化顺序](perf_v0.md#optimization-sequence)。本文尚无优化后的实测结果，不据这些指标预报加速比。
 
 <a id="theory-validation"></a>
 
@@ -625,15 +625,15 @@ GTX 1060 上的方案应按 FP32 SIMT 能力组织；优化实现与验证细节
 | 理论预期 | §6.6 的 V0 结构计数 | 改动前记录预期数量、假设、指标方向；涉及 `Br/Bc/threads` 时写出取值 |
 | 构建与环境 | §1.2–1.3 的已记录环境及历史构建缺口 | nvcc、host compiler、编译参数、目标架构、PyTorch/CUDA、驱动、GPU，以及是否调整时钟 |
 | 数值正确性 | 小形状测试通过，大形状计时未验证 | 记录测试形状、causal 模式、容差、参考实现与误差；快速数学或归约顺序变化要独立评估 |
-| 正常延迟 | 正式均值 2922.2971875 ms、中位数 2916.776953125 ms | 相同 warmup/iterations/repeats 的均值、中位数与每组样本；与同一环境、相近时间复跑的 V0 比较更可靠 |
+| 正常延迟 | 正式均值 2922.2971875 ms、中位数 2916.776953125 ms | 新版本保存相同 warmup/iterations/repeats 的均值、中位数与每组样本，直接引用 V0 归档比较 |
 | 结构与计数器 | 每 key 10 次屏障，原始 23 项指标 | 结构减少量是否达到公式；同口径指标是否支持解释；无效指标保留标记 |
 | 最终判断 | V0 为参考，没有优化结论 | 分别给出“结构预测是否成立”“速度是否改善”“偏差由何证据解释”；指标比例变化本身不能代替结论 |
 
-加速比使用同口径无 profiler 时间：`speedup = V0 时间 / 新版本时间`。与正式 baseline 比均值时使用 2922.2971875 ms，与中位数比较时使用 2916.776953125 ms；当日短复测属于另一计时方案，不混用。若运行环境或 GPU 状态变化，应在同一环境、相近时间复跑归档 V0 与新版本，记录样本波动，判断收益是否超出测量噪声。
+加速比使用同口径无 profiler 时间：`speedup = V0 时间 / 新版本时间`。与正式 baseline 比均值时使用 2922.2971875 ms，与中位数比较时使用 2916.776953125 ms；当日短复测属于另一计时方案，不混用。常规优化直接复用这份 V0 归档，只测量新版本；环境差异在报告中说明。确需环境校准时另开独立实验，不把 V0 复跑作为每轮固定步骤。
 
 如果屏障确实移除而延迟改善不足，继续检查新增的依赖、指令数量、寄存器压力与访存；如果事务下降而速度未变，检查计算、通信或依赖是否成为限制；如果速度提高但计数预测未实现，应记录其他原因，不能事后把假设改写成已经证明的结论。
 
-当前版本状态为：**V0 已采集并归档；新的算法优化版本尚未建立结果。** 后续每轮在自己的版本目录中记录“父版本、改动、理论预期、原始结果和判断”，保留本页的 V0 数值。
+当前版本状态见 [测量索引](../README.md)。后续每轮在自己的版本目录中记录“父版本、改动、理论预期、原始结果和判断”，直接引用本页的 V0 数值。
 
 <a id="usage"></a>
 
@@ -691,7 +691,7 @@ sudo /usr/local/cuda-12.8/bin/nvprof --profile-from-start off \
 
 采集 efficient 时，把 kernel filter 改为 `'.*fmha_cutlassF.*'`，`--impl` 改为 `efficient`，输出路径改为 `/tmp/fa2-efficient-s16384-d64-all-metrics.txt`。
 
-`--kernels` 必须放在它所限制的 `--metrics` 之前。本次旧明细命令顺序错误，工具警告 filter 未生效；但 capture 中各只有一次 forward，两个原始 CSV 也各只有一条预期 kernel 记录，因此仍能明确测量对象，见 [采集方法与 filter 警告](perf-baseline.md#collection-method)。
+`--kernels` 必须放在它所限制的 `--metrics` 之前。本次旧明细命令顺序错误，工具警告 filter 未生效；但 capture 中各只有一次 forward，两个原始 CSV 也各只有一条预期 kernel 记录，因此仍能明确测量对象，见 [采集方法与 filter 警告](perf_v0.md#collection-method)。
 
 若需要保持原始 CSV 的数值精度并由脚本处理，添加 `--csv --print-gpu-trace`，并使用 `.csv` 输出路径；默认文本输出可能采用不同的单位缩放和显示精度。多次 kernel 调用时，summary 会按 kernel 聚合，trace 按调用展示；本次捕获各只有一次 forward。
 
@@ -717,7 +717,7 @@ sudo /usr/local/cuda-12.8/bin/nvprof --profile-from-start off \
 
 计数器采集回答“执行时发生了什么”，benchmark 回答“正常运行有多快”，数值测试回答“结果是否正确”。replay、状态保存恢复和采集本身会改变执行条件，三者不能互相替代。
 
-本次已有小形状 causal/non-causal 正确性测试通过；`S=16384` 计时使用 `--no-verify`，不能由此推导大形状误差上界。完整验证记录见 [baseline 正确性和证据文件](perf-baseline.md#validation-evidence)。
+本次已有小形状 causal/non-causal 正确性测试通过；`S=16384` 计时使用 `--no-verify`，不能由此推导大形状误差上界。完整验证记录见 [V0 正确性和证据文件](perf_v0.md#validation-evidence)。
 
 <a id="per-sm-collection"></a>
 
@@ -749,7 +749,7 @@ sudo /usr/local/cuda-12.8/bin/nvprof --profile-from-start off \
 
 ### 7.7 优化版本复测时确认实际加载代码
 
-Python wrapper 导入预编译 `src.cuda_fa2_extension`，不会因为 `.cu` 文件修改就自动重建，见 [扩展导入逻辑](../../../../src/cuda_fa2_forward.py#L16-L25)。因此每轮必须重新构建、启动新的 Python 进程，并核对 `extension.__file__` 和 SHA-256。
+Python wrapper 根据版本导入预编译扩展，不会因为 `.cu` 文件修改就自动重建，见 [扩展导入逻辑](../../../../src/cuda_fa2_forward.py#L16-L32)。修改新版本核心实现后需构建该版本、启动新的 Python 进程，并核对 `extension.__file__` 和 SHA-256；V0 基线继续引用原归档。
 
 以下是后续在 `FA` 目录执行的记录与复测命令，本文尚未执行。先保存新源码状态；这里的 `git diff HEAD` 覆盖已跟踪和已暂存的修改，未跟踪但参与构建的文件需另行保存快照与哈希：
 
@@ -764,7 +764,7 @@ git diff --binary HEAD -- cpp_cuda/fa2 src scripts
 ```bash
 TORCH_CUDA_ARCH_LIST=6.1 MAX_JOBS=1 \
   /home/dengxiao/miniconda3/envs/nanovllm/bin/python -E -s -B \
-  cpp_cuda/fa2/build_extension.py build_ext --inplace --force
+   cpp_cuda/fa2/build_extension.py --version v1 build_ext --inplace --force
 ```
 
 构建完成后使用新的 Python 进程确认模块与源码哈希，不能仅以构建命令退出成功作为加载新版本的证据：
@@ -773,12 +773,12 @@ TORCH_CUDA_ARCH_LIST=6.1 MAX_JOBS=1 \
 /home/dengxiao/miniconda3/envs/nanovllm/bin/python -E -s -B - <<'PY'
 import hashlib
 from pathlib import Path
-from src import cuda_fa2_extension
+from src import cuda_fa2_v1_extension
 
 paths = [
-    Path(cuda_fa2_extension.__file__).resolve(),
-    Path("cpp_cuda/fa2/fa2_forward.cu"),
-    Path("cpp_cuda/fa2/binding.cpp"),
+    Path(cuda_fa2_v1_extension.__file__).resolve(),
+    Path("cpp_cuda/fa2/v1/fa2_forward.cu"),
+    Path("cpp_cuda/fa2/common/binding.cpp"),
     Path("cpp_cuda/fa2/build_extension.py"),
 ]
 for path in paths:
@@ -791,12 +791,12 @@ PY
 ```bash
 /home/dengxiao/miniconda3/envs/nanovllm/bin/python -E -s -B \
   -m scripts.benchmark_attention \
-  --device cuda --impl cuda_fa2 --seq-len 16384 --head-dim 64 \
+  --device cuda --impl cuda_fa2_v1 --seq-len 16384 --head-dim 64 \
   --warmup 5 --iterations 20 --repeats 5 --threads 1 --seed 0 \
   --no-causal --no-verify --output-json /tmp/fa2-v1-benchmark.json
 ```
 
-`--no-verify` 只为匹配 V0 的大形状性能计时，不能替代前一步的数值验证。接着使用 §7.3 的完整指标集合采集，更新 kernel filter 与输出路径；聚合结果与 V0 聚合结果比较，§7.6 的逐 SM 输出作为补充实验。最终将原始结果、版本清单、参与构建的源码快照与实际 `.so` 归档到该版本自己的目录，并使用相对路径引用。
+`--no-verify` 只为匹配 V0 的大形状性能计时，不能替代前一步的数值验证。接着使用 §7.3 的完整指标集合采集，更新 kernel filter 与输出路径；聚合结果直接与 V0 归档比较，§7.6 的逐 SM 输出作为补充实验。新版本 `snapshot/` 只保存核心 CUDA 实现，实际 `.so` 单独归档到 `binaries/`，其余代码直接引用工作区；原始结果与构建身份保存在该版本目录中。
 
 <a id="references"></a>
 
@@ -813,8 +813,8 @@ PY
 | [逐实例能力元数据](data/nvprof-instance-capabilities.json) | 当前设备 23 个指标的 evaluation mode、相关事件域和实例数量；不是性能采集结果 |
 | [evidence.json](data/evidence.json) | 测量对象、时间线、反汇编与相关证据 |
 | [resources.txt](data/resources.txt) / [sass.txt](data/sass.txt) | custom 的资源用量和实际机器指令 |
-| [FA2 baseline 性能分析](perf-baseline.md) | 正式 benchmark、同步成本、流量与优化顺序 |
-| [V0 CUDA kernel](snapshot/fa2_forward.cu#L18-L82) / [当前开发源码](../../../../cpp_cuda/fa2/fa2_forward.cu) | 本文解释以 V0 快照为准，后续开发源码另有版本 |
+| [V0 性能分析](perf_v0.md) | 正式 benchmark、同步成本、流量与优化顺序 |
+| [V0 CUDA kernel](snapshot/fa2_forward.cu#L18-L82) / [当前开发源码](../../../../cpp_cuda/fa2/v0/fa2_forward.cu) | 本文解释以 V0 快照为准，后续开发源码另有版本 |
 
 ### 8.2 NVIDIA 官方定义与背景
 

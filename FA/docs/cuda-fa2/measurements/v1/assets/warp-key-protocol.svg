@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="812" viewBox="0 0 1200 812" role="img" aria-labelledby="title desc">
+  <title id="title">V1 单 query warp 的每 key 数据依赖与寄存器通信</title>
+  <desc id="desc">每个 key 的处理包含 32 lane 局部点积、五级 shuffle 归约、lane 0 的 m 和 l 更新、两次 alpha 和 p tilde 广播、各 lane 私有 Z 更新。下一轮仍依赖上一轮的 m、l、Z。其他 query warp 无需共同到齐，最后通过一次 shuffle 广播分母并写输出。</desc>
+  <defs>
+    <style>
+      text { font-family: "Noto Sans CJK SC", "Microsoft YaHei", sans-serif; fill: #18263c; }
+      .title { font-size: 26px; font-weight: 700; }
+      .heading { font-size: 21px; font-weight: 700; }
+      .label { font-size: 18px; font-weight: 600; }
+      .body { font-size: 17px; }
+      .small { font-size: 15px; fill: #58677b; }
+      .mono { font-family: "DejaVu Sans Mono", monospace; font-size: 17px; }
+      .flow { fill: none; stroke: #536c91; stroke-width: 2.5; marker-end: url(#arrow); }
+      .recur { fill: none; stroke: #b98540; stroke-width: 2.5; stroke-dasharray: 7 5; marker-end: url(#gold-arrow); }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0L10 5L0 10Z" fill="#536c91"/>
+    </marker>
+    <marker id="gold-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0L10 5L0 10Z" fill="#b98540"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="812" rx="18" fill="#f7f9fc"/>
+  <text x="30" y="43" class="title">单 query warp：用寄存器通信连接每轮 key 的计算</text>
+  <text x="30" y="75" class="small">有效 query 的 32 个 lane 始终参与 shuffle；其他 query warp 独立推进自己的循环。</text>
+
+  <rect x="30" y="105" width="1140" height="85" rx="12" fill="#ffffff" stroke="#cdd6e3"/>
+  <text x="50" y="137" class="heading">循环前：建立持久状态</text>
+  <text x="50" y="166" class="body">所有 lane：Q 条带只加载一次，Z 条带初始化为 0；lane 0：m = −∞，l = 0。</text>
+  <path d="M600 191V224" class="flow"/>
+
+  <rect x="30" y="226" width="1140" height="385" rx="14" fill="#ffffff" stroke="#b3c3da"/>
+  <text x="50" y="258" class="heading">第 j 轮 key（每行共 Lᵢ 轮）</text>
+
+  <rect x="50" y="280" width="330" height="133" rx="10" fill="#e8f2ff" stroke="#92b5e4"/>
+  <text x="67" y="309" class="label">① 所有 lane：局部 QK</text>
+  <text x="67" y="340" class="body">加载当前 Kⱼ 的有效维度</text>
+  <text x="67" y="368" class="body">a_lane = Σ q_frag × k_frag</text>
+  <text x="67" y="396" class="small">无有效维度的 lane 提供零项</text>
+
+  <path d="M382 346H411" class="flow"/>
+  <rect x="414" y="280" width="331" height="133" rx="10" fill="#e8f2ff" stroke="#92b5e4"/>
+  <text x="431" y="309" class="label">② 全 warp：五级归约</text>
+  <text x="431" y="340" class="mono">offset: 16, 8, 4, 2, 1</text>
+  <text x="431" y="368" class="body">shuffle_down，FULL_MASK</text>
+  <text x="431" y="396" class="small">仅 lane 0 使用完整点积结果</text>
+
+  <path d="M747 346H776" class="flow"/>
+  <rect x="779" y="280" width="370" height="133" rx="10" fill="#fff3e5" stroke="#d8b689"/>
+  <text x="796" y="309" class="label">③ lane 0：online softmax</text>
+  <text x="796" y="340" class="body">m_new = max(m, score)</text>
+  <text x="796" y="368" class="body">计算 alpha / p_tilde，更新 l / m</text>
+  <text x="796" y="396" class="small">其他 lane 等待收到该行权重</text>
+
+  <path d="M964 415V445H831V474" class="flow"/>
+  <rect x="704" y="477" width="446" height="96" rx="10" fill="#f1ecfa" stroke="#b7a3d7"/>
+  <text x="721" y="507" class="label">④ 全 warp：两次权重广播</text>
+  <text x="721" y="537" class="body">alpha / p_tilde ← shuffle_from_lane0</text>
+  <text x="721" y="561" class="small">位于 lane 0 条件体之后的共同位置</text>
+
+  <path d="M702 525H673" class="flow"/>
+  <rect x="50" y="477" width="620" height="96" rx="10" fill="#e8f5f0" stroke="#91c6b0"/>
+  <text x="67" y="507" class="label">⑤ 所有 lane：加载 Vⱼ，更新自己的 Z 条带</text>
+  <text x="67" y="537" class="mono">z_frag = alpha * z_frag + p_tilde * v_frag</text>
+  <text x="67" y="561" class="small">线程私有状态；不经过 shared memory，不需要 CTA 屏障</text>
+  <path d="M203 575V604H1160V273H203V279" class="recur"/>
+  <rect x="408" y="580" width="357" height="22" rx="4" fill="#ffffff"/>
+  <text x="419" y="597" class="small">下一 key：继续使用上一轮的 m / l / Z</text>
+
+  <path d="M360 612V646" class="flow"/>
+  <rect x="30" y="649" width="1140" height="82" rx="12" fill="#ffffff" stroke="#cdd6e3"/>
+  <text x="50" y="682" class="heading">循环后：一次分母广播，各 lane 写回有效维度</text>
+  <text x="50" y="711" class="body">l_final ← shuffle_from_lane0(l)；Oᵢ,h = Zᵢ,h / l_final。每个输出元素拥有唯一写入线程。</text>
+  <text x="30" y="765" class="body">消除的是 CTA 汇合与 shared 通信；五级归约、lane 0 指数和逐 key 状态依赖继续存在。</text>
+  <text x="30" y="795" class="small">该协议只交换寄存器；加入 shared 写读或 K / V tile 后，必须重新定义内存同步关系。</text>
+</svg>

@@ -29,8 +29,8 @@
 
 相关文件：
 
-- [binding.cpp](../../cpp_cuda/fa2/binding.cpp)：暴露 C++ 接口。
-- [fa2_forward.cu](../../cpp_cuda/fa2/fa2_forward.cu)：实现基线 CUDA Kernel。
+- [common/binding.cpp](../../cpp_cuda/fa2/common/binding.cpp)：暴露两个版本共用的 C++ 接口。
+- [v0/fa2_forward.cu](../../cpp_cuda/fa2/v0/fa2_forward.cu)：实现基线 CUDA Kernel；[v1/fa2_forward.cu](../../cpp_cuda/fa2/v1/fa2_forward.cu) 实现 warp-query 优化。
 - [build_extension.py](../../cpp_cuda/fa2/build_extension.py)：使用不依赖 Ninja 的方式构建扩展，详细说明见 [extension-build.md](./extension-build.md)。
 - [cuda_fa2_forward.py](../../src/cuda_fa2_forward.py)：提供 Python Wrapper。
 
@@ -120,7 +120,7 @@ Benchmark 与 Profiling 必须保持相同的 `S`、`d`、FP32、Causal 设置�
 CUDA_HOME=/usr/local/cuda-12.8 \
 TORCH_CUDA_ARCH_LIST=6.1 \
 /home/dengxiao/miniconda3/envs/nanovllm/bin/python -E -s -B \
-  cpp_cuda/fa2/build_extension.py build_ext --inplace
+  cpp_cuda/fa2/build_extension.py --version v0 build_ext --inplace
 ```
 
 构建产物 `.so` 写入 `src/` Python Package，编译中间文件写入 Setuptools 的普通 `build/` 目录；两者均被 Git 忽略。

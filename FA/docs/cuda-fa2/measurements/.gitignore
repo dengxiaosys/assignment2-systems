@@ -1,3 +1,10 @@
 # Versioned measurement evidence must remain available after Git synchronization.
 !*/data/*.log
 !*/snapshot/*.so
+!*/binaries/*.so
+
+# Nsight Systems analysis databases are regenerated from tracked .nsys-rep files.
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.sqlite-journal

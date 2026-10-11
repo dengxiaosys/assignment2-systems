@@ -4,8 +4,10 @@
 
 [build_extension.py](../../cpp_cuda/fa2/build_extension.py) 负责将以下源码编译为可被 Python 导入的动态扩展：
 
-- [binding.cpp](../../cpp_cuda/fa2/binding.cpp#L1-L14)：定义 Pybind11 模块并暴露 `forward`。
-- [fa2_forward.cu](../../cpp_cuda/fa2/fa2_forward.cu#L18-L143)：实现 CUDA Kernel 与 C++ Launch Wrapper。
+- [common/binding.cpp](../../cpp_cuda/fa2/common/binding.cpp#L1-L14)：定义两个版本共用的 Pybind11 模块并暴露 `forward`。
+- [v0/fa2_forward.cu](../../cpp_cuda/fa2/v0/fa2_forward.cu#L18-L112) 或 [v1/fa2_forward.cu](../../cpp_cuda/fa2/v1/fa2_forward.cu#L28-L150)：实现所选版本的 CUDA Kernel 与 C++ Launch Wrapper。
+
+统一入口使用 `--version v0` 或 `--version v1` 选择版本，默认 V1。下文以 V0 模块名说明 ABI、编译和链接机制，V1 使用独立模块 `src.cuda_fa2_v1_extension`；详细版本布局见 [源码说明](../../cpp_cuda/fa2/README.md)。
 
 最终产物为：
 
@@ -26,7 +28,7 @@ import src.cuda_fa2_extension as extension
 当前实现采用显式的 Ahead-of-Time Build：
 
 ```bash
-python cpp_cuda/fa2/build_extension.py build_ext --inplace
+python cpp_cuda/fa2/build_extension.py --version v0 build_ext --inplace
 ```
 
 没有在第一次 Forward 时调用 `torch.utils.cpp_extension.load()` 隐式编译，原因如下：
@@ -98,7 +100,7 @@ binding.o + fa2_forward.o + PyTorch/CUDA Libraries
     └── Host Linker ─────────> cuda_fa2_extension*.so
 ```
 
-[binding.cpp](../../cpp_cuda/fa2/binding.cpp#L1-L14) 只声明 `fa2_forward_cuda`：
+[binding.cpp](../../cpp_cuda/fa2/common/binding.cpp#L1-L14) 只声明 `fa2_forward_cuda`：
 
 ```cpp
 torch::Tensor fa2_forward_cuda(
@@ -108,7 +110,7 @@ torch::Tensor fa2_forward_cuda(
     bool is_causal);
 ```
 
-函数定义位于 [fa2_forward.cu](../../cpp_cuda/fa2/fa2_forward.cu#L115-L143)。编译
+函数定义位于 [V0 fa2_forward.cu](../../cpp_cuda/fa2/v0/fa2_forward.cu#L94-L112)。编译
 `binding.cpp` 时只需要知道函数签名；最终链接阶段再从 `fa2_forward.o` 中解析函数符号。
 
 这里的 `torch::Tensor` 与 PyTorch C++ API 中的 `at::Tensor` 表示同一种引用计数 Tensor
@@ -420,7 +422,7 @@ extra_compile_args={
 ### `-lineinfo`
 
 在 CUDA Binary 中保留行号信息，使 Nsight Systems / Nsight Compute 能将 Kernel 指令
-关联回 [fa2_forward.cu](../../cpp_cuda/fa2/fa2_forward.cu)。
+关联回 [V0 fa2_forward.cu](../../cpp_cuda/fa2/v0/fa2_forward.cu) 或对应版本的 CUDA 源码。
 
 它不会像 `-G` 那样生成完整 Device Debug 信息，因此对性能影响较小。
 
@@ -456,7 +458,7 @@ if __name__ == "__main__":
 CUDA_HOME=/usr/local/cuda-12.8 \
 TORCH_CUDA_ARCH_LIST=6.1 \
 /home/dengxiao/miniconda3/envs/nanovllm/bin/python -E -s -B \
-  cpp_cuda/fa2/build_extension.py build_ext --inplace
+  cpp_cuda/fa2/build_extension.py --version v0 build_ext --inplace
 ```
 
 参数说明：
@@ -468,6 +470,7 @@ TORCH_CUDA_ARCH_LIST=6.1 \
 | `-E` | 忽略 `PYTHON*` 环境变量 |
 | `-s` | 禁用用户级 Site Packages |
 | `-B` | 不生成 `.pyc` |
+| `--version v0` | 选择 V0 核心实现与模块名；V1 使用 `--version v1` |
 | `build_ext` | 执行 C/CUDA Extension 构建 |
 | `--inplace` | 将 `.so` 复制到 `src/` |
 
@@ -478,7 +481,7 @@ Setuptools 根据源码和 Object 文件的时间戳决定是否重新编译。
 源码修改后，通常直接重新执行构建命令即可。需要强制重新编译时：
 
 ```bash
-python cpp_cuda/fa2/build_extension.py build_ext --inplace --force
+python cpp_cuda/fa2/build_extension.py --version v0 build_ext --inplace --force
 ```
 
 需要完全清理生成产物时：

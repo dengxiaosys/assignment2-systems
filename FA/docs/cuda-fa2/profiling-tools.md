@@ -80,7 +80,7 @@ end.synchronize()
 elapsed_ms = start.elapsed_time(end)
 ```
 
-这个例子假设 `forward` 将工作提交到当前 stream；本项目的 CUDA 扩展采用了 [当前 stream](file:///home/dengxiao/code_repos/institutionalized/stanford_cs336/assignments/assignment2-systems/FA/cpp_cuda/fa2/fa2_forward.cu#L105-L109)。`end.synchronize()` 等待结束事件及其之前的 stream 工作完成，不是要求所有 stream 都完成。若目标操作使用多个 stream，需要明确它们之间的依赖，再决定计时边界。
+这个例子假设 `forward` 将工作提交到当前 stream；本项目的 CUDA 扩展采用了 [当前 stream](../../cpp_cuda/fa2/v0/fa2_forward.cu#L105-L109)。`end.synchronize()` 等待结束事件及其之前的 stream 工作完成，不是要求所有 stream 都完成。若目标操作使用多个 stream，需要明确它们之间的依赖，再决定计时边界。
 
 CUDA kernel 发射通常是异步的。CPU 调用返回时，GPU 可能还没有执行完；只在 Python 函数前后读取 CPU 时钟，容易测到提交工作所需的时间。上面的 Event 示例展示计时机制，实际 benchmark 还需要 warmup、重复测量和保存样本。
 
@@ -105,7 +105,7 @@ CUDA kernel 发射通常是异步的。CPU 调用返回时，GPU 可能还没有
 - **Event 区间**：测量 stream 中两个事件之间的时间，可能包含 CPU 供给不足造成的发射间隙；单 kernel 时间仍需时间线核对。
 - **正确性**：大形状的 `--no-verify` 只跳过参考计算，不能证明数值正确。
 
-正式 baseline 使用 5 次 warmup、每组 20 次 forward、5 组重复；上面的 1 次 × 3 组适合检查当前状态。完整记录见 [性能分析](measurements/v0/perf-baseline.md)。
+正式 baseline 使用 5 次 warmup、每组 20 次 forward、5 组重复；上面的 1 次 × 3 组适合检查当前状态。完整记录见 [V0 性能分析](measurements/v0/perf_v0.md)。
 
 ## 3. Nsight Systems：学会读 CPU/GPU 时间线
 
@@ -280,7 +280,7 @@ compute-sanitizer --tool memcheck \
   -m tests.test_cuda_fa2_forward --device cuda
 ```
 
-然后按需要将 `--tool` 改为 `racecheck`、`initcheck` 或 `synccheck`。racecheck 可额外指定 `--racecheck-num-workers 1` 控制 CPU 工作线程。过滤 kernel 可以减少框架其他 kernel 的检查成本，现有 [数值测试](file:///home/dengxiao/code_repos/institutionalized/stanford_cs336/assignments/assignment2-systems/FA/tests/test_cuda_fa2_forward.py#L33-L71)覆盖小 shape、causal/non-causal 以及 CPU FP64 参考。
+然后按需要将 `--tool` 改为 `racecheck`、`initcheck` 或 `synccheck`。racecheck 可额外指定 `--racecheck-num-workers 1` 控制 CPU 工作线程。过滤 kernel 可以减少框架其他 kernel 的检查成本，现有 [数值测试](../../tests/test_cuda_fa2_forward.py#L43-L81)覆盖小 shape、causal/non-causal 以及 CPU FP64 参考。
 
 已有 4 项 CUDA 测试通过；上面的 Sanitizer 命令是后续练习方法，不代表本项目已经取得 Sanitizer 全部检查通过的结论。检查结果受实际执行路径和输入覆盖限制；[racecheck 的检查范围][sanitizer-racecheck]也不能当作所有 global memory 竞争的通用证明。插桩后的耗时不用于性能比较。
 
@@ -297,7 +297,7 @@ compute-sanitizer --tool memcheck \
 | `-G` | 生成设备调试代码；应使用独立调试构建 |
 | `-g` | 生成 host 调试信息，辅助调试 host 代码 |
 
-本项目的 [编译配置](file:///home/dengxiao/code_repos/institutionalized/stanford_cs336/assignments/assignment2-systems/FA/cpp_cuda/fa2/build_extension.py#L33-L46)已经有 `-O2` 和 `-lineinfo`。若要查看 ptxas 的编译期报告，可以在 `nvcc` 参数列表中加入 `-Xptxas=-v` 后重新构建，选项定义见 [NVCC 编译器文档][nvcc-guide]。性能实验应保留优化构建；不要把 `-G` 调试构建的结果与原 baseline 比较。
+本项目的 [统一编译配置](../../cpp_cuda/fa2/build_extension.py)已经有 `-O2`、`-lineinfo` 和 `--ptxas-options=-v`；最后一项输出 ptxas 资源报告，与表中的 `-Xptxas=-v` 等价，选项定义见 [NVCC 编译器文档][nvcc-guide]。性能实验应保留优化构建；不要把 `-G` 调试构建的结果与原 baseline 比较。
 
 寄存器增加可能减少驻留 CTA，也可能通过保存更多 Q/O 或预取值减少访存、提高吞吐。因此资源数量是解释性能的条件，不能仅以“寄存器越少越好”为优化目标。spill 指寄存器压力导致值放到 thread-local memory，需要结合报告中的 spill load/store 与实际访问分析。
 
@@ -405,7 +405,7 @@ nvidia-smi \
 
 建议先读 §2、§3、§4，再按当前假设进入 §5、§6。命令中的临时输出均放在 `/tmp`，确认有保留价值后再归档到对应版本的测量目录，组织方式见 [测量索引](measurements/README.md)。本文命令用于后续练习；除明确链接的既有采集记录外，不表示每个示例都已经重新执行。
 
-- [性能 baseline 与实测结论](measurements/v0/perf-baseline.md)
+- [V0 性能基线与实测结论](measurements/v0/perf_v0.md)
 - [nvprof 指标可读版](measurements/v0/nvprof-readable.md)
 - [旧版 Nsight Compute 安装、命令与兼容性](ncu-pascal.md)
 

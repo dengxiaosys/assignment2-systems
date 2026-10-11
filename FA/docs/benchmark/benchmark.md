@@ -42,7 +42,7 @@ cd /home/dengxiao/code_repos/institutionalized/stanford_cs336/assignments/assign
 # 首次使用前显式构建，不依赖 Ninja
 CUDA_HOME=/usr/local/cuda-12.8 TORCH_CUDA_ARCH_LIST=6.1 \
 /home/dengxiao/miniconda3/envs/nanovllm/bin/python -E -s -B \
-  cpp_cuda/fa2/build_extension.py build_ext --inplace
+  cpp_cuda/fa2/build_extension.py --version v0 build_ext --inplace
 
 # 自写 C++/CUDA online-softmax baseline
 /home/dengxiao/miniconda3/envs/nanovllm/bin/python -E -s -B \
@@ -82,7 +82,7 @@ GPU 不可用或指定 fused 后端不受支持时直接报错，不回退到 CP
 ## 4. CUDA 扩展构建
 
 `cuda_fa2` 使用 [build_extension.py](../../cpp_cuda/fa2/build_extension.py)
-显式构建 [cpp_cuda/fa2](../../cpp_cuda/fa2/) 中的 C++/CUDA extension。
+以 `--version v0` 显式构建 [cpp_cuda/fa2/v0](../../cpp_cuda/fa2/v0/fa2_forward.cu) 中的 C++/CUDA extension；V1 使用 `--version v1` 构建，并在测量中选择 `--impl cuda_fa2_v1`。
 构建器采用 `BuildExtension(use_ninja=False)`，运行 benchmark 时只导入已有 `.so`，
 不会隐式触发编译。
 完整构建流程见 [CUDA Extension 构建文档](../cuda-fa2/extension-build.md)。

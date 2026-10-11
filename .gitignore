@@ -161,6 +161,11 @@ benchmark_results/
 profile_artifacts/
 /FA/profiles/
 
+# FA compiler intermediates generated outside build/
+/FA/**/*.o
+/FA/**/*.obj
+/FA/**/*.a
+
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
 #  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore

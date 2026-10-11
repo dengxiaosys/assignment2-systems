@@ -1,0 +1,34 @@
+[
+  {
+    "dims_per_lane": 4,
+    "symbol": "_ZN47_GLOBAL__N__796cd223_14_fa2_forward_cu_2694350723fa2_forward_fp32_kernelILi4EEEvPKfS2_S2_Pfiifb",
+    "REG": 27,
+    "STACK": 0,
+    "SHARED": 0,
+    "LOCAL": 0
+  },
+  {
+    "dims_per_lane": 3,
+    "symbol": "_ZN47_GLOBAL__N__796cd223_14_fa2_forward_cu_2694350723fa2_forward_fp32_kernelILi3EEEvPKfS2_S2_Pfiifb",
+    "REG": 23,
+    "STACK": 0,
+    "SHARED": 0,
+    "LOCAL": 0
+  },
+  {
+    "dims_per_lane": 2,
+    "symbol": "_ZN47_GLOBAL__N__796cd223_14_fa2_forward_cu_2694350723fa2_forward_fp32_kernelILi2EEEvPKfS2_S2_Pfiifb",
+    "REG": 23,
+    "STACK": 0,
+    "SHARED": 0,
+    "LOCAL": 0
+  },
+  {
+    "dims_per_lane": 1,
+    "symbol": "_ZN47_GLOBAL__N__796cd223_14_fa2_forward_cu_2694350723fa2_forward_fp32_kernelILi1EEEvPKfS2_S2_Pfiifb",
+    "REG": 21,
+    "STACK": 0,
+    "SHARED": 0,
+    "LOCAL": 0
+  }
+]

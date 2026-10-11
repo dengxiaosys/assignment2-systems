@@ -101,7 +101,7 @@
     "path_base": "measurement_directory",
     "documents": [
       "opt_routine1.md",
-      "perf-baseline.md",
+      "perf_v0.md",
       "nvprof-readable.md"
     ],
     "data": "data/",
@@ -110,4 +110,3 @@
     "profiler_reports": "profiles/"
   }
 }
-

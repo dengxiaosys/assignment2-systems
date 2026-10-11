@@ -136,7 +136,7 @@ mkdir -p ./profiles
 
 CUDA_HOME=/usr/local/cuda-12.8 TORCH_CUDA_ARCH_LIST=6.1 \
 /home/dengxiao/miniconda3/envs/nanovllm/bin/python -E -s -B \
-  cpp_cuda/fa2/build_extension.py build_ext --inplace
+  cpp_cuda/fa2/build_extension.py --version v0 build_ext --inplace
 
 nsys profile \
   --trace=cuda,nvtx --sample=none --cpuctxsw=none \
@@ -188,7 +188,7 @@ nsys stats --report cuda_gpu_trace \
   ./docs/cuda-fa2/measurements/v0/profiles/baseline_naive_attention_s16384_d64.nsys-rep
 ```
 
-`stats` 首次运行可能生成同目录的 SQLite 分析文件。注意表头时间单位。
+`stats` 首次运行可能生成同目录的 SQLite 分析文件；它是可从 `.nsys-rep` 重建的分析缓存，不由 Git 追踪，也不需要重新执行 GPU 采集。注意表头时间单位。
 `cuda_gpu_kern_sum` 的时间占比以 kernel 执行时间总和为分母，不等于整个 forward 的
 wall-clock 占比。看 launch 间隙、CPU 等待或多 stream 重叠，需要结合时间线。
 

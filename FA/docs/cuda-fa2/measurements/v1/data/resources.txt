@@ -1,0 +1,20 @@
+
+Fatbin elf code:
+================
+arch = sm_61
+code version = [1,7]
+host = linux
+compile_size = 64bit
+identifier = /home/dengxiao/code_repos/institutionalized/stanford_cs336/assignments/assignment2-systems/FA/cpp_cuda/fa2/v1/fa2_forward.cu
+
+Resource usage:
+ Common:
+  GLOBAL:11 CONSTANT[4]:88
+ Function _ZN47_GLOBAL__N__796cd223_14_fa2_forward_cu_2694350723fa2_forward_fp32_kernelILi4EEEvPKfS2_S2_Pfiifb:
+  REG:27 STACK:0 SHARED:0 LOCAL:0 CONSTANT[2]:24 CONSTANT[0]:365 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN47_GLOBAL__N__796cd223_14_fa2_forward_cu_2694350723fa2_forward_fp32_kernelILi3EEEvPKfS2_S2_Pfiifb:
+  REG:23 STACK:0 SHARED:0 LOCAL:0 CONSTANT[2]:24 CONSTANT[0]:365 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN47_GLOBAL__N__796cd223_14_fa2_forward_cu_2694350723fa2_forward_fp32_kernelILi2EEEvPKfS2_S2_Pfiifb:
+  REG:23 STACK:0 SHARED:0 LOCAL:0 CONSTANT[2]:24 CONSTANT[0]:365 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN47_GLOBAL__N__796cd223_14_fa2_forward_cu_2694350723fa2_forward_fp32_kernelILi1EEEvPKfS2_S2_Pfiifb:
+  REG:21 STACK:0 SHARED:0 LOCAL:0 CONSTANT[2]:24 CONSTANT[0]:365 TEXTURE:0 SURFACE:0 SAMPLER:0

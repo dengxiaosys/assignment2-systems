@@ -108,7 +108,7 @@ Scheduler Statistics、Warp State Statistics、Instruction Statistics、Launch S
 
 已验证 non-causal `(64,64)` 和 causal `(7,3)`，最大绝对误差分别为 0 与约 `6.39e-9`。
 这些是工具兼容性和学习用例，**输入不同于原随机输入 baseline**；
-其延迟、occupancy 或 stall 数值不能直接替代 [V0 性能分析](measurements/v0/perf-baseline.md) 的性能数据。
+其延迟、occupancy 或 stall 数值不能直接替代 [V0 性能分析](measurements/v0/perf_v0.md) 的性能数据。
 
 入口保留 baseline 的 `128 threads/CTA` 和既有参数 ABI。
 修改 kernel 后应先重新构建扩展；若修改线程组织或参数接口，还应同步更新这个启动入口。

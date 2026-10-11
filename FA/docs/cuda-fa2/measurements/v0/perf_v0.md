@@ -235,7 +235,7 @@ native 的可见 kernel 是 FP32 SGEMM，efficient 也是 FP32 CUTLASS；本次�
 
 每轮优化先记录父版本、commit 或未提交 patch、线程与 tile 参数，以及预计减少的屏障、加载或状态更新数量，再实现和测量。**结构预测是否成立、指标是否支持解释、正常延迟是否改善分别判断。** 具体记录规范与 V0 假设表见 [理论预期与实测对照](nvprof-readable.md#theory-validation)。
 
-新的性能结果使用自己的版本目录、源码快照、实际 `.so` 哈希与环境记录。V0 原始数据保持固定；环境或 GPU 状态变化时，在相近时间复跑 V0 与新版本，保留同口径 benchmark 的每组样本。扩展不会因 `.cu` 修改自动重建，复测前应核对实际加载模块，步骤见 [重新构建与加载版本确认](nvprof-readable.md#optimized-code-loading)。
+新的性能结果使用自己的版本目录，核心源码保存在 `snapshot/`，实际 `.so` 单独归档并记录哈希。常规优化只测量新版本，V0 的计时和 counters 直接引用已有归档；运行条件差异在报告中说明，确需校准时另开独立实验。扩展不会因 `.cu` 修改自动重建，测量前应核对实际加载模块，步骤见 [重新构建与加载版本确认](nvprof-readable.md#optimized-code-loading)。
 
 ## 1.8 复现命令、原始数据与验证
 

@@ -1,0 +1,107 @@
+{
+  "device": "NVIDIA GeForce GTX 1060 (0)",
+  "kernel": "void _GLOBAL__N__796cd223_14_fa2_forward_cu_26943507::fa2_forward_fp32_kernel<int=2>(float const *, float const , float const , float*, int, int, float, bool)",
+  "shape": [
+    16384,
+    64
+  ],
+  "causal": false,
+  "aggregate_mode": "on",
+  "captured_forward_calls": 1,
+  "kernel_replay": true,
+  "metrics": {
+    "achieved_occupancy": {
+      "value": 0.985105,
+      "unit": "unitless"
+    },
+    "sm_efficiency": {
+      "value": 99.999383,
+      "unit": "%"
+    },
+    "warp_execution_efficiency": {
+      "value": 54.256673,
+      "unit": "%"
+    },
+    "warp_nonpred_execution_efficiency": {
+      "value": 54.16945,
+      "unit": "%"
+    },
+    "eligible_warps_per_cycle": {
+      "value": 5.394563,
+      "unit": "unitless"
+    },
+    "issue_slot_utilization": {
+      "value": 71.425499,
+      "unit": "%"
+    },
+    "stall_sync": {
+      "value": 0.0,
+      "unit": "%"
+    },
+    "stall_memory_dependency": {
+      "value": 39.899801,
+      "unit": "%"
+    },
+    "stall_exec_dependency": {
+      "value": 21.597141,
+      "unit": "%"
+    },
+    "stall_other": {
+      "value": 24.746867,
+      "unit": "%"
+    },
+    "stall_not_selected": {
+      "value": 4.215677,
+      "unit": "%"
+    },
+    "stall_inst_fetch": {
+      "value": 8.727479,
+      "unit": "%"
+    },
+    "stall_pipe_busy": {
+      "value": 0.807123,
+      "unit": "%"
+    },
+    "stall_texture": {
+      "value": 0.0,
+      "unit": "%"
+    },
+    "stall_memory_throttle": {
+      "value": 5.6e-05,
+      "unit": "%"
+    },
+    "stall_constant_memory_dependency": {
+      "value": 0.005856,
+      "unit": "%"
+    },
+    "dram_read_throughput": {
+      "value": 603.042352,
+      "unit": "MB/s"
+    },
+    "dram_write_throughput": {
+      "value": 11.638323,
+      "unit": "MB/s"
+    },
+    "l2_read_throughput": {
+      "value": 40.276353,
+      "unit": "GB/s"
+    },
+    "l2_tex_read_hit_rate": {
+      "value": 88.602554,
+      "unit": "%"
+    },
+    "dram_read_transactions": {
+      "value": 6966350.0,
+      "unit": "unitless"
+    },
+    "l2_read_transactions": {
+      "value": 476439296.0,
+      "unit": "unitless"
+    },
+    "gld_efficiency": {
+      "value": 100.0,
+      "unit": "%"
+    }
+  },
+  "raw_file": "nvprof-custom-s16384-d64.csv"
+}

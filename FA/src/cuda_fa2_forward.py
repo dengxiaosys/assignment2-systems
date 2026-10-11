@@ -1,5 +1,8 @@
-"""Python wrapper for the prebuilt C++/CUDA attention forward."""
+"""Load, identify and run the prebuilt C++/CUDA attention versions."""
 
+import hashlib
+import importlib
+from pathlib import Path
 from types import ModuleType
 
 import torch
@@ -8,19 +11,23 @@ from .input_validation import validate_attention_inputs
 
 
 MAX_HEAD_DIM = 128
-_BUILD_COMMAND = (
-    "python cpp_cuda/fa2/build_extension.py build_ext --inplace"
-)
 
 
-def import_cuda_fa2_extension() -> ModuleType:
-    """Import the generated src/cuda_fa2_extension shared library."""
+def import_cuda_fa2_extension(version: str = "v0") -> ModuleType:
+    """Import the selected extension without rebuilding or replacing another version."""
+    if version == "v0":
+        module_name = "src.cuda_fa2_extension"
+    elif version == "v1":
+        module_name = "src.cuda_fa2_v1_extension"
+    else:
+        raise ValueError(f"Unknown CUDA FA2 version {version!r}")
     try:
-        import src.cuda_fa2_extension as extension
+        extension = importlib.import_module(module_name)
     except (ImportError, OSError) as error:
         raise RuntimeError(
-            "cuda_fa2 extension is not built or cannot be loaded. "
-            f"Run `{_BUILD_COMMAND}` from the FA directory."
+            f"{module_name} is not built or cannot be loaded. "
+            f"Run `python cpp_cuda/fa2/build_extension.py --version {version} "
+            "build_ext --inplace` from the FA directory."
         ) from error
     return extension
 
@@ -31,6 +38,7 @@ def validate_cuda_fa2_support(
     v: torch.Tensor,
     *,
     is_causal: bool = False,
+    version: str = "v0",
 ) -> None:
     """Validate the supported subset and ensure the extension is importable."""
     del is_causal
@@ -46,7 +54,7 @@ def validate_cuda_fa2_support(
         raise RuntimeError(
             f"cuda_fa2 requires compute capability >= 6.0, got {capability}"
         )
-    import_cuda_fa2_extension()
+    import_cuda_fa2_extension(version)
 
 
 @torch.no_grad()
@@ -61,3 +69,32 @@ def cuda_fa2_attention_forward(
     validate_cuda_fa2_support(q, k, v, is_causal=is_causal)
     extension = import_cuda_fa2_extension()
     return extension.forward(q, k, v, is_causal)
+
+
+@torch.no_grad()
+def cuda_fa2_v1_attention_forward(
+    q: torch.Tensor,
+    k: torch.Tensor,
+    v: torch.Tensor,
+    *,
+    is_causal: bool = False,
+) -> torch.Tensor:
+    """Run four independent query warps per CTA with register shuffle communication."""
+    validate_cuda_fa2_support(q, k, v, is_causal=is_causal, version="v1")
+    extension = import_cuda_fa2_extension("v1")
+    return extension.forward(q, k, v, is_causal)
+
+
+def implementation_metadata(implementation: str) -> dict:
+    """Record the loaded CUDA extension identity outside benchmark timing."""
+    if implementation not in ("cuda_fa2", "cuda_fa2_v1"):
+        return {}
+    version = "v1" if implementation == "cuda_fa2_v1" else "v0"
+    extension = import_cuda_fa2_extension(version)
+    path = Path(extension.__file__).resolve()
+    return {
+        "cuda_fa2_version": version,
+        "extension_module": extension.__name__,
+        "extension_path": str(path),
+        "extension_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+    }

@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="830" viewBox="0 0 1200 830" role="img" aria-labelledby="title desc">
+  <title id="title">V0 与 V1 的 query、warp 和 lane 数据所有权</title>
+  <desc id="desc">V0 的四个 warp 协作一个 query，d 等于 64 时两个 warp 没有有效向量维度。V1 的四个 warp 各自处理一个 query，每个 lane 持有两个维度的 Q 和 Z，标量状态属于每个 warp 的 lane 0。两个版本都使用 128 threads 每 CTA。</desc>
+  <defs>
+    <style>
+      text { font-family: "Noto Sans CJK SC", "Microsoft YaHei", sans-serif; fill: #18263c; }
+      .title { font-size: 26px; font-weight: 700; }
+      .subtitle { font-size: 16px; fill: #58677b; }
+      .heading { font-size: 21px; font-weight: 700; }
+      .label { font-size: 17px; font-weight: 600; }
+      .body { font-size: 16px; }
+      .small { font-size: 14px; fill: #58677b; }
+      .mono { font-family: "DejaVu Sans Mono", monospace; font-size: 15px; }
+      .line { fill: none; stroke: #8090a6; stroke-width: 2; marker-end: url(#arrow); }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0L10 5L0 10Z" fill="#8090a6"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="830" rx="18" fill="#f7f9fc"/>
+  <text x="30" y="43" class="title">通信范围收缩：四个 warp 协作一行 → 四个 warp 独立计算四行</text>
+  <text x="30" y="75" class="subtitle">主配置 d = 64，W = 4；两版均为 128 threads / CTA。图示为所有权与控制流，不是性能预测。</text>
+
+  <rect x="28" y="106" width="550" height="450" rx="14" fill="#ffffff" stroke="#cdd6e3"/>
+  <text x="50" y="142" class="heading">V0：1 query / CTA</text>
+  <text x="50" y="171" class="small">query i = blockIdx.x；thread t 持有维度 h = t</text>
+  <rect x="50" y="194" width="326" height="56" rx="9" fill="#e7eefc" stroke="#a1b7e3"/>
+  <text x="64" y="216" class="label">warp 0</text>
+  <text x="64" y="238" class="body">h = 0 … 31；有效 Q / Z</text>
+  <rect x="50" y="262" width="326" height="56" rx="9" fill="#e7eefc" stroke="#a1b7e3"/>
+  <text x="64" y="284" class="label">warp 1</text>
+  <text x="64" y="306" class="body">h = 32 … 63；有效 Q / Z</text>
+  <rect x="50" y="330" width="326" height="56" rx="9" fill="#f0f2f5" stroke="#cdd4de" stroke-dasharray="5 4"/>
+  <text x="64" y="352" class="label">warp 2</text>
+  <text x="64" y="374" class="body">h = 64 … 95；零项、归约、同步</text>
+  <rect x="50" y="398" width="326" height="56" rx="9" fill="#f0f2f5" stroke="#cdd4de" stroke-dasharray="5 4"/>
+  <text x="64" y="420" class="label">warp 3</text>
+  <text x="64" y="442" class="body">h = 96 … 127；零项、归约、同步</text>
+  <path d="M378 222H402V328H423M378 290H402M378 358H402M378 426H402V328" class="line"/>
+  <rect x="426" y="205" width="128" height="242" rx="10" fill="#fff4e7" stroke="#e8be86"/>
+  <text x="490" y="237" text-anchor="middle" class="label">共同 query i</text>
+  <text x="490" y="277" text-anchor="middle" class="body">shared 归约</text>
+  <text x="490" y="309" text-anchor="middle" class="body">thread 0</text>
+  <text x="490" y="337" text-anchor="middle" class="body">更新 m / l</text>
+  <text x="490" y="372" text-anchor="middle" class="body">shared 权重</text>
+  <text x="490" y="410" text-anchor="middle" class="body">跨 warp 汇合</text>
+  <rect x="50" y="477" width="504" height="52" rx="8" fill="#fff1e8"/>
+  <text x="68" y="500" class="body">每 key 10 次 CTA 屏障；最后分母广播另 1 次</text>
+  <text x="68" y="520" class="small">四个 warp 到齐后推进同一行的状态与输出</text>
+
+  <rect x="596" y="106" width="576" height="450" rx="14" fill="#ffffff" stroke="#cdd6e3"/>
+  <text x="618" y="142" class="heading">V1：4 queries / CTA</text>
+  <text x="618" y="171" class="small">query i = 4 × blockIdx.x + warp_id；完整 warp 内通信</text>
+  <rect x="618" y="194" width="532" height="56" rx="9" fill="#e8f2ff" stroke="#92b5e4"/>
+  <text x="632" y="218" class="label">warp 0 → query 4b</text>
+  <text x="632" y="239" class="body">32 lanes：各持 Q / Z 的 2 个维度；lane 0 持 m / l</text>
+  <rect x="618" y="262" width="532" height="56" rx="9" fill="#e8f5f0" stroke="#91c6b0"/>
+  <text x="632" y="286" class="label">warp 1 → query 4b + 1</text>
+  <text x="632" y="307" class="body">32 lanes：各持 Q / Z 的 2 个维度；lane 0 持 m / l</text>
+  <rect x="618" y="330" width="532" height="56" rx="9" fill="#f1ecfa" stroke="#b7a3d7"/>
+  <text x="632" y="354" class="label">warp 2 → query 4b + 2</text>
+  <text x="632" y="375" class="body">32 lanes：各持 Q / Z 的 2 个维度；lane 0 持 m / l</text>
+  <rect x="618" y="398" width="532" height="56" rx="9" fill="#fff3e5" stroke="#d8b689"/>
+  <text x="632" y="422" class="label">warp 3 → query 4b + 3</text>
+  <text x="632" y="443" class="body">32 lanes：各持 Q / Z 的 2 个维度；lane 0 持 m / l</text>
+  <rect x="618" y="477" width="532" height="52" rx="8" fill="#ecf7f0"/>
+  <text x="636" y="500" class="body">各 warp 独立前进；无 CTA 屏障、无跨 warp 写读</text>
+  <text x="636" y="520" class="small">每轮五级归约 + 两次权重广播；仍逐 key 递推</text>
+
+  <rect x="28" y="577" width="1144" height="164" rx="14" fill="#ffffff" stroke="#cdd6e3"/>
+  <text x="50" y="611" class="heading">V1 的单 warp 条带：h = lane + 32r</text>
+  <text x="50" y="639" class="small">d = 64 时 r ∈ {0, 1}；每个槽位的 Q / Z 留在其拥有线程中</text>
+  <rect x="50" y="660" width="292" height="58" rx="8" fill="#e8f2ff"/>
+  <text x="66" y="684" class="label">lane 0</text>
+  <text x="66" y="705" class="mono">h = 0, 32   + m / l</text>
+  <rect x="366" y="660" width="292" height="58" rx="8" fill="#e8f2ff"/>
+  <text x="382" y="684" class="label">lane 1</text>
+  <text x="382" y="705" class="mono">h = 1, 33</text>
+  <text x="713" y="695" class="title" text-anchor="middle">…</text>
+  <rect x="770" y="660" width="380" height="58" rx="8" fill="#e8f2ff"/>
+  <text x="786" y="684" class="label">lane 31</text>
+  <text x="786" y="705" class="mono">h = 31, 63</text>
+  <text x="30" y="778" class="body">尾部规则：query 越界 → 整 warp 退出；维度越界 → 数据操作屏蔽、仍参加 shuffle。</text>
+  <text x="30" y="807" class="subtitle">四个 warp 各自加载只读 K / V；V1 尚未建立显式 K / V shared tile 复用。</text>
+</svg>

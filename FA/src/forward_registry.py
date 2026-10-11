@@ -6,6 +6,7 @@ import torch
 
 from .cuda_fa2_forward import (
     cuda_fa2_attention_forward,
+    cuda_fa2_v1_attention_forward,
     validate_cuda_fa2_support,
 )
 from .input_validation import validate_attention_inputs
@@ -20,6 +21,7 @@ IMPLEMENTATION_BACKENDS = {
     "native": "pytorch_dense_attention",
     "efficient": "pytorch_sdpa_efficient_attention",
     "cuda_fa2": "custom_cpp_cuda_fa2_baseline_fp32",
+    "cuda_fa2_v1": "custom_cpp_cuda_fa2_warp_query_fp32",
 }
 
 
@@ -31,6 +33,8 @@ def get_attention_forward(implementation: str) -> Callable[..., torch.Tensor]:
         return memory_efficient_attention_forward
     elif implementation == "cuda_fa2":
         return cuda_fa2_attention_forward
+    elif implementation == "cuda_fa2_v1":
+        return cuda_fa2_v1_attention_forward
     else:
         raise ValueError(
             f"Unknown implementation {implementation!r}; "
@@ -64,5 +68,7 @@ def validate_implementation(
             v,
             is_causal=is_causal,
         )
+    elif implementation == "cuda_fa2_v1":
+        validate_cuda_fa2_support(q, k, v, is_causal=is_causal, version="v1")
     else:
         raise ValueError(f"Unknown implementation {implementation!r}")

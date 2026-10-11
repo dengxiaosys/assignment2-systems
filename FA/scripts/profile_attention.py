@@ -16,6 +16,7 @@ from src.forward_registry import (
     get_attention_forward,
     validate_implementation,
 )
+from src.cuda_fa2_forward import implementation_metadata
 
 
 def parse_args() -> argparse.Namespace:
@@ -58,6 +59,7 @@ def main() -> None:
     print(json.dumps({
         "implementation": args.impl,
         "backend": IMPLEMENTATION_BACKENDS[args.impl],
+        **implementation_metadata(args.impl),
         "python": sys.executable,
         "torch": torch.__version__,
         "cuda_build": torch.version.cuda,

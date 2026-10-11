@@ -1,0 +1,275 @@
+{
+  "measurement_id": "V1",
+  "measurement_date": "2026-10-11",
+  "parent_measurement": "V0",
+  "reference_repository": "stanford_cs336/assignments/assignment2-systems",
+  "working_head": "ed188c592e7a3d47fa4272ff4c4e20c75d2b0ab1",
+  "source_identity": "Core CUDA implementation is snapshotted; shared build, binding and Python files are referenced from the workspace.",
+  "development_source": "../../../../cpp_cuda/fa2/v1/fa2_forward.cu",
+  "build_entry": "../../../../cpp_cuda/fa2/build_extension.py",
+  "measured_binary": {
+    "module": "src.cuda_fa2_v1_extension",
+    "runtime_path_relative_to_fa": "src/cuda_fa2_v1_extension.cpython-311-x86_64-linux-gnu.so",
+    "archive_path": "binaries/cuda_fa2_v1_extension.cpython-311-x86_64-linux-gnu.so",
+    "sha256": "078da892a4215b62df43f75642e84e1e107529f1ee370089326494f247ccaa47",
+    "size_bytes": 275320,
+    "architecture": "sm_61",
+    "rebuilt_for_measurement": true
+  },
+  "parent_binary": {
+    "module": "src.cuda_fa2_extension",
+    "sha256": "29f397f8fa5bad4d2bd7f4f3ba54be87cee2d8bb5eaa4a505db283f60f957d6a",
+    "archive_path": "../v0/snapshot/cuda_fa2_extension.cpython-311-x86_64-linux-gnu.so",
+    "rebuilt_for_comparison": false
+  },
+  "environment": {
+    "gpu": "NVIDIA GeForce GTX 1060",
+    "compute_capability": [
+      6,
+      1
+    ],
+    "sm_count": 10,
+    "driver": "570.211.01",
+    "python_environment": "nanovllm",
+    "torch": "2.6.0+cu124",
+    "torch_cuda_build": "12.4",
+    "nvcc": "12.8.93",
+    "nvprof": "12.8.90 (21)",
+    "gxx": "13.3.0",
+    "compute_sanitizer": "2025.1.0.0",
+    "cpu_threads": 1,
+    "max_build_jobs": 1
+  },
+  "build": {
+    "command": "python -E -s -B cpp_cuda/fa2/v1/build_extension.py build_ext --inplace --build-temp /tmp/fa2-v1-build/temp --build-lib /tmp/fa2-v1-build/lib",
+    "torch_cuda_arch_list": "6.1",
+    "cxx_flags": [
+      "-O2"
+    ],
+    "nvcc_flags": [
+      "-O2",
+      "-lineinfo",
+      "--ptxas-options=-v"
+    ],
+    "fast_math": false,
+    "log": "data/build.log",
+    "warnings": [
+      "CUDA 12.8 vs PyTorch CUDA 12.4 minor mismatch",
+      "PyTorch has no recorded g++ bounds for CUDA 12.8",
+      "nvcc pre-sm_75 compilation support is deprecated in future releases"
+    ],
+    "log_note": "Original measurement command used the previous layout. The build log and binary identity remain unchanged; current_build_command records the unified entry."
+  },
+  "kernel": {
+    "threads_per_cta": 128,
+    "warps_per_cta": 4,
+    "queries_per_cta": 4,
+    "grid_for_main_shape": [
+      4096,
+      1,
+      1
+    ],
+    "head_dim_supported": [
+      1,
+      128
+    ],
+    "compiled_resources": [
+      {
+        "dims_per_lane": 4,
+        "symbol": "_ZN47_GLOBAL__N__796cd223_14_fa2_forward_cu_2694350723fa2_forward_fp32_kernelILi4EEEvPKfS2_S2_Pfiifb",
+        "REG": 27,
+        "STACK": 0,
+        "SHARED": 0,
+        "LOCAL": 0
+      },
+      {
+        "dims_per_lane": 3,
+        "symbol": "_ZN47_GLOBAL__N__796cd223_14_fa2_forward_cu_2694350723fa2_forward_fp32_kernelILi3EEEvPKfS2_S2_Pfiifb",
+        "REG": 23,
+        "STACK": 0,
+        "SHARED": 0,
+        "LOCAL": 0
+      },
+      {
+        "dims_per_lane": 2,
+        "symbol": "_ZN47_GLOBAL__N__796cd223_14_fa2_forward_cu_2694350723fa2_forward_fp32_kernelILi2EEEvPKfS2_S2_Pfiifb",
+        "REG": 23,
+        "STACK": 0,
+        "SHARED": 0,
+        "LOCAL": 0
+      },
+      {
+        "dims_per_lane": 1,
+        "symbol": "_ZN47_GLOBAL__N__796cd223_14_fa2_forward_cu_2694350723fa2_forward_fp32_kernelILi1EEEvPKfS2_S2_Pfiifb",
+        "REG": 21,
+        "STACK": 0,
+        "SHARED": 0,
+        "LOCAL": 0
+      }
+    ],
+    "resource_file": "data/resources.txt",
+    "sass_file": "data/sass.txt"
+  },
+  "correctness": {
+    "cuda_tests": {
+      "count": 9,
+      "passed": true,
+      "log": "data/cuda-validation.log"
+    },
+    "registry_tests": {
+      "count": 5,
+      "passed": true,
+      "log": "data/registry-validation.log"
+    },
+    "memcheck": {
+      "errors": 0,
+      "exit_code": 0,
+      "log": "data/memcheck.log"
+    },
+    "synccheck": {
+      "errors": 0,
+      "exit_code": 0,
+      "log": "data/synccheck.log"
+    },
+    "rtol": 2e-05,
+    "atol": 2e-05,
+    "all_supported_head_dims_tested": true,
+    "large_sequence_sampled_rows": [
+      0,
+      1,
+      3,
+      4,
+      8191,
+      16383
+    ],
+    "large_sequence_causal_modes": [
+      false,
+      true
+    ],
+    "large_sequence_all_rows_verified": false,
+    "large_sequence_max_abs_error": 1.932930856346493e-07,
+    "large_sequence_data": "data/row-validation.json"
+  },
+  "benchmark": {
+    "shape": [
+      16384,
+      64
+    ],
+    "dtype": "float32",
+    "causal_for_version_comparison": false,
+    "tf32": false,
+    "seed": 0,
+    "cpu_threads": 1,
+    "warmup": 5,
+    "iterations_per_repeat": 20,
+    "repeats": 5,
+    "concurrent_gpu_runs": false,
+    "records": {
+      "v1": "data/benchmark-custom.json",
+      "efficient": "data/benchmark-efficient.json",
+      "v1_causal": "data/benchmark-custom-causal.json",
+      "v0_baseline": "../v0/data/evidence.json"
+    },
+    "cuda_event_mean_ms": {
+      "v1": 348.1783984375,
+      "efficient": 37.911054077148435,
+      "v1_causal": 182.430380859375,
+      "v0_baseline": 2922.2971875000003
+    },
+    "v1_over_efficient": 9.184086460085286,
+    "baseline_source": {
+      "manifest": "../v0/manifest.json",
+      "manifest_key": "unprofiled_benchmark.formal",
+      "records": "../v0/data/evidence.json",
+      "records_key": "benchmark_records",
+      "implementation": "cuda_fa2",
+      "policy": "Reuse archived V0 data; no routine V0 rerun."
+    },
+    "v0_over_v1": 8.393103077658534,
+    "supplementary_v0_recheck": {
+      "record": "data/benchmark-v0-recheck.json",
+      "cuda_event_mean_ms": 2924.5730859375,
+      "v0_over_v1": 8.399639664786607,
+      "used_for_primary_comparison": false,
+      "note": "Retained prior executed run; not required for future versions."
+    }
+  },
+  "profile": {
+    "shape": [
+      16384,
+      64
+    ],
+    "causal": false,
+    "warmup": 5,
+    "captured_forward_calls": 1,
+    "aggregate_mode": "on",
+    "kernel_replay_for_counters": true,
+    "identity_for_counters": "sudo",
+    "counters": "data/nvprof-custom-s16384-d64.csv",
+    "counters_json": "data/counters.json",
+    "counter_process": "data/nvprof-process.log",
+    "timeline": "data/nvprof-timeline.csv",
+    "timeline_process": "data/nvprof-timeline-process.log",
+    "timeline_report": "profiles/forward.nvvp",
+    "counter_overflows": [],
+    "timeline_kernel_ms": 348.77703
+  },
+  "limits": [
+    "V0 binary was not rebuilt with the V1 toolchain; measured speedup is between identified runtime versions, not a same-compiler single-factor experiment.",
+    "Counter comparison uses archived V0 metrics and newly captured V1 metrics, not paired same-round counters.",
+    "Long-shape FP64 verification covered six rows in both causal modes, not every row.",
+    "Non-finite input and FP32 intermediate-overflow behavior remain outside the formal numerical domain.",
+    "Logical K/V loads are unchanged despite different observed cache and DRAM transactions.",
+    "Primary speedup compares archived V0 baseline with newly measured V1 using matching recorded parameters; run conditions may differ."
+  ],
+  "files_sha256": {
+    "assets/warp-key-protocol.svg": "d0f9c109da4165c68943373341e1760b9476bb14d5bde59d0c7784534d07a42f",
+    "assets/warp-query-mapping.svg": "db411f8c6ceed3a637915e01c75954c2a70de2c9e6d6a008c6877f2d4d74fe1d",
+    "binaries/cuda_fa2_v1_extension.cpython-311-x86_64-linux-gnu.so": "078da892a4215b62df43f75642e84e1e107529f1ee370089326494f247ccaa47",
+    "build-and-run.md": "3539104b6c7c0f548384ef3f90693c15c45d1d0842d9555c2287771cd411aa06",
+    "data/benchmark-custom-causal.json": "0a1874fa5ec04d831b8a26b0d22e14a5871d2bd2b4ae8a089e2884f99cda5ff0",
+    "data/benchmark-custom.json": "374d8a66c806d0c6aa79f30f23103302a432a24a0e805015b6751f547188f1aa",
+    "data/benchmark-efficient.json": "5674b5a80b7a014c5b1f98ff6a8f641c9c28bb0372ad75c3488fd9b210d04495",
+    "data/benchmark-v0-recheck.json": "7ab44132cd160fb2cdb90c4eaafe5b5d9ff0ffaa864b105adc1eaa3d67178a9b",
+    "data/build.log": "2273b0f6ed29f167a6e392161593cfc57db6e866a8261c8633e36cb433328804",
+    "data/counters.json": "27a369a13152abc8233b8b7c105b20dc3f6b318ebf9e9e441018ffd7d8696226",
+    "data/cuda-validation.log": "ef378c249996d3fee0b3792e82a8d99fd9d28c4d096a081b30c64dcd7745696c",
+    "data/kernel-resources.json": "08a30c59f018d48ac119005a7b368ecd1e86963c96f7a00604758108df089d23",
+    "data/memcheck.log": "948bc5eec473ff7837f7339b5545ce438516d21087b748aa99230d1f57f85355",
+    "data/nvprof-custom-s16384-d64.csv": "b3bc9f75d1ae13a44d4d674d40e54a9bfc0160af2818def8ff779f727a8018a4",
+    "data/nvprof-process.log": "532f467ddb1ff981e496b466f12e76314bbfbe13d6a5c81c1d6e9858cdb25b07",
+    "data/nvprof-timeline-process.log": "532f467ddb1ff981e496b466f12e76314bbfbe13d6a5c81c1d6e9858cdb25b07",
+    "data/nvprof-timeline.csv": "7bd083b6da8295b5f31f022d1082da6767d4f62b2092acea99817669ca948e39",
+    "data/registry-validation.log": "d03ce458f2a6cd2b4f27522f3aacad03ce1872c028853507c3ad02ca621bdcad",
+    "data/resources.txt": "12069a27070897d812381e63bf5fe03502c33ba7bec1cb5ea5752ff2d579ecc3",
+    "data/row-validation.json": "b11583cebcec620789700c9c824a5557412e91773da51b03beecb37593b4cf1d",
+    "data/sass.txt": "d7029a0a9f9303eec60fb7be90423667f70425e91dbee27e8c2f82f67e40d8d2",
+    "data/synccheck.log": "6bd74ecbfb4408dd35c6e7dd4d88a11c6ba6e25ee8dfda9b7fbf33348589be45",
+    "optimization-design.md": "16862b06de79352ca9afa4fd5f462949987a67adceedb664b1addb03fc4e806d",
+    "perf_v1.md": "48e9b7efc2a3546390ade8e9e3ec51b8e66e117cd945620fae20d0cc38ac8a06",
+    "profiles/forward.nvvp": "cd0839037638a640106715b1e528280263a0a913fc71ba940090b1bb2584c89d",
+    "snapshot/fa2_forward.cu": "bd3691b7ba0441c68e9f9d4b8bb2a09f4fbc3964fdbbd633aa416414164b6687"
+  },
+  "current_build_command": "python -E -s -B cpp_cuda/fa2/build_extension.py --version v1 build_ext --inplace --build-temp /tmp/fa2-v1-build/temp --build-lib /tmp/fa2-v1-build/lib",
+  "parent_source": {
+    "path": "../v0/snapshot/fa2_forward.cu",
+    "version_manifest": "../v0/manifest.json",
+    "note": "Reference the parent archive directly; no duplicate V0 source in V1."
+  },
+  "snapshot_policy": {
+    "core_source": "snapshot/fa2_forward.cu",
+    "measured_binary": "binaries/",
+    "shared_files": "Workspace references; no copies of binding, build scripts, Python wrappers or tests."
+  },
+  "workspace_references": {
+    "binding": "../../../../cpp_cuda/fa2/common/binding.cpp",
+    "build": "../../../../cpp_cuda/fa2/build_extension.py",
+    "wrapper": "../../../../src/cuda_fa2_forward.py",
+    "registry": "../../../../src/forward_registry.py",
+    "benchmark": "../../../../scripts/benchmark_attention.py",
+    "profile": "../../../../scripts/profile_attention.py",
+    "tests": "../../../../tests/test_cuda_fa2_forward.py",
+    "long_sequence_validation": "../../../../tests/test_cuda_fa2_forward.py",
+    "extension_identity": "../../../../src/cuda_fa2_forward.py"
+  }
+}

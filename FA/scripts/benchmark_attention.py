@@ -16,6 +16,7 @@ from src.numerical_verification import (
     REFERENCE_TOLERANCE,
     verify_against_cpu_fp64,
 )
+from src.cuda_fa2_forward import implementation_metadata
 
 
 def parse_args() -> argparse.Namespace:
@@ -77,6 +78,7 @@ def main() -> None:
     payload = {
         "implementation": args.impl,
         "backend": IMPLEMENTATION_BACKENDS[args.impl],
+        **implementation_metadata(args.impl),
         "device": str(device),
         "gpu_name": torch.cuda.get_device_name(device) if device.type == "cuda" else None,
         "compute_capability": list(torch.cuda.get_device_capability(device)) if device.type == "cuda" else None,
