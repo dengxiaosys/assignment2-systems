@@ -133,17 +133,19 @@ class CudaFa2NumericalTests(unittest.TestCase):
                         verify_against_cpu_fp64(FORWARD, *inputs, is_causal=causal)
 
     def test_softmax_maximum_changes_across_tiles(self):
-        q = torch.zeros(65, 64, device=DEVICE)
-        q[:, 0] = 1
-        k = torch.zeros_like(q)
-        scores = torch.full((65,), -70.0, device=DEVICE)
-        scores[[0, 31, 32, 63, 64]] = torch.tensor(
-            [-30, 2, 40, 40, 60], device=DEVICE, dtype=scores.dtype,
-        )
-        k[:, 0] = scores * 64**0.5
-        v = torch.randn_like(q)
-        for causal in (False, True):
-            verify_against_cpu_fp64(FORWARD, q, k, v, is_causal=causal)
+        for seq_len in (65, 128, 256):
+            q = torch.zeros(seq_len, 64, device=DEVICE)
+            q[:, 0] = 1
+            k = torch.zeros_like(q)
+            scores = torch.full((seq_len,), -70.0, device=DEVICE)
+            scores[[0, 31, 32, 63, 64, seq_len - 1]] = torch.tensor(
+                [-30, 2, 40, 40, 60, 80], device=DEVICE, dtype=scores.dtype,
+            )
+            k[:, 0] = scores * 64**0.5
+            v = torch.randn_like(q)
+            for causal in (False, True):
+                with self.subTest(seq_len=seq_len, causal=causal):
+                    verify_against_cpu_fp64(FORWARD, q, k, v, is_causal=causal)
 
     def test_cancellation_across_accumulator_groups(self):
         for head_dim in (3, 4, 5, 31, 33, 63, 64, 65, 127, 128):
@@ -160,15 +162,39 @@ class CudaFa2NumericalTests(unittest.TestCase):
     def test_subnormal_probabilities_preserve_large_value_contributions(self):
         for head_dim in (33, 64):
             for score_gap in (86.0, 88.0, 90.0, 96.0):
-                q = torch.zeros(65, head_dim, device=DEVICE)
-                q[:, 0] = 1.0
-                k = torch.zeros_like(q)
-                k[:64, 0] = -score_gap * head_dim**0.5
-                v = torch.zeros_like(q)
-                v[:64] = 1e36
+                for seq_len in ((65, 128, 256) if head_dim == 64 else (65,)):
+                    q = torch.zeros(seq_len, head_dim, device=DEVICE)
+                    q[:, 0] = 1.0
+                    k = torch.zeros_like(q)
+                    k[:-1, 0] = -score_gap * head_dim**0.5
+                    v = torch.zeros_like(q)
+                    v[:-1] = 1e36
+                    for causal in (False, True):
+                        with self.subTest(shape=(seq_len, head_dim), score_gap=score_gap, causal=causal):
+                            verify_against_cpu_fp64(FORWARD, q, k, v, is_causal=causal)
+
+    def test_complete_d64_tiles_and_cancellation(self):
+        for seq_len in (128, 256, 512):
+            for seed in (0, 7):
+                torch.manual_seed(seed)
+                q, k, v = [torch.randn(seq_len, 64, device=DEVICE) for _ in range(3)]
+                v[1::2] = -v[::2]
                 for causal in (False, True):
-                    with self.subTest(head_dim=head_dim, score_gap=score_gap, causal=causal):
+                    with self.subTest(seq_len=seq_len, seed=seed, causal=causal):
                         verify_against_cpu_fp64(FORWARD, q, k, v, is_causal=causal)
+
+    def test_complete_d64_fallback_rescales_large_values(self):
+        # A base held below the new maximum can overflow P*V even though
+        # max-based online softmax and the normalized result remain finite.
+        q = torch.zeros(128, 64, device=DEVICE)
+        q[:, 0] = 1.0
+        k = torch.zeros_like(q)
+        k[64:, 0] = 5.0 * 64**0.5
+        v = torch.zeros_like(q)
+        v[64:] = 1e35
+        for causal in (False, True):
+            with self.subTest(causal=causal):
+                verify_against_cpu_fp64(FORWARD, q, k, v, is_causal=causal)
 
     def test_contiguous_inputs_with_unaligned_storage_offset(self):
         for head_dim in (4, 32, 64, 128):
@@ -243,7 +269,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
     parser.add_argument(
-        "--impl", choices=("cuda_fa2", "cuda_fa2_v1", "cuda_fa2_v2", "cuda_fa2_v3", "cuda_fa2_v4"),
+        "--impl", choices=("cuda_fa2", "cuda_fa2_v1", "cuda_fa2_v2", "cuda_fa2_v3", "cuda_fa2_v4", "cuda_fa2_v5"),
         default="cuda_fa2",
     )
     parser.add_argument("--long-sequence", action="store_true", help="Also check sampled rows at S=16384, d=64")

@@ -1,0 +1,55 @@
+{
+  "implementation": "cuda_fa2_v5",
+  "backend": "custom_cpp_cuda_fa2_sliced_query_simt_fp32",
+  "cuda_fa2_version": "v5",
+  "extension_module": "src.cuda_fa2_v5_extension",
+  "extension_path": "/home/dengxiao/code_repos/institutionalized/stanford_cs336/assignments/assignment2-systems/FA/src/cuda_fa2_v5_extension.cpython-311-x86_64-linux-gnu.so",
+  "extension_sha256": "f8bd20d59f4a8213b981ff6198c0d272b4fc43cf3087a278a692cbdd0e994d7f",
+  "device": "cuda",
+  "gpu_name": "NVIDIA GeForce GTX 1060",
+  "compute_capability": [
+    6,
+    1
+  ],
+  "torch_version": "2.6.0+cu124",
+  "torch_cuda_build": "12.4",
+  "dtype": "torch.float32",
+  "tf32": false,
+  "qkv_shape": [
+    16384,
+    64
+  ],
+  "causal": false,
+  "cpu_threads": 1,
+  "seed": 0,
+  "warmup": 5,
+  "iterations_per_repeat": 20,
+  "repeats": 5,
+  "verified": false,
+  "verification_rtol": null,
+  "verification_atol": null,
+  "max_abs_error_vs_cpu_fp64": null,
+  "materializes_full_attention_matrices": false,
+  "native_s_matrix_bytes": 1073741824,
+  "native_p_matrix_bytes": 1073741824,
+  "native_s_plus_p_bytes": 2147483648,
+  "peak_additional_cuda_allocated_bytes": 33882624,
+  "wall_ms_mean": 21.937331129884114,
+  "wall_ms_median": 21.918949000246357,
+  "wall_ms_samples": [
+    22.12803285001428,
+    21.80230704980204,
+    21.918949000246357,
+    21.916985449934145,
+    21.920381299423752
+  ],
+  "cuda_event_ms_mean": 21.93547546386719,
+  "cuda_event_ms_median": 21.917286682128907,
+  "cuda_event_ms_samples": [
+    22.125926208496093,
+    21.800071716308594,
+    21.917286682128907,
+    21.915321350097656,
+    21.91877136230469
+  ]
+}

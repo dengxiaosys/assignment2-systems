@@ -1,0 +1,10 @@
+test_delegates_cuda_fa2_support_check (tests.test_forward_registry.ForwardRegistryTests.test_delegates_cuda_fa2_support_check) ... ok
+test_delegates_memory_efficient_support_check (tests.test_forward_registry.ForwardRegistryTests.test_delegates_memory_efficient_support_check) ... ok
+test_delegates_versioned_support_check (tests.test_forward_registry.ForwardRegistryTests.test_delegates_versioned_support_check) ... ok
+test_rejects_unknown_implementation (tests.test_forward_registry.ForwardRegistryTests.test_rejects_unknown_implementation) ... ok
+test_resolves_named_implementations (tests.test_forward_registry.ForwardRegistryTests.test_resolves_named_implementations) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.004s
+
+OK

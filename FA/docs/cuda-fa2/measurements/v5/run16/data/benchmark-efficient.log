@@ -1,0 +1,51 @@
+{
+  "implementation": "efficient",
+  "backend": "pytorch_sdpa_efficient_attention",
+  "device": "cuda",
+  "gpu_name": "NVIDIA GeForce GTX 1060",
+  "compute_capability": [
+    6,
+    1
+  ],
+  "torch_version": "2.6.0+cu124",
+  "torch_cuda_build": "12.4",
+  "dtype": "torch.float32",
+  "tf32": false,
+  "qkv_shape": [
+    16384,
+    64
+  ],
+  "causal": false,
+  "cpu_threads": 1,
+  "seed": 0,
+  "warmup": 5,
+  "iterations_per_repeat": 20,
+  "repeats": 5,
+  "verified": false,
+  "verification_rtol": null,
+  "verification_atol": null,
+  "max_abs_error_vs_cpu_fp64": null,
+  "materializes_full_attention_matrices": false,
+  "native_s_matrix_bytes": 1073741824,
+  "native_p_matrix_bytes": 1073741824,
+  "native_s_plus_p_bytes": 2147483648,
+  "peak_additional_cuda_allocated_bytes": 4194304,
+  "wall_ms_mean": 36.139250510168495,
+  "wall_ms_median": 36.112086749926675,
+  "wall_ms_samples": [
+    35.95585170041886,
+    36.09249080036534,
+    36.112086749926675,
+    36.22705695015611,
+    36.308766349975485
+  ],
+  "cuda_event_ms_mean": 36.137449951171874,
+  "cuda_event_ms_median": 36.110357666015624,
+  "cuda_event_ms_samples": [
+    35.953921508789065,
+    36.090667724609375,
+    36.110357666015624,
+    36.22528076171875,
+    36.30702209472656
+  ]
+}

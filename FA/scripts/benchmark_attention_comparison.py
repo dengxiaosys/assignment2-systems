@@ -8,7 +8,7 @@ import torch
 
 from src.benchmark_measurement import measure_latency
 from src.cuda_fa2_forward import implementation_metadata
-from src.forward_registry import get_attention_forward, validate_implementation
+from src.forward_registry import IMPLEMENTATION_BACKENDS, get_attention_forward, validate_implementation
 from src.numerical_verification import REFERENCE_TOLERANCE, reference_row
 
 
@@ -27,10 +27,10 @@ def sampled_error(forward, inputs, causal):
     return records
 
 
-def compare_case(shape, causal, seed, rounds, iterations, warmup):
+def compare_case(shape, causal, seed, rounds, iterations, warmup, implementation):
     torch.manual_seed(seed)
     inputs = [torch.randn(*shape, device="cuda") for _ in range(3)]
-    implementations = ("cuda_fa2_v4", "efficient")
+    implementations = (implementation, "efficient")
     forwards = {name: get_attention_forward(name) for name in implementations}
     checks = {}
     for name, forward in forwards.items():
@@ -44,7 +44,7 @@ def compare_case(shape, causal, seed, rounds, iterations, warmup):
             operation = lambda: forwards[name](*inputs, is_causal=causal)
             pair[name] = measure_latency(operation, torch.device("cuda"), warmup, iterations, 1)
         pair["efficient_over_custom"] = (
-            pair["efficient"]["cuda_event_ms_mean"] / pair["cuda_fa2_v4"]["cuda_event_ms_mean"]
+            pair["efficient"]["cuda_event_ms_mean"] / pair[implementation]["cuda_event_ms_mean"]
         )
         samples.append(pair)
     return {
@@ -56,6 +56,7 @@ def compare_case(shape, causal, seed, rounds, iterations, warmup):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--suite", choices=("paired", "matrix"), required=True)
+    parser.add_argument("--impl", choices=tuple(IMPLEMENTATION_BACKENDS), default="cuda_fa2_v4")
     parser.add_argument("--output-json", type=Path, required=True)
     args = parser.parse_args()
     torch.set_num_threads(1)
@@ -69,7 +70,7 @@ def main():
         cases = [(shape, causal, 0) for shape in shapes for causal in (False, True)]
         rounds, iterations, warmup = 3, 10, 5
     payload = {
-        "suite": args.suite, **implementation_metadata("cuda_fa2_v4"),
+        "suite": args.suite, "implementation": args.impl, **implementation_metadata(args.impl),
         "gpu": torch.cuda.get_device_name(), "torch": torch.__version__,
         "cuda_build": torch.version.cuda, "dtype": "float32", "tf32": False, "cpu_threads": 1,
         "warmup_per_batch": warmup, "iterations_per_batch": iterations,
@@ -79,7 +80,7 @@ def main():
     }
     args.output_json.parent.mkdir(parents=True, exist_ok=True)
     for shape, causal, seed in cases:
-        case = compare_case(shape, causal, seed, rounds, iterations, warmup)
+        case = compare_case(shape, causal, seed, rounds, iterations, warmup, args.impl)
         payload["cases"].append(case)
         args.output_json.write_text(json.dumps(payload, indent=2, allow_nan=False) + "\n")
         print(

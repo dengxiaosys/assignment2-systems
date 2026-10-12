@@ -1,0 +1,6 @@
+running build_ext
+/home/dengxiao/miniconda3/envs/nanovllm/lib/python3.11/site-packages/torch/utils/cpp_extension.py:448: UserWarning: The detected CUDA version (12.8) has a minor version mismatch with the version that was used to compile PyTorch (12.4). Most likely this shouldn't be a problem.
+  warnings.warn(CUDA_MISMATCH_WARN.format(cuda_str_version, torch.version.cuda))
+/home/dengxiao/miniconda3/envs/nanovllm/lib/python3.11/site-packages/torch/utils/cpp_extension.py:458: UserWarning: There are no g++ version bounds defined for CUDA version 12.8
+  warnings.warn(f'There are no {compiler_name} version bounds defined for CUDA version {cuda_str_version}')
+copying /tmp/fa2-v5-build/lib/src/cuda_fa2_v5_extension.cpython-311-x86_64-linux-gnu.so -> src

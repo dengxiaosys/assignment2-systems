@@ -1,0 +1,7 @@
+{
+  "build": 0,
+  "schedule": 0,
+  "cuda-validation": 0,
+  "benchmark-custom": 0,
+  "benchmark-efficient": 0
+}

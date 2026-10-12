@@ -1,0 +1,25 @@
+========= COMPUTE-SANITIZER
+{
+  "implementation": "cuda_fa2_v5",
+  "backend": "custom_cpp_cuda_fa2_sliced_query_simt_fp32",
+  "cuda_fa2_version": "v5",
+  "extension_module": "src.cuda_fa2_v5_extension",
+  "extension_path": "/home/dengxiao/code_repos/institutionalized/stanford_cs336/assignments/assignment2-systems/FA/src/cuda_fa2_v5_extension.cpython-311-x86_64-linux-gnu.so",
+  "extension_sha256": "eb08ef9a06f2c336668281b11c43e506cb493df72f3d901c489b3c7863bb2d16",
+  "python": "/home/dengxiao/miniconda3/envs/nanovllm/bin/python",
+  "torch": "2.6.0+cu124",
+  "cuda_build": "12.4",
+  "gpu": "NVIDIA GeForce GTX 1060",
+  "compute_capability": [
+    6,
+    1
+  ],
+  "qkv_shape": [
+    256,
+    64
+  ],
+  "dtype": "torch.float32",
+  "causal": false,
+  "warmup": 0,
+  "captured_iterations": 1
+}

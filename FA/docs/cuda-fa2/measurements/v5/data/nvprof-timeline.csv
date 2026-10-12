@@ -1,0 +1,36 @@
+==1691047== NVPROF is profiling process 1691047, command: /home/dengxiao/miniconda3/envs/nanovllm/bin/python -m scripts.profile_attention --impl cuda_fa2_v5 --no-causal --warmup 1
+{
+  "implementation": "cuda_fa2_v5",
+  "backend": "custom_cpp_cuda_fa2_bounded_split_simt_fp32",
+  "cuda_fa2_version": "v5",
+  "extension_module": "src.cuda_fa2_v5_extension",
+  "extension_path": "/home/dengxiao/code_repos/institutionalized/stanford_cs336/assignments/assignment2-systems/FA/src/cuda_fa2_v5_extension.cpython-311-x86_64-linux-gnu.so",
+  "extension_sha256": "52bc53fce133f624796695799d67a69d08de8505d1f5e26ba1bd25844e126f0d",
+  "python": "/home/dengxiao/miniconda3/envs/nanovllm/bin/python",
+  "torch": "2.6.0+cu124",
+  "cuda_build": "12.4",
+  "gpu": "NVIDIA GeForce GTX 1060",
+  "compute_capability": [
+    6,
+    1
+  ],
+  "qkv_shape": [
+    16384,
+    64
+  ],
+  "dtype": "torch.float32",
+  "causal": false,
+  "warmup": 1,
+  "captured_iterations": 1
+}
+Capture finished: one forward call. Inspect the external profiler report.
+==1691047== Profiling application: /home/dengxiao/miniconda3/envs/nanovllm/bin/python -m scripts.profile_attention --impl cuda_fa2_v5 --no-causal --warmup 1
+==1691047== Profiling result:
+"Start","Duration","Grid X","Grid Y","Grid Z","Block X","Block Y","Block Z","Registers Per Thread","Static SMem","Dynamic SMem","Device","Context","Stream","Name","Correlation_ID"
+ms,ms,,,,,,,,KB,KB,,,,,
+239.294424,0.001472,1,1,1,128,1,1,9,0.000000,0.000000,"NVIDIA GeForce GTX 1060 (0)","1","7","void at::native::vectorized_elementwise_kernel<int=4, at::native::FillFunctor<int>, std::array<char*, unsigned long=1>>(int, int, at::native::FillFunctor<int>)",36
+239.308056,0.135136,256,2,2,32,8,1,32,4.125000,0.000000,"NVIDIA GeForce GTX 1060 (0)","1","7","packed_qk::prepare_with_bounds(float const *, float const *, float const *, float*, unsigned int*)",42
+239.443608,22.435227,128,5,1,128,1,1,224,48.000000,0.000000,"NVIDIA GeForce GTX 1060 (0)","1","7","void fixed_prefetch::forward<bool=0>(float const *, float const , float const , float*, int, float, float const , float const *, int)",57
+261.879315,0.004320,256,1,1,64,1,1,220,0.000000,21.000000,"NVIDIA GeForce GTX 1060 (0)","1","7","void maxwell_d64::fallback<bool=0>(float const *, float const , float const , float*, int, float, float const )",58
+261.884051,0.168096,1024,1,1,256,1,1,42,0.000000,0.000000,"NVIDIA GeForce GTX 1060 (0)","1","7","split_attention::combine(float const *, float const *, float*, int, int, float const *, float)",59
+==1691047== Generated result file: /home/dengxiao/code_repos/institutionalized/stanford_cs336/assignments/assignment2-systems/FA/docs/cuda-fa2/measurements/v5/profiles/forward.nvvp

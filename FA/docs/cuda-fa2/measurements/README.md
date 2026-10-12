@@ -1,6 +1,6 @@
 # CUDA FA2 测量索引
 
-每个代码版本的测量单独归档到`v0/`、`v1/`、`v2/`、`v3/`、`v4/`等目录。目录名和文件名不使用日期；测量日期保留在文档与 `manifest.json` 中。不同版本各自记录源码、实际加载的二进制、运行环境、理论预期和原始结果。
+每个代码版本的测量单独归档到`v0/`至`v5/`等目录。目录名和文件名不使用日期；测量日期保留在文档与 `manifest.json` 中。不同版本各自记录源码、实际加载的二进制、运行环境、理论预期和原始结果。
 
 ## 1. 版本与测量状态
 
@@ -11,6 +11,7 @@
 | V2 | 以 V1 为父版本；八个 query / CTA 共享 32-key K/V tile，分块 online softmax | [简明 FAQ](v2/faq.md)、[优化设计](v2/optimization-design.md)、[编译执行](v2/build-and-run.md)、[实测分析](v2/perf_v2.md)、[版本清单](v2/manifest.json) | 已编译、验证、三类 sanitizer 与 29 项 counters；non-causal 143.560 ms，相比 V1 快 2.425 倍 |
 | V3 | 以 V2 为父版本；64 query / CTA、寄存器微矩阵、shared 阶段复用与受控展开 | [优化设计](v3/optimization-design.md)、[efficient 分析](v3/efficient-analysis.md)、[编译执行](v3/build-and-run.md)、[实测分析](v3/perf_v3.md)、[版本清单](v3/manifest.json) | non-causal 47.459 ms，相比 V2 快 3.025 倍；全数值/三类 sanitizer/29 项 counters，保留消融与失败记录 |
 | V4 | 64×64 SIMT tile、stage8预取、P置换、aligned向量搬运 | [理论与消融](v4/optimization-design.md)、[编译执行](v4/build-and-run.md)、[实测分析](v4/perf_v4.md)、[版本清单](v4/manifest.json) | 主形状均值32.886 ms，对同轮efficient36.103 ms；30组交替计时全部领先，48案例抽样校验和三类sanitizer/29项counters通过；d>64等边界见报告 |
+| V5 | 128×64 SIMT tile、范数界固定基准、split线性归并、完整shared与跨阶段预取 | [性能总结](v5/perf_v5.md)、[理论与消融](v5/optimization-design.md)、[编译执行](v5/build-and-run.md)、[版本清单](v5/manifest.json) | 独立中位数21.626 ms，对照36.063 ms；成对耗时比non-causal60.43%、causal61.52%，用户认可为本版结束条件；17项数值/三类sanitizer/29项counters与48案例完成 |
 
 后续版本先添加优化前设计，再补充各自实验与证据。通用工具说明见 [性能调优工具与学习路线](../profiling-tools.md)。
 
@@ -49,7 +50,9 @@ V3 延续 V2 的核心快照与二进制布局，增加 `efficient-analysis.md`�
 
 V4保留run1–run21的探索与消融，最终选定run20，主目录保存最终源码、二进制和独立计时。manifest集中记录每轮状态、资源、哈希及去重后的路径映射；byte-identical的stdout/JSON或验证输出只留一份。`benchmark-paired.json`保存主形状交替顺序的全部批次，`benchmark-matrix.json`保存多形状计时和CPU FP64抽样行证据。
 
-FA2的[源码目录](../../../cpp_cuda/fa2/README.md)使用`common/`、`v0/`至`v4/`与单一`build_extension.py --version`入口。每版 `snapshot/` 仅保留核心 CUDA 实现，公共绑定、脚本和测试直接引用工作区；实际扩展单独归档，V0 历史目录保持原有二进制位置。多轮独立采集用 `run1/`、`run2/` 区分，保留各轮条件与原始输出。
+V5最终选定run97算法组合，run100修复范围外在线softmax，run101清理并验证最终版本。主目录延续`perf_v5.md`、`optimization-design.md`、`build-and-run.md`、`manifest.json`和`data/snapshot/binaries/profiles/assets`结构。源码按7个职责文件组织，历史候选只在快照中保留；byte-identical快照/二进制去重，manifest提供原路径到实际保留文件的映射。run72为离线模型，无GPU计时；run12未重编译，明确标为无效。原始60%参考与最终全部样本均保留，不因用户接受约40%收益而改写数据。
+
+FA2的[源码目录](../../../cpp_cuda/fa2/README.md)使用`common/`、`v0/`至`v5/`与单一`build_extension.py --version`入口。每版 `snapshot/` 保留核心 CUDA 实现及必要版本头文件，公共绑定、脚本和测试直接引用工作区；实际扩展单独归档，V0 历史目录保持原有二进制位置。多轮独立采集用 `run1/`、`run2/` 区分，保留各轮条件与原始输出。
 
 ## 3. 优化前后比较
 

@@ -22,7 +22,9 @@ PROJECT_ROOT = SOURCE_DIR.parents[1]
 
 def main() -> None:
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("--version", choices=("v0", "v1", "v2", "v3", "v4"), default="v1")
+    parser.add_argument("--version", choices=("v0", "v1", "v2", "v3", "v4", "v5"), default="v1")
+    parser.add_argument("--register-usage-level", type=int, choices=range(11))
+    parser.add_argument("--max-registers", type=int)
     args, setup_args = parser.parse_known_args()
     sys.argv = [sys.argv[0], *setup_args]
     module_name = (
@@ -37,6 +39,12 @@ def main() -> None:
     from setuptools import setup
     from torch.utils.cpp_extension import BuildExtension, CUDAExtension
 
+    ptxas_options = "-v"
+    if args.register_usage_level is not None:
+        ptxas_options += f",--register-usage-level={args.register_usage_level}"
+    if args.max_registers is not None:
+        ptxas_options += f",--maxrregcount={args.max_registers}"
+
     setup(
         name=f"cs336-cuda-fa2-{args.version}",
         packages=["src"],
@@ -48,9 +56,10 @@ def main() -> None:
                     str(SOURCE_DIR / "common" / "binding.cpp"),
                     str(SOURCE_DIR / args.version / "fa2_forward.cu"),
                 ],
+                depends=[str(path) for path in (SOURCE_DIR / args.version).glob("*.cuh")],
                 extra_compile_args={
                     "cxx": ["-O2"],
-                    "nvcc": ["-O2", "-lineinfo", "--ptxas-options=-v"],
+                    "nvcc": ["-O2", "-lineinfo", f"--ptxas-options={ptxas_options}"],
                 },
             )
         ],

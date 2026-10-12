@@ -1,0 +1,55 @@
+==1565923== NVPROF is profiling process 1565923, command: /home/dengxiao/miniconda3/envs/nanovllm/bin/python -m scripts.profile_attention --impl cuda_fa2_v5 --no-causal --warmup 1
+{
+  "implementation": "cuda_fa2_v5",
+  "backend": "custom_cpp_cuda_fa2_sliced_query_simt_fp32",
+  "cuda_fa2_version": "v5",
+  "extension_module": "src.cuda_fa2_v5_extension",
+  "extension_path": "/home/dengxiao/code_repos/institutionalized/stanford_cs336/assignments/assignment2-systems/FA/src/cuda_fa2_v5_extension.cpython-311-x86_64-linux-gnu.so",
+  "extension_sha256": "a8b72dcb1f7adce6424db00ce228dddec422b18a99452ff7b4378eabf837e6c3",
+  "python": "/home/dengxiao/miniconda3/envs/nanovllm/bin/python",
+  "torch": "2.6.0+cu124",
+  "cuda_build": "12.4",
+  "gpu": "NVIDIA GeForce GTX 1060",
+  "compute_capability": [
+    6,
+    1
+  ],
+  "qkv_shape": [
+    16384,
+    64
+  ],
+  "dtype": "torch.float32",
+  "causal": false,
+  "warmup": 1,
+  "captured_iterations": 1
+}
+==1565923== Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+Capture finished: one forward call. Inspect the external profiler report.
+==1565923== Profiling application: /home/dengxiao/miniconda3/envs/nanovllm/bin/python -m scripts.profile_attention --impl cuda_fa2_v5 --no-causal --warmup 1
+==1565923== Profiling result:
+==1565923== Metric result:
+"Device","Kernel","Invocations","Metric Name","Metric Description","Min","Max","Avg"
+"NVIDIA GeForce GTX 1060 (0)","packed_qk::prepare(float const *, float const *, float*)",1,"achieved_occupancy","Achieved Occupancy",0.948786,0.948786,0.948786
+"NVIDIA GeForce GTX 1060 (0)","packed_qk::prepare(float const *, float const *, float*)",1,"eligible_warps_per_cycle","Eligible Warps Per Active Cycle",1.255863,1.255863,1.255863
+"NVIDIA GeForce GTX 1060 (0)","packed_qk::prepare(float const *, float const *, float*)",1,"issue_slot_utilization","Issue Slot Utilization",19.818993%,19.818993%,19.818993%
+"NVIDIA GeForce GTX 1060 (0)","packed_qk::prepare(float const *, float const *, float*)",1,"stall_exec_dependency","Issue Stall Reasons (Execution Dependency)",14.574860%,14.574860%,14.574860%
+"NVIDIA GeForce GTX 1060 (0)","packed_qk::prepare(float const *, float const *, float*)",1,"stall_inst_fetch","Issue Stall Reasons (Instructions Fetch)",0.582984%,0.582984%,0.582984%
+"NVIDIA GeForce GTX 1060 (0)","packed_qk::prepare(float const *, float const *, float*)",1,"stall_memory_dependency","Issue Stall Reasons (Data Request)",65.521487%,65.521487%,65.521487%
+"NVIDIA GeForce GTX 1060 (0)","packed_qk::prepare(float const *, float const *, float*)",1,"stall_sync","Issue Stall Reasons (Synchronization)",7.430179%,7.430179%,7.430179%
+"NVIDIA GeForce GTX 1060 (0)","packed_qk::prepare(float const *, float const *, float*)",1,"shared_load_transactions_per_request","Shared Memory Load Transactions Per Request",1.000000,1.000000,1.000000
+"NVIDIA GeForce GTX 1060 (0)","packed_qk::prepare(float const *, float const *, float*)",1,"shared_store_transactions_per_request","Shared Memory Store Transactions Per Request",1.000000,1.000000,1.000000
+"NVIDIA GeForce GTX 1060 (0)","packed_qk::prepare(float const *, float const *, float*)",1,"inst_executed","Instructions Executed",1294336,1294336,1294336
+"NVIDIA GeForce GTX 1060 (0)","packed_qk::prepare(float const *, float const *, float*)",1,"flop_count_sp_fma","Floating Point Operations(Single Precision FMA)",0,0,0
+"NVIDIA GeForce GTX 1060 (0)","packed_qk::prepare(float const *, float const *, float*)",1,"ipc","Executed IPC",0.893191,0.893191,0.893191
+"NVIDIA GeForce GTX 1060 (0)","void warp_pipeline::forward<bool=0>(float const *, float const , float const , float*, int, float)",1,"achieved_occupancy","Achieved Occupancy",0.184601,0.184601,0.184601
+"NVIDIA GeForce GTX 1060 (0)","void warp_pipeline::forward<bool=0>(float const *, float const , float const , float*, int, float)",1,"eligible_warps_per_cycle","Eligible Warps Per Active Cycle",5.864908,5.864908,5.864908
+"NVIDIA GeForce GTX 1060 (0)","void warp_pipeline::forward<bool=0>(float const *, float const , float const , float*, int, float)",1,"issue_slot_utilization","Issue Slot Utilization",77.976527%,77.976527%,77.976527%
+"NVIDIA GeForce GTX 1060 (0)","void warp_pipeline::forward<bool=0>(float const *, float const , float const , float*, int, float)",1,"stall_exec_dependency","Issue Stall Reasons (Execution Dependency)",19.445643%,19.445643%,19.445643%
+"NVIDIA GeForce GTX 1060 (0)","void warp_pipeline::forward<bool=0>(float const *, float const , float const , float*, int, float)",1,"stall_inst_fetch","Issue Stall Reasons (Instructions Fetch)",15.746070%,15.746070%,15.746070%
+"NVIDIA GeForce GTX 1060 (0)","void warp_pipeline::forward<bool=0>(float const *, float const , float const , float*, int, float)",1,"stall_memory_dependency","Issue Stall Reasons (Data Request)",1.421333%,1.421333%,1.421333%
+"NVIDIA GeForce GTX 1060 (0)","void warp_pipeline::forward<bool=0>(float const *, float const , float const , float*, int, float)",1,"stall_sync","Issue Stall Reasons (Synchronization)",24.378776%,24.378776%,24.378776%
+"NVIDIA GeForce GTX 1060 (0)","void warp_pipeline::forward<bool=0>(float const *, float const , float const , float*, int, float)",1,"shared_load_transactions_per_request","Shared Memory Load Transactions Per Request",2.000000,2.000000,2.000000
+"NVIDIA GeForce GTX 1060 (0)","void warp_pipeline::forward<bool=0>(float const *, float const , float const , float*, int, float)",1,"shared_store_transactions_per_request","Shared Memory Store Transactions Per Request",4.485015,4.485015,4.485015
+"NVIDIA GeForce GTX 1060 (0)","void warp_pipeline::forward<bool=0>(float const *, float const , float const , float*, int, float)",1,"inst_executed","Instructions Executed",1358116864,1358116864,1358116864
+"NVIDIA GeForce GTX 1060 (0)","void warp_pipeline::forward<bool=0>(float const *, float const , float const , float*, int, float)",1,"flop_count_sp_fma","Floating Point Operations(Single Precision FMA)",34393554944,34393554944,34393554944
+"NVIDIA GeForce GTX 1060 (0)","void warp_pipeline::forward<bool=0>(float const *, float const , float const , float*, int, float)",1,"ipc","Executed IPC",3.320695,3.320695,3.320695

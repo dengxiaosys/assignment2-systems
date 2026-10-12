@@ -11,6 +11,7 @@ from src.cuda_fa2_forward import (
     cuda_fa2_v2_attention_forward,
     cuda_fa2_v3_attention_forward,
     cuda_fa2_v4_attention_forward,
+    cuda_fa2_v5_attention_forward,
 )
 from src.forward_registry import (
     get_attention_forward,
@@ -35,6 +36,7 @@ class ForwardRegistryTests(unittest.TestCase):
         self.assertIs(get_attention_forward("cuda_fa2_v2"), cuda_fa2_v2_attention_forward)
         self.assertIs(get_attention_forward("cuda_fa2_v3"), cuda_fa2_v3_attention_forward)
         self.assertIs(get_attention_forward("cuda_fa2_v4"), cuda_fa2_v4_attention_forward)
+        self.assertIs(get_attention_forward("cuda_fa2_v5"), cuda_fa2_v5_attention_forward)
 
     def test_rejects_unknown_implementation(self):
         q = torch.randn(7, 16)
@@ -60,7 +62,7 @@ class ForwardRegistryTests(unittest.TestCase):
 
     def test_delegates_versioned_support_check(self):
         q = torch.randn(7, 16)
-        for version in ("v1", "v2", "v3", "v4"):
+        for version in ("v1", "v2", "v3", "v4", "v5"):
             with self.subTest(version=version):
                 with patch("src.forward_registry.validate_cuda_fa2_support") as validate_support:
                     validate_implementation(f"cuda_fa2_{version}", q, q, q, is_causal=True)

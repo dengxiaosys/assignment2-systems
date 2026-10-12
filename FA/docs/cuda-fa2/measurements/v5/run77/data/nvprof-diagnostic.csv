@@ -1,0 +1,103 @@
+==1594097== NVPROF is profiling process 1594097, command: /home/dengxiao/miniconda3/envs/nanovllm/bin/python -m scripts.profile_attention --impl cuda_fa2_v5 --no-causal --warmup 1
+{
+  "implementation": "cuda_fa2_v5",
+  "backend": "custom_cpp_cuda_fa2_sliced_query_simt_fp32",
+  "cuda_fa2_version": "v5",
+  "extension_module": "src.cuda_fa2_v5_extension",
+  "extension_path": "/home/dengxiao/code_repos/institutionalized/stanford_cs336/assignments/assignment2-systems/FA/src/cuda_fa2_v5_extension.cpython-311-x86_64-linux-gnu.so",
+  "extension_sha256": "aab3f659e9b5a59ce4f28a1727d41aea32847982ef3bdd8208616de7d7f87881",
+  "python": "/home/dengxiao/miniconda3/envs/nanovllm/bin/python",
+  "torch": "2.6.0+cu124",
+  "cuda_build": "12.4",
+  "gpu": "NVIDIA GeForce GTX 1060",
+  "compute_capability": [
+    6,
+    1
+  ],
+  "qkv_shape": [
+    16384,
+    64
+  ],
+  "dtype": "torch.float32",
+  "causal": false,
+  "warmup": 1,
+  "captured_iterations": 1
+}
+==1594097== Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+Capture finished: one forward call. Inspect the external profiler report.
+==1594097== Profiling application: /home/dengxiao/miniconda3/envs/nanovllm/bin/python -m scripts.profile_attention --impl cuda_fa2_v5 --no-causal --warmup 1
+==1594097== Profiling result:
+==1594097== Metric result:
+"Device","Kernel","Invocations","Metric Name","Metric Description","Min","Max","Avg"
+"NVIDIA GeForce GTX 1060 (0)","packed_qk::prepare(float const *, float const *, float*)",1,"achieved_occupancy","Achieved Occupancy",0.952093,0.952093,0.952093
+"NVIDIA GeForce GTX 1060 (0)","packed_qk::prepare(float const *, float const *, float*)",1,"eligible_warps_per_cycle","Eligible Warps Per Active Cycle",1.177305,1.177305,1.177305
+"NVIDIA GeForce GTX 1060 (0)","packed_qk::prepare(float const *, float const *, float*)",1,"issue_slot_utilization","Issue Slot Utilization",18.865842%,18.865842%,18.865842%
+"NVIDIA GeForce GTX 1060 (0)","packed_qk::prepare(float const *, float const *, float*)",1,"stall_exec_dependency","Issue Stall Reasons (Execution Dependency)",15.132709%,15.132709%,15.132709%
+"NVIDIA GeForce GTX 1060 (0)","packed_qk::prepare(float const *, float const *, float*)",1,"stall_inst_fetch","Issue Stall Reasons (Instructions Fetch)",0.574382%,0.574382%,0.574382%
+"NVIDIA GeForce GTX 1060 (0)","packed_qk::prepare(float const *, float const *, float*)",1,"stall_memory_dependency","Issue Stall Reasons (Data Request)",64.402395%,64.402395%,64.402395%
+"NVIDIA GeForce GTX 1060 (0)","packed_qk::prepare(float const *, float const *, float*)",1,"stall_sync","Issue Stall Reasons (Synchronization)",7.151540%,7.151540%,7.151540%
+"NVIDIA GeForce GTX 1060 (0)","packed_qk::prepare(float const *, float const *, float*)",1,"shared_load_transactions_per_request","Shared Memory Load Transactions Per Request",1.000000,1.000000,1.000000
+"NVIDIA GeForce GTX 1060 (0)","packed_qk::prepare(float const *, float const *, float*)",1,"shared_store_transactions_per_request","Shared Memory Store Transactions Per Request",1.000000,1.000000,1.000000
+"NVIDIA GeForce GTX 1060 (0)","packed_qk::prepare(float const *, float const *, float*)",1,"inst_executed","Instructions Executed",1294336,1294336,1294336
+"NVIDIA GeForce GTX 1060 (0)","packed_qk::prepare(float const *, float const *, float*)",1,"flop_count_sp_fma","Floating Point Operations(Single Precision FMA)",0,0,0
+"NVIDIA GeForce GTX 1060 (0)","packed_qk::prepare(float const *, float const *, float*)",1,"ipc","Executed IPC",0.850235,0.850235,0.850235
+"NVIDIA GeForce GTX 1060 (0)","void fixed_prefetch::forward<bool=0>(float const *, float const , float const , float*, int, float, float const , float const *, int)",1,"achieved_occupancy","Achieved Occupancy",0.124277,0.124277,0.124277
+"NVIDIA GeForce GTX 1060 (0)","void fixed_prefetch::forward<bool=0>(float const *, float const , float const , float*, int, float, float const , float const *, int)",1,"eligible_warps_per_cycle","Eligible Warps Per Active Cycle",5.290127,5.290127,5.290127
+"NVIDIA GeForce GTX 1060 (0)","void fixed_prefetch::forward<bool=0>(float const *, float const , float const , float*, int, float, float const , float const *, int)",1,"issue_slot_utilization","Issue Slot Utilization",83.683451%,83.683451%,83.683451%
+"NVIDIA GeForce GTX 1060 (0)","void fixed_prefetch::forward<bool=0>(float const *, float const , float const , float*, int, float, float const , float const *, int)",1,"stall_exec_dependency","Issue Stall Reasons (Execution Dependency)",24.675961%,24.675961%,24.675961%
+"NVIDIA GeForce GTX 1060 (0)","void fixed_prefetch::forward<bool=0>(float const *, float const , float const , float*, int, float, float const , float const *, int)",1,"stall_inst_fetch","Issue Stall Reasons (Instructions Fetch)",10.932211%,10.932211%,10.932211%
+"NVIDIA GeForce GTX 1060 (0)","void fixed_prefetch::forward<bool=0>(float const *, float const , float const , float*, int, float, float const , float const *, int)",1,"stall_memory_dependency","Issue Stall Reasons (Data Request)",0.085484%,0.085484%,0.085484%
+"NVIDIA GeForce GTX 1060 (0)","void fixed_prefetch::forward<bool=0>(float const *, float const , float const , float*, int, float, float const , float const *, int)",1,"stall_sync","Issue Stall Reasons (Synchronization)",9.898002%,9.898002%,9.898002%
+"NVIDIA GeForce GTX 1060 (0)","void fixed_prefetch::forward<bool=0>(float const *, float const , float const , float*, int, float, float const , float const *, int)",1,"shared_load_transactions_per_request","Shared Memory Load Transactions Per Request",1.882150,1.882150,1.882150
+"NVIDIA GeForce GTX 1060 (0)","void fixed_prefetch::forward<bool=0>(float const *, float const , float const , float*, int, float, float const , float const *, int)",1,"shared_store_transactions_per_request","Shared Memory Store Transactions Per Request",5.322078,5.322078,5.322078
+"NVIDIA GeForce GTX 1060 (0)","void fixed_prefetch::forward<bool=0>(float const *, float const , float const , float*, int, float, float const , float const *, int)",1,"inst_executed","Instructions Executed",1282643968,1282643968,1282643968
+"NVIDIA GeForce GTX 1060 (0)","void fixed_prefetch::forward<bool=0>(float const *, float const , float const , float*, int, float, float const , float const *, int)",1,"flop_count_sp_fma","Floating Point Operations(Single Precision FMA)",34628173824,34628173824,34628173824
+"NVIDIA GeForce GTX 1060 (0)","void fixed_prefetch::forward<bool=0>(float const *, float const , float const , float*, int, float, float const , float const *, int)",1,"ipc","Executed IPC",3.607521,3.607521,3.607521
+"NVIDIA GeForce GTX 1060 (0)","score_bounds::prepare(float const *, float const *, float const *, unsigned int*, int)",1,"achieved_occupancy","Achieved Occupancy",0.846738,0.846738,0.846738
+"NVIDIA GeForce GTX 1060 (0)","score_bounds::prepare(float const *, float const *, float const *, unsigned int*, int)",1,"eligible_warps_per_cycle","Eligible Warps Per Active Cycle",1.072327,1.072327,1.072327
+"NVIDIA GeForce GTX 1060 (0)","score_bounds::prepare(float const *, float const *, float const *, unsigned int*, int)",1,"issue_slot_utilization","Issue Slot Utilization",19.680382%,19.680382%,19.680382%
+"NVIDIA GeForce GTX 1060 (0)","score_bounds::prepare(float const *, float const *, float const *, unsigned int*, int)",1,"stall_exec_dependency","Issue Stall Reasons (Execution Dependency)",16.967550%,16.967550%,16.967550%
+"NVIDIA GeForce GTX 1060 (0)","score_bounds::prepare(float const *, float const *, float const *, unsigned int*, int)",1,"stall_inst_fetch","Issue Stall Reasons (Instructions Fetch)",3.089987%,3.089987%,3.089987%
+"NVIDIA GeForce GTX 1060 (0)","score_bounds::prepare(float const *, float const *, float const *, unsigned int*, int)",1,"stall_memory_dependency","Issue Stall Reasons (Data Request)",69.036767%,69.036767%,69.036767%
+"NVIDIA GeForce GTX 1060 (0)","score_bounds::prepare(float const *, float const *, float const *, unsigned int*, int)",1,"stall_sync","Issue Stall Reasons (Synchronization)",0.000000%,0.000000%,0.000000%
+"NVIDIA GeForce GTX 1060 (0)","score_bounds::prepare(float const *, float const *, float const *, unsigned int*, int)",1,"shared_load_transactions_per_request","Shared Memory Load Transactions Per Request",0.000000,0.000000,0.000000
+"NVIDIA GeForce GTX 1060 (0)","score_bounds::prepare(float const *, float const *, float const *, unsigned int*, int)",1,"shared_store_transactions_per_request","Shared Memory Store Transactions Per Request",0.000000,0.000000,0.000000
+"NVIDIA GeForce GTX 1060 (0)","score_bounds::prepare(float const *, float const *, float const *, unsigned int*, int)",1,"inst_executed","Instructions Executed",1032192,1032192,1032192
+"NVIDIA GeForce GTX 1060 (0)","score_bounds::prepare(float const *, float const *, float const *, unsigned int*, int)",1,"flop_count_sp_fma","Floating Point Operations(Single Precision FMA)",65536,65536,65536
+"NVIDIA GeForce GTX 1060 (0)","score_bounds::prepare(float const *, float const *, float const *, unsigned int*, int)",1,"ipc","Executed IPC",0.900378,0.900378,0.900378
+"NVIDIA GeForce GTX 1060 (0)","void at::native::vectorized_elementwise_kernel<int=4, at::native::FillFunctor<int>, std::array<char*, unsigned long=1>>(int, int, at::native::FillFunctor<int>)",1,"achieved_occupancy","Achieved Occupancy",0.058244,0.058244,0.058244
+"NVIDIA GeForce GTX 1060 (0)","void at::native::vectorized_elementwise_kernel<int=4, at::native::FillFunctor<int>, std::array<char*, unsigned long=1>>(int, int, at::native::FillFunctor<int>)",1,"eligible_warps_per_cycle","Eligible Warps Per Active Cycle",0.076464,0.076464,0.076464
+"NVIDIA GeForce GTX 1060 (0)","void at::native::vectorized_elementwise_kernel<int=4, at::native::FillFunctor<int>, std::array<char*, unsigned long=1>>(int, int, at::native::FillFunctor<int>)",1,"issue_slot_utilization","Issue Slot Utilization",1.911589%,1.911589%,1.911589%
+"NVIDIA GeForce GTX 1060 (0)","void at::native::vectorized_elementwise_kernel<int=4, at::native::FillFunctor<int>, std::array<char*, unsigned long=1>>(int, int, at::native::FillFunctor<int>)",1,"stall_exec_dependency","Issue Stall Reasons (Execution Dependency)",18.429003%,18.429003%,18.429003%
+"NVIDIA GeForce GTX 1060 (0)","void at::native::vectorized_elementwise_kernel<int=4, at::native::FillFunctor<int>, std::array<char*, unsigned long=1>>(int, int, at::native::FillFunctor<int>)",1,"stall_inst_fetch","Issue Stall Reasons (Instructions Fetch)",7.754280%,7.754280%,7.754280%
+"NVIDIA GeForce GTX 1060 (0)","void at::native::vectorized_elementwise_kernel<int=4, at::native::FillFunctor<int>, std::array<char*, unsigned long=1>>(int, int, at::native::FillFunctor<int>)",1,"stall_memory_dependency","Issue Stall Reasons (Data Request)",0.000000%,0.000000%,0.000000%
+"NVIDIA GeForce GTX 1060 (0)","void at::native::vectorized_elementwise_kernel<int=4, at::native::FillFunctor<int>, std::array<char*, unsigned long=1>>(int, int, at::native::FillFunctor<int>)",1,"stall_sync","Issue Stall Reasons (Synchronization)",0.000000%,0.000000%,0.000000%
+"NVIDIA GeForce GTX 1060 (0)","void at::native::vectorized_elementwise_kernel<int=4, at::native::FillFunctor<int>, std::array<char*, unsigned long=1>>(int, int, at::native::FillFunctor<int>)",1,"shared_load_transactions_per_request","Shared Memory Load Transactions Per Request",0.000000,0.000000,0.000000
+"NVIDIA GeForce GTX 1060 (0)","void at::native::vectorized_elementwise_kernel<int=4, at::native::FillFunctor<int>, std::array<char*, unsigned long=1>>(int, int, at::native::FillFunctor<int>)",1,"shared_store_transactions_per_request","Shared Memory Store Transactions Per Request",0.000000,0.000000,0.000000
+"NVIDIA GeForce GTX 1060 (0)","void at::native::vectorized_elementwise_kernel<int=4, at::native::FillFunctor<int>, std::array<char*, unsigned long=1>>(int, int, at::native::FillFunctor<int>)",1,"inst_executed","Instructions Executed",56,56,56
+"NVIDIA GeForce GTX 1060 (0)","void at::native::vectorized_elementwise_kernel<int=4, at::native::FillFunctor<int>, std::array<char*, unsigned long=1>>(int, int, at::native::FillFunctor<int>)",1,"flop_count_sp_fma","Floating Point Operations(Single Precision FMA)",0,0,0
+"NVIDIA GeForce GTX 1060 (0)","void at::native::vectorized_elementwise_kernel<int=4, at::native::FillFunctor<int>, std::array<char*, unsigned long=1>>(int, int, at::native::FillFunctor<int>)",1,"ipc","Executed IPC",0.066906,0.066906,0.066906
+"NVIDIA GeForce GTX 1060 (0)","void maxwell_d64::fallback<bool=0>(float const *, float const , float const , float*, int, float, float const )",1,"achieved_occupancy","Achieved Occupancy",0.091001,0.091001,0.091001
+"NVIDIA GeForce GTX 1060 (0)","void maxwell_d64::fallback<bool=0>(float const *, float const , float const , float*, int, float, float const )",1,"eligible_warps_per_cycle","Eligible Warps Per Active Cycle",0.298904,0.298904,0.298904
+"NVIDIA GeForce GTX 1060 (0)","void maxwell_d64::fallback<bool=0>(float const *, float const , float const , float*, int, float, float const )",1,"issue_slot_utilization","Issue Slot Utilization",6.988876%,6.988876%,6.988876%
+"NVIDIA GeForce GTX 1060 (0)","void maxwell_d64::fallback<bool=0>(float const *, float const , float const , float*, int, float, float const )",1,"stall_exec_dependency","Issue Stall Reasons (Execution Dependency)",18.659432%,18.659432%,18.659432%
+"NVIDIA GeForce GTX 1060 (0)","void maxwell_d64::fallback<bool=0>(float const *, float const , float const , float*, int, float, float const )",1,"stall_inst_fetch","Issue Stall Reasons (Instructions Fetch)",18.886163%,18.886163%,18.886163%
+"NVIDIA GeForce GTX 1060 (0)","void maxwell_d64::fallback<bool=0>(float const *, float const , float const , float*, int, float, float const )",1,"stall_memory_dependency","Issue Stall Reasons (Data Request)",26.987898%,26.987898%,26.987898%
+"NVIDIA GeForce GTX 1060 (0)","void maxwell_d64::fallback<bool=0>(float const *, float const , float const , float*, int, float, float const )",1,"stall_sync","Issue Stall Reasons (Synchronization)",0.000000%,0.000000%,0.000000%
+"NVIDIA GeForce GTX 1060 (0)","void maxwell_d64::fallback<bool=0>(float const *, float const , float const , float*, int, float, float const )",1,"shared_load_transactions_per_request","Shared Memory Load Transactions Per Request",0.000000,0.000000,0.000000
+"NVIDIA GeForce GTX 1060 (0)","void maxwell_d64::fallback<bool=0>(float const *, float const , float const , float*, int, float, float const )",1,"shared_store_transactions_per_request","Shared Memory Store Transactions Per Request",0.000000,0.000000,0.000000
+"NVIDIA GeForce GTX 1060 (0)","void maxwell_d64::fallback<bool=0>(float const *, float const , float const , float*, int, float, float const )",1,"inst_executed","Instructions Executed",9728,9728,9728
+"NVIDIA GeForce GTX 1060 (0)","void maxwell_d64::fallback<bool=0>(float const *, float const , float const , float*, int, float, float const )",1,"flop_count_sp_fma","Floating Point Operations(Single Precision FMA)",0,0,0
+"NVIDIA GeForce GTX 1060 (0)","void maxwell_d64::fallback<bool=0>(float const *, float const , float const , float*, int, float, float const )",1,"ipc","Executed IPC",0.268514,0.268514,0.268514
+"NVIDIA GeForce GTX 1060 (0)","fixed_wide::combine(float const *, float const *, float*, int, int, float const *, float)",1,"achieved_occupancy","Achieved Occupancy",0.560440,0.560440,0.560440
+"NVIDIA GeForce GTX 1060 (0)","fixed_wide::combine(float const *, float const *, float*, int, int, float const *, float)",1,"eligible_warps_per_cycle","Eligible Warps Per Active Cycle",0.728065,0.728065,0.728065
+"NVIDIA GeForce GTX 1060 (0)","fixed_wide::combine(float const *, float const *, float*, int, int, float const *, float)",1,"issue_slot_utilization","Issue Slot Utilization",12.723196%,12.723196%,12.723196%
+"NVIDIA GeForce GTX 1060 (0)","fixed_wide::combine(float const *, float const *, float*, int, int, float const *, float)",1,"stall_exec_dependency","Issue Stall Reasons (Execution Dependency)",4.395511%,4.395511%,4.395511%
+"NVIDIA GeForce GTX 1060 (0)","fixed_wide::combine(float const *, float const *, float*, int, int, float const *, float)",1,"stall_inst_fetch","Issue Stall Reasons (Instructions Fetch)",1.361763%,1.361763%,1.361763%
+"NVIDIA GeForce GTX 1060 (0)","fixed_wide::combine(float const *, float const *, float*, int, int, float const *, float)",1,"stall_memory_dependency","Issue Stall Reasons (Data Request)",91.637911%,91.637911%,91.637911%
+"NVIDIA GeForce GTX 1060 (0)","fixed_wide::combine(float const *, float const *, float*, int, int, float const *, float)",1,"stall_sync","Issue Stall Reasons (Synchronization)",0.000000%,0.000000%,0.000000%
+"NVIDIA GeForce GTX 1060 (0)","fixed_wide::combine(float const *, float const *, float*, int, int, float const *, float)",1,"shared_load_transactions_per_request","Shared Memory Load Transactions Per Request",0.000000,0.000000,0.000000
+"NVIDIA GeForce GTX 1060 (0)","fixed_wide::combine(float const *, float const *, float*, int, int, float const *, float)",1,"shared_store_transactions_per_request","Shared Memory Store Transactions Per Request",0.000000,0.000000,0.000000
+"NVIDIA GeForce GTX 1060 (0)","fixed_wide::combine(float const *, float const *, float*, int, int, float const *, float)",1,"inst_executed","Instructions Executed",1245184,1245184,1245184
+"NVIDIA GeForce GTX 1060 (0)","fixed_wide::combine(float const *, float const *, float*, int, int, float const *, float)",1,"flop_count_sp_fma","Floating Point Operations(Single Precision FMA)",524288,524288,524288
+"NVIDIA GeForce GTX 1060 (0)","fixed_wide::combine(float const *, float const *, float*, int, int, float const *, float)",1,"ipc","Executed IPC",0.555813,0.555813,0.555813

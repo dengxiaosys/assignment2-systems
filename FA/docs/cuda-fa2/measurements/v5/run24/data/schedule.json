@@ -1,0 +1,23 @@
+{
+  "policy": "ffma_yield_interval",
+  "interval": 32,
+  "original_extension_sha256": "f4a572ae53539c91057969f2e15a834d46f500ecf60e3cf9e65a54f417132811",
+  "extension_sha256": "c4d7dc6d0525b48b79376a7c495799f17b3f1b06c7624ef64fb7558b28e381c8",
+  "original_cubin_sha256": "357e60818377c2791dc64011aa022e881809f91e39afa921749a0f221f7a25a8",
+  "cubin_sha256": "bb9253bf561275f3bae3feb33189697010598c7449b5afb2da97d131075e54f1",
+  "changed_bytes": 203,
+  "unchanged_instruction_words": true,
+  "unchanged_stalls_and_barriers": true,
+  "kernels": [
+    {
+      "symbol": "_ZN11maxwell_d647forwardILb0EEEvPKfS2_S2_Pfif",
+      "ffma_instructions": 537,
+      "changed_yield_bits": 102
+    },
+    {
+      "symbol": "_ZN11maxwell_d647forwardILb1EEEvPKfS2_S2_Pfif",
+      "ffma_instructions": 537,
+      "changed_yield_bits": 101
+    }
+  ]
+}

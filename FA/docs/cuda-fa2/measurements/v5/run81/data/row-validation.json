@@ -1,0 +1,119 @@
+{
+  "implementation": "cuda_fa2_v5",
+  "cuda_fa2_version": "v5",
+  "extension_module": "src.cuda_fa2_v5_extension",
+  "extension_path": "/home/dengxiao/code_repos/institutionalized/stanford_cs336/assignments/assignment2-systems/FA/src/cuda_fa2_v5_extension.cpython-311-x86_64-linux-gnu.so",
+  "extension_sha256": "084dacb73d463dc9562921b70026fb8df5dfd249738ecddca3b8e5c3c4fbfbbf",
+  "shape": [
+    16384,
+    64
+  ],
+  "seed": 0,
+  "cpu_threads": 1,
+  "rtol": 2e-05,
+  "atol": 2e-05,
+  "verified_all_rows": false,
+  "reference": "CPU FP64 row dot/softmax/PV; no full attention matrix",
+  "rows": [
+    {
+      "causal": false,
+      "query_index": 0,
+      "max_abs_error": 3.187953219810358e-08
+    },
+    {
+      "causal": false,
+      "query_index": 1,
+      "max_abs_error": 4.3234241653769545e-08
+    },
+    {
+      "causal": false,
+      "query_index": 3,
+      "max_abs_error": 5.890793285633078e-08
+    },
+    {
+      "causal": false,
+      "query_index": 4,
+      "max_abs_error": 4.1412468147847964e-08
+    },
+    {
+      "causal": false,
+      "query_index": 7,
+      "max_abs_error": 4.0185694851618825e-08
+    },
+    {
+      "causal": false,
+      "query_index": 8,
+      "max_abs_error": 7.342213573057052e-08
+    },
+    {
+      "causal": false,
+      "query_index": 31,
+      "max_abs_error": 2.7028193690104008e-08
+    },
+    {
+      "causal": false,
+      "query_index": 32,
+      "max_abs_error": 5.046578280439029e-08
+    },
+    {
+      "causal": false,
+      "query_index": 8191,
+      "max_abs_error": 5.2850349701140994e-08
+    },
+    {
+      "causal": false,
+      "query_index": 16383,
+      "max_abs_error": 5.42118397048319e-08
+    },
+    {
+      "causal": true,
+      "query_index": 0,
+      "max_abs_error": 2.384185791015625e-07
+    },
+    {
+      "causal": true,
+      "query_index": 1,
+      "max_abs_error": 2.8676003904770653e-07
+    },
+    {
+      "causal": true,
+      "query_index": 3,
+      "max_abs_error": 4.32655095916612e-07
+    },
+    {
+      "causal": true,
+      "query_index": 4,
+      "max_abs_error": 2.1962221385951608e-07
+    },
+    {
+      "causal": true,
+      "query_index": 7,
+      "max_abs_error": 2.3822468658840634e-07
+    },
+    {
+      "causal": true,
+      "query_index": 8,
+      "max_abs_error": 3.9700731985226057e-07
+    },
+    {
+      "causal": true,
+      "query_index": 31,
+      "max_abs_error": 1.9120734884303658e-07
+    },
+    {
+      "causal": true,
+      "query_index": 32,
+      "max_abs_error": 3.095571828592991e-07
+    },
+    {
+      "causal": true,
+      "query_index": 8191,
+      "max_abs_error": 8.851585516520075e-08
+    },
+    {
+      "causal": true,
+      "query_index": 16383,
+      "max_abs_error": 5.42118397048319e-08
+    }
+  ]
+}

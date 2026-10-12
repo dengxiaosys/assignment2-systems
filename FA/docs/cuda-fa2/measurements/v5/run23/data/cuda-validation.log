@@ -1,0 +1,21 @@
+test_rejects_cpu_before_loading_extension (__main__.CudaFa2ContractTests.test_rejects_cpu_before_loading_extension) ... ok
+test_all_supported_dimensions (__main__.CudaFa2NumericalTests.test_all_supported_dimensions) ... ok
+test_cancellation_across_accumulator_groups (__main__.CudaFa2NumericalTests.test_cancellation_across_accumulator_groups) ... ok
+test_changing_softmax_maximum (__main__.CudaFa2NumericalTests.test_changing_softmax_maximum) ... ok
+test_complete_d64_tiles_and_cancellation (__main__.CudaFa2NumericalTests.test_complete_d64_tiles_and_cancellation) ... ok
+test_contiguous_inputs_with_unaligned_storage_offset (__main__.CudaFa2NumericalTests.test_contiguous_inputs_with_unaligned_storage_offset) ... ok
+test_future_keys_do_not_change_causal_prefix (__main__.CudaFa2NumericalTests.test_future_keys_do_not_change_causal_prefix) ... ok
+test_key_tiles_causal_diagonals_and_query_tails (__main__.CudaFa2NumericalTests.test_key_tiles_causal_diagonals_and_query_tails) ... ok
+test_matches_cpu_fp64_reference (__main__.CudaFa2NumericalTests.test_matches_cpu_fp64_reference) ... ok
+test_query_tails_and_strip_boundaries (__main__.CudaFa2NumericalTests.test_query_tails_and_strip_boundaries) ... ok
+test_rejects_noncontiguous_inputs (__main__.CudaFa2NumericalTests.test_rejects_noncontiguous_inputs) ... ok
+test_rejects_unsupported_head_dimension (__main__.CudaFa2NumericalTests.test_rejects_unsupported_head_dimension) ... ok
+test_softmax_maximum_changes_across_tiles (__main__.CudaFa2NumericalTests.test_softmax_maximum_changes_across_tiles) ... ok
+test_subnormal_probabilities_preserve_large_value_contributions (__main__.CudaFa2NumericalTests.test_subnormal_probabilities_preserve_large_value_contributions) ... ok
+test_uniform_attention_and_single_key (__main__.CudaFa2NumericalTests.test_uniform_attention_and_single_key) ... ok
+test_sampled_rows_against_cpu_fp64 (__main__.CudaFa2LongSequenceTests.test_sampled_rows_against_cpu_fp64) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.576s
+
+OK

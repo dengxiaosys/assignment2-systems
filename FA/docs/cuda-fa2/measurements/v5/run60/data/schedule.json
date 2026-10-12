@@ -1,0 +1,22 @@
+{
+  "policy": "ffma_lsu_dual_issue",
+  "interval": 32,
+  "original_extension_sha256": "0866a048675d199ef63bcbf3522f8a02270cf743f2a2adcbede273921564226b",
+  "extension_sha256": "0866a048675d199ef63bcbf3522f8a02270cf743f2a2adcbede273921564226b",
+  "original_cubin_sha256": "f1016c801c03eaa7c141fbf21b5d84625454eef8c244b35206f24b8bf75215ae",
+  "cubin_sha256": "f1016c801c03eaa7c141fbf21b5d84625454eef8c244b35206f24b8bf75215ae",
+  "changed_bytes": 0,
+  "unchanged_instruction_words": true,
+  "unchanged_stalls_and_barriers": false,
+  "unchanged_dependency_barriers": true,
+  "kernels": [
+    {
+      "symbol": "_ZN10fixed_wide7forwardILb0EEEvPKfS2_S2_PfifS2_S3_i",
+      "dual_issue_pairs": []
+    },
+    {
+      "symbol": "_ZN10fixed_wide7forwardILb1EEEvPKfS2_S2_PfifS2_S3_i",
+      "dual_issue_pairs": []
+    }
+  ]
+}

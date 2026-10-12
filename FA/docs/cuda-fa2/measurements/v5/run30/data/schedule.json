@@ -1,0 +1,31 @@
+{
+  "policy": "ffma_independent_reorder",
+  "interval": 32,
+  "original_extension_sha256": "8a3cbc589d1210d3e8e04b8e24444a0d7bc220125112855d7f68c4c3dde668c3",
+  "extension_sha256": "734de37c4b45b8c306eeb1a910833405043e1b1325cb4943328c6b5f4958f283",
+  "original_cubin_sha256": "c656c64c5110b01a896bde82eb32d764bd64b5a67b8d6a1cec1ebbde1580d3d4",
+  "cubin_sha256": "7dbbd7b5f3b0a1b3eb1bdd65e49d3734e18fc5d1fe8443ee56b7f92cfcd1f762",
+  "changed_bytes": 2108,
+  "unchanged_instruction_words": false,
+  "unchanged_stalls_and_barriers": true,
+  "kernels": [
+    {
+      "symbol": "_ZN11maxwell_d647forwardILb0EEEvPKfS2_S2_Pfif",
+      "independent_segments": 20,
+      "moved_instruction_words": 190,
+      "modeled_bank_conflicts_before": 24,
+      "modeled_bank_conflicts_after": 4,
+      "register_ffma_instructions": 528,
+      "changed_reuse_fields": 226
+    },
+    {
+      "symbol": "_ZN11maxwell_d647forwardILb1EEEvPKfS2_S2_Pfif",
+      "independent_segments": 18,
+      "moved_instruction_words": 213,
+      "modeled_bank_conflicts_before": 29,
+      "modeled_bank_conflicts_after": 5,
+      "register_ffma_instructions": 528,
+      "changed_reuse_fields": 233
+    }
+  ]
+}

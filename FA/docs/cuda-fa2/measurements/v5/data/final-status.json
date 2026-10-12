@@ -1,0 +1,14 @@
+{
+  "build": 0,
+  "cuda-validation": 0,
+  "benchmark-custom": 0,
+  "benchmark-efficient": 0,
+  "registry": 0,
+  "memcheck": 0,
+  "synccheck": 0,
+  "racecheck": 0,
+  "paired": 0,
+  "matrix": 0,
+  "counters": 0,
+  "timeline": 0
+}
