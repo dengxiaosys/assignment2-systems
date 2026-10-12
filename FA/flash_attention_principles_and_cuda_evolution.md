@@ -137,7 +137,11 @@ $$\frac{\exp(s_t - m_{\mathrm{new}})}{\exp(s_t - m_{\mathrm{old}})} = \exp(m_{\m
 2. **顺序不可乱。** 必须先定出 $m_{\mathrm{new}}$，才能据此算 $\alpha$ 与新块权重 $\widetilde p = \exp(s - m_{\mathrm{new}})$；若先用旧 $m$ 算指数再改基准，则新旧两部分基准不一致。
 3. **$m_{\mathrm{new}}$ 不变时退化为纯累加。** 若新块的最大值未超过 $m_{\mathrm{old}}$，则 $\alpha = \exp(0) = 1$，更新退化为 $\ell \mathrel{+}= \sum_t\widetilde p_t$、$z \mathrel{+}= V^\top\widetilde p$，即普通累加——重标定只在基准真正改变时才「花钱」。
 
-全部 key tile 处理完后，一次性得到该行输出 $o = z/\ell$，并可顺带得到 logsumexp $L = m + \log\ell$（用途见 §2.7）。整个过程对每行只遍历一遍 scores、只维护常数个状态，故额外存储为 $O(d)$ 而非 $O(N_k)$。
+全部 key tile 处理完后，一次性得到该行输出，并可顺带得到 logsumexp（用途见 §2.7）：
+
+$$o = \frac{z}{\ell},\qquad L = m + \log\ell$$
+
+整个过程对每行只遍历一遍 scores、只维护常数个状态，故额外存储为 $O(d)$ 而非 $O(N_k)$。
 
 <img src="figures/online_softmax_rescale.svg" width="960" alt="online softmax 换基准时旧状态整体缩放一次的几何直觉" />
 
@@ -171,7 +175,9 @@ $$\textbf{(6)}\quad A^{(a)}_{\mathrm{new}} = \alpha^{(a)}[:,\!\text{None}]\circ 
 
 全部 key/value tile 处理完后，再做收尾（除一次分母、存 logsumexp）：
 
-$$\textbf{(7)}\quad O^{(a)} = A^{(a)} / \ell^{(a)}[:,\!\text{None}],\qquad L^{(a)} = m^{(a)} + \log\ell^{(a)}$$
+$$\textbf{(7)}\quad O^{(a)} = A^{(a)} / \ell^{(a)}[:,\!\text{None}]$$
+
+$$\phantom{\textbf{(7)}}\quad L^{(a)} = m^{(a)} + \log\ell^{(a)}$$
 
 其中步骤 (2)–(6) 与 §2.2 的 online softmax 更新式逐行对应（(2) 定新基准、(3) 得缩放因子、(4) 算新块权重、(5)(6) 用同一 $\alpha^{(a)}$ 重标定旧分母与旧分子再并入新块），只是把单 query 的标量/向量换成了作用于整个 tile 的矩阵运算。该设计体现三条 FA forward 的核心性质：（1）**维护未归一化 accumulator**，仅在最后除以 $\ell$，避免每个 tile 都归一化再合并，从而减少昂贵的非矩阵运算（max/exp/逐元素乘除）；（2）**query tile 在外层、key/value tile 在内层**，不同 query tile 分给不同并行任务，各自独立产出 $O^{(a)}, L^{(a)}$，无需跨任务通信，并行度由 $B\times H$ 提升到 $B\times H\times T_q$；（3）任意时刻只需一个 $B_q\times B_k$ 的临时 score/probability tile，$S^{(a,b)}$ 与 $\widetilde P^{(a,b)}$ 被消费后即丢弃，HBM 中只保留 $Q,K,V,O,L$，不物化 $N_q\times N_k$ 的完整矩阵。
 
@@ -203,139 +209,859 @@ $$p_{ij} = \frac{\exp(s_{ij})}{\exp(L_i)} = \exp(s_{ij} - L_i)$$
 
 因此 backward 只需重算 score $s_{ij}$ 并读取每行一个 $L_i$，即可恢复概率，无需把 forward 的完整 $P$（$N_qN_k$ 个元素）保留到 backward。对 $N_q=N_k=8192,H=32$，完整 BF16 的 $P$ 为 $4$ GiB，而 FP32 的 $L$ 仅 $1$ MiB，相差约 $4096$ 倍。且 $L\ge\max_j s_j$，故 $s_j - L\le 0$，重建时 $\exp$ 不会上溢。forward 保存 $L$ 几乎零额外成本——它只是 online softmax 结束时已有 $m,\ell$ 的合并。
 
-### 2.8 Backward （保存什么、重算什么）
+### 2.8 Backward 原理（保存什么、重算什么）
 
 > **实现状态说明**：本节为 backward 的完整数学原理。当前仓库 v0–v5 均为 **forward-only**，backward 尚未进入 CUDA 实现；此处原理供后续实现对齐，不对应已有核函数。
 
-#### 2.8.1 普通 attention backward 的依赖
+### 9.1 普通 backward 为什么依赖大矩阵
 
-先把不分块的普通 attention backward 走一遍。forward 是三个连续算子 $S=QK^\top/\sqrt d \to P=\operatorname{rowsoftmax}(S) \to O=PV$；backward 从上游梯度 $dO\in\mathbb{R}^{N_q\times d}$ 出发，严格沿计算图反向，依次经过这三个算子。
+令上游梯度为 $dO\in\mathbb{R}^{N_q\times d}$。忽略 mask 的不可见位置后，标准矩阵形式是：
 
-<img src="figures/backward_dependency_dag.svg" width="720" alt="普通 attention backward 的 dQ、dK、dV 共享依赖图" />
+$$dV=P^\top dO,\quad dP=dOV^\top,\quad dS=P\circ\left(dP-\operatorname{rowsum}(P\circ dP)[:,None]\right)$$
 
-*图 2.8-1（取自 backward 讲义）　普通 attention 的 $dQ,dK,dV$ 共享依赖 DAG：每份数据画成一个节点，一条入边表示计算目标节点时必须读取该数据。红色的 $P,dP,dS$ 都有 $N_qN_k$ 个元素；普通 backward 需要让 $P$ 跨越 forward/backward 边界保持存活，而 $dP,dS$ 可在 backward 内部产生并消费；$Q,K,V$ 也需存活，但只有线性规模 $O((N_q+N_k)d)$。*
+其余两个输入梯度为 $dQ=dSK/\sqrt d$ 和 $dK=dS^\top Q/\sqrt d$。
 
-**先经过矩阵乘 $O=PV$。** 由矩阵乘的 VJP 得
+下面的依赖图中，每份数据只画成一个节点；一条入边表示计算目标节点时必须读取该数据。
 
-$$dV = P^\top dO \in \mathbb{R}^{N_k\times d},\qquad dP = dO\,V^\top \in \mathbb{R}^{N_q\times N_k}$$
+![普通 attention backward 的 dQ、dK、dV 共享依赖图](./assets/flash_attention2/backward_dependency_dag.svg)
 
-$dV$ 的含义是每个 value 向量对所有 query 输出的影响按 $P$ 加权汇总；$dP$ 的含义是改变权重 $P_{ij}$ 时输出行 $O_i$ 会沿 $V_j$ 方向变化。**这一步已说明普通 backward 为何依赖 $P$：即便暂不考虑 softmax，计算 $dV$ 也要读完整的 attention 概率。**
+**图 9-1：普通 attention 的 $dQ,dK,dV$ 共享依赖 DAG。** 图中红色的 $P,dP,dS$ 都有 $N_qN_k$ 个元素；普通 backward 需要让 $P$ 跨越 forward/backward 边界保持存活，而 $dP,dS$ 可在 backward 内部产生并消费。$Q,K,V$ 也需要保持存活，但它们只有线性规模 $O((N_q+N_k)d)$。
 
-**再经过逐行 softmax backward**（§2.8.2 详细推导），由 $dP$ 得 $dS$：
+沿依赖图读取，可以得到三条梯度路径：
 
-$$dS = P\circ\big(dP - \operatorname{rowsum}(P\circ dP)[:,\!\text{None}]\big) \in \mathbb{R}^{N_q\times N_k}$$
+1. $P,dO\rightarrow dV$；
+2. $dO,V\rightarrow dP$，再由 $P,dP\rightarrow dS$，最后由 $dS,K\rightarrow dQ$；
+3. 前半段与 $dQ$ 共享同一个 $dP,dS$，最后由 $dS,Q\rightarrow dK$。
 
-**最后经过 $S=QK^\top/\sqrt d$**，把梯度传回两个输入：
+如果 forward 保存完整 $P$，其元素数是 $N_qN_k$；若不保存，就必须能廉价重建它。handout 的标准 backward 展开见 [L1039-L1053](./cs336_assignment2_systems_extracted.md#L1039-L1053)。
 
-$$dQ = \frac{dS\,K}{\sqrt d} \in \mathbb{R}^{N_q\times d},\qquad dK = \frac{dS^\top Q}{\sqrt d} \in \mathbb{R}^{N_k\times d}$$
+### 9.2 预备知识：普通 attention backward 按什么顺序计算
 
-沿依赖图可读出三条梯度路径：（i）$P,dO \to dV$；（ii）$dO,V \to dP \to dS \to dQ$；（iii）前半段与 $dQ$ 共享同一个 $dP,dS$，最后 $dS,Q \to dK$。其中 $P, dP, dS$ 均含 $N_qN_k$ 个元素——普通实现需让 $P$ 跨 forward/backward 边界存活，这正是 FA 要消除的二次项（§2.8.3、§2.8.4 分别给出「不保存 $P$ 而重建」与「不跨 tile 归约」的办法）。
+在理解 FlashAttention backward 之前，先把不分 tile 的普通 attention backward 走一遍。这里统一约定：
 
-#### 2.8.2 softmax backward 的逐元素推导
+$$dX\equiv\frac{\partial\mathcal J}{\partial X}$$
 
-attention 对 $S$ 的每行独立做 softmax。固定行 $i$，记 $Z_i=\sum_r\exp(S_{ir})$、$P_{iu}=\exp(S_{iu})/Z_i$。对分子（仅 $u{=}j$ 时依赖 $S_{ij}$）与分母用商法则：
+其中 $\mathcal J$ 是整个模型最终产生的标量 loss，$dX$ 表示该 loss 关于张量 $X$ 的梯度。
 
-$$\frac{\partial P_{iu}}{\partial S_{ij}} = \frac{\delta_{uj}\exp(S_{iu})Z_i - \exp(S_{iu})\exp(S_{ij})}{Z_i^2} = \delta_{uj}P_{iu} - P_{iu}P_{ij} = P_{iu}(\delta_{uj} - P_{ij})$$
+#### 9.2.1 Forward 有三个连续算子
 
-其中 $\delta_{uj}$ 为 Kronecker delta。由多变量链式法则，$S_{ij}$ 影响整行输出：
+忽略 batch、head 和 mask 后，单头 attention forward 是：
 
-$$dS_{ij} = \sum_{u=1}^{N_k} dP_{iu}\,\frac{\partial P_{iu}}{\partial S_{ij}} = \sum_u dP_{iu}P_{iu}\delta_{uj} - P_{ij}\sum_u dP_{iu}P_{iu} = P_{ij}\Big(dP_{ij} - \sum_u P_{iu}dP_{iu}\Big)$$
+$$S=\frac{QK^\top}{\sqrt d}$$
 
-定义行标量 $D_i = \sum_u P_{iu}dP_{iu} = P_i^\top dP_i$，即得逐元素形式 $dS_{ij} = P_{ij}(dP_{ij} - D_i)$，向量形式 $dS_i = P_i\circ(dP_i - D_i\mathbf 1)$。一个正确性检验是 $\sum_j dS_{ij} = D_i - D_i\sum_j P_{ij} = 0$，对应「给所有 logits 加常数不改变 softmax」。实现无需构造 $N_k\times N_k$ 的 Jacobian，逐元素公式只需 $O(N_k)$。
+$$P=\operatorname{rowsoftmax}(S)$$
 
-上面的标量推导已足以实现，这里补充它与常见「VJP」矩阵写法的关系。把 §2.8.2 求出的全部偏导排成 Jacobian $J_i = \partial P_i/\partial S_i \in \mathbb{R}^{N_k\times N_k}$，其第 $(u,j)$ 元为 $\partial P_{iu}/\partial S_{ij} = P_{iu}(\delta_{uj}-P_{ij})$，等价于
+$$O=PV$$
 
-$$J_i = \operatorname{diag}(P_i) - P_iP_i^\top$$
+各张量 shape 为：
 
-（对角项 $P_{ij}(1-P_{ij})$、非对角项 $-P_{iu}P_{ij}$）。softmax backward 即 $dS_i = J_i^\top dP_i$，展开其第 $j$ 分量 $[J_i^\top dP_i]_j = \sum_u (J_i)_{uj} dP_{iu} = \sum_u \tfrac{\partial P_{iu}}{\partial S_{ij}} dP_{iu} = dS_{ij}$，与逐元素式完全一致——这就是「softmax 的 vector–Jacobian product」。实际实现**不构造** $J_i$，因为逐元素式只需 $O(N_k)$ 时间与空间，而显式 Jacobian 需 $O(N_k^2)$。
+| 张量 | shape | 含义 |
+|---|---:|---|
+| $Q$ | $(N_q,d)$ | query |
+| $K,V$ | $(N_k,d)$ | key 与 value |
+| $S$ | $(N_q,N_k)$ | softmax 前的 score |
+| $P$ | $(N_q,N_k)$ | 每个 query 对所有 keys 的概率 |
+| $O$ | $(N_q,d)$ | attention 输出 |
 
-#### 2.8.3 第一个关键：用 $L$ 按 tile 重建 $P$
-
-<img src="figures/backward_recompute_twopass.svg" width="960" alt="Backward 原理：保存什么、重算什么、两遍调度" />
-
-*图 2.8-2　backward 的整体原理（原理级，尚未实现）：forward 仅保存线性规模的 $Q,K,V,O,L$；backward 入口以一次 $O(N_qd)$ 预计算 $D=\operatorname{rowsum}(O\circ dO)$；每对 $(a,b)$ tile 用 $L$ 重建 $P$、用 $D$ 算 $dS$，二次中间量 $S,P,dP,dS$ 均片上产生消费、不入 HBM；两遍调度（key-owner 产 $dK,dV$、query-owner 产 $dQ$）使每个输出 tile 只有唯一 owner，以廉价重算换清晰所有权。*
-
-tile 内局部 softmax 的分母只覆盖该 tile 的 keys，与全局分母不同，故不能拼成完整 $P$。但由 §2.7，重算 $S^{(a,b)} = Q^{(a)}(K^{(b)})^\top/\sqrt d + M^{(a,b)}$ 后，用每行一个全局标量 $L^{(a)}$ 即可恢复真实概率切片：
-
-$$P^{(a,b)} = \exp\!\big(S^{(a,b)} - L^{(a)}[:,\!\text{None}]\big) \in \mathbb{R}^{B_q\times B_k}$$
-
-重算时必须复现 forward 完全相同的 scale、causal mask、边界 mask 与指数底数，否则会向 $dV,dS$ 错误传播梯度。
-
-#### 2.8.4 第二个关键：用 $D$ 消除跨 tile 的行归约
-
-$D_i = \sum_{j=1}^{N_k} P_{ij}dP_{ij}$ 沿 key 维求和，单个 tile 只能得到部分和。将 $dP_{ij} = \sum_c dO_{ic}V_{jc}$ 代入并交换求和次序：
-
-$$D_i = \sum_{j} P_{ij}\sum_c dO_{ic}V_{jc} = \sum_c dO_{ic}\Big(\sum_j P_{ij}V_{jc}\Big) = \sum_c dO_{ic}O_{ic} = \langle O_i, dO_i\rangle$$
-
-因此 $D = \operatorname{rowsum}(O\circ dO)\in\mathbb{R}^{N_q}$ 可在进入主 backward 之前以一次 $O(N_qd)$ 预处理算出，只沿长度为 $d$ 的特征维归约，不再需要遍历 $N_qN_k$ 个 score。至此两个全局依赖都压缩为每 query 行一个标量：**$L_i$ 回答「这一行的 $P$ 怎么重建」，$D_i$ 回答「这一行的 $dS$ 怎么计算**」。
-
-#### 2.8.5 二次中间量只按 tile 产生与消费；两遍调度
-
-对每一对 $(a,b)$ tile，依赖链 $S^{(a,b)}\to P^{(a,b)}$、$dP^{(a,b)} = dO^{(a)}(V^{(b)})^\top$、$dS^{(a,b)} = P^{(a,b)}\circ(dP^{(a,b)} - D^{(a)}[:,\!\text{None}])$ 均以 $(B_q,B_k)$ 小块在片上产生、立即消费、随即丢弃；逻辑上 $(N_q,N_k)$ 的 $S,P,dP,dS$ 从不在 HBM 完整物化。各 tile 对输出梯度的贡献为：
-
-$$\Delta dV^{(b)} = (P^{(a,b)})^\top dO^{(a)},\qquad \Delta dQ^{(a)} = \frac{dS^{(a,b)}K^{(b)}}{\sqrt d},\qquad \Delta dK^{(b)} = \frac{(dS^{(a,b)})^\top Q^{(a)}}{\sqrt d}$$
-
-三者归约方向不同：$dQ_i = \tfrac1{\sqrt d}\sum_j dS_{ij}k_j$ 沿 key 归约，$dK_j,dV_j$ 沿 query 归约。为使每个输出 tile 只有唯一 owner（在片上完成全部归约、只写回一次），课程算法采用**两遍调度**：第一遍 key-owner（固定 key tile，遍历 query tiles，产出 $dK,dV$），第二遍 query-owner（固定 query tile，遍历 key tiles，产出 $dQ$）。两遍各重算一次 $P^{(a,b)}$——这是刻意的以廉价重算换取清晰所有权，避免跨 thread block 的 atomic 或大量 partial gradient 写回。最终只写回 $dQ,dK,dV$，元素数 $N_qd+2N_kd = O((N_q+N_k)d)$，仅随序列长度线性增长。
-
-#### 2.8.6 张量生命周期：保存、预计算、重算、丢弃
-
-把 backward 用到的数据按时间边界分四类，可一眼看出哪些是线性规模、哪些二次规模中间量从不整体物化：
-
-| 类别 | 数据 | shape | 生命周期与用途 |
-| --- | --- | --- | --- |
-| 跨 forward/backward 保存 | $Q,K,V,O$ | $(N_q,d)$ 或 $(N_k,d)$ | 保持已有 storage 存活：重算 $S$、算 $D$、算 $dQ/dK/dV$ |
-| 跨 forward/backward 保存 | $L$ | $(N_q,)$ | 按 tile 重建 $P$（§2.8.3），替代了二次项 $P$ |
-| backward 入口预计算 | $dO$；$D=\operatorname{rowsum}(O\circ dO)$ | $(N_q,d)$；$(N_q,)$ | $dO$ 为上游输入，$D$ 一次 $O(N_qd)$ 算出供所有 tile 用 |
-| tile 内重算、用完丢弃 | $S^{(a,b)},P^{(a,b)},dP^{(a,b)},dS^{(a,b)}$ | $(B_q,B_k)$ | 片上产生、立即消费、随即丢弃，**从不写回 HBM** |
-| 输出 accumulator | $dQ^{(a)}$；$dK^{(b)},dV^{(b)}$ | $(B_q,d)$；$(B_k,d)$ | 各由唯一 owner program 在片上归约，最后写回一次 |
-
-关键对照：$S,P,dP,dS$ 在数学上都有 $(N_q,N_k)$ 的完整定义，但 kernel 不为任何一个分配完整 HBM buffer；跨边界真正保存的主项元素数为 $2N_qd+2N_kd+N_q = O((N_q+N_k)d)$，普通实现额外保存完整 $P$ 则多出 $N_qN_k$ 的二次项，FA 用长度 $N_q$ 的 $L$ 将其替代。代价是 backward 要重新执行矩阵乘与指数——这正是 FA1 的核心取舍：**片上重算当前 tile，通常比 forward 把完整 $P$ 写入 HBM、backward 再读回更划算**。
-
-#### 2.8.7 两遍的伪代码与归约所有权
-
-两遍互补的输出所有权可直接写成伪代码。第一遍 **key-owner**（不同 key tile 间并行，每个 program 遍历全部 query tile，沿 query 维完成 $dK,dV$ 的全部归约）：
+backward 从上游给出的 $dO$ 开始，严格沿计算图反向经过：
 
 ```text
-parallel for key_tile b:
-    dK_b = 0 ; dV_b = 0                       # (Bk, d) 片上 accumulator
-    for query_tile a:
-        S_ab = recompute(Q_a, K_b, mask)      # 重算 score tile
-        P_ab = exp(S_ab - L_a[:, None])       # 用 L 重建概率（§2.8.3）
-        dP_ab = dO_a @ transpose(V_b)
-        dS_ab = P_ab * (dP_ab - D_a[:, None]) # 用 D 得 dS（§2.8.4）
-        dV_b += transpose(P_ab) @ dO_a
-        dK_b += transpose(dS_ab) @ Q_a / sqrt(d)
-    store dK_b, dV_b                          # 唯一 owner，写回一次
+dO  -->  O = P V  -->  得到 dP、dV
+                       |
+                       v
+                P = softmax(S)  -->  得到 dS
+                                      |
+                                      v
+                              S = Q K^T / sqrt(d)
+                                      |
+                                      v
+                                  得到 dQ、dK
 ```
 
-第二遍 **query-owner**（不同 query tile 间并行，每个 program 遍历全部 key tile，沿 key 维完成 $dQ$ 的归约）：
+#### 9.2.2 先经过矩阵乘 $O=PV$
+
+给定上游梯度 $dO\in\mathbb R^{N_q\times d}$，矩阵乘 backward 得到：
+
+$$dV=P^\top dO\in\mathbb R^{N_k\times d}$$
+
+$$dP=dOV^\top\in\mathbb R^{N_q\times N_k}$$
+
+$dV$ 的含义是：每个 value 向量对所有 query 输出的影响需要按 $P$ 加权汇总。$dP$ 的含义是：改变某个权重 $P_{ij}$ 时，输出行 $O_i$ 会沿 value $V_j$ 的方向变化。
+
+这一步已经说明普通 backward 为什么依赖 $P$：即使暂时不考虑 softmax，计算 $dV$ 也需要读取完整的 attention probability。
+
+#### 9.2.3 再经过普通 softmax backward
+
+attention 对 $S$ 的每一行独立执行 softmax。固定第 $i$ 个 query 行：
+
+阅读本小节时，应把 $i$ 看作已经固定的行标签：它始终指同一个 query，不参与后面的求和，也不会在求导过程中变化。真正变化的下标是 $u$ 和 $j$：$u$ 枚举这一行的 softmax 输出位置，$j$ 表示当前求导所针对的 score 输入位置。
+
+$$S_i=\begin{bmatrix}S_{i1}&\cdots&S_{iN_k}\end{bmatrix}^\top,\qquad P_i=\operatorname{softmax}(S_i)\in\mathbb R^{N_k}$$
+
+其中：
+
+$$P_{ij}=\frac{\exp(S_{ij})}{\sum_{u=1}^{N_k}\exp(S_{iu})}$$
+
+由上一节的 $O=PV$ backward，已经得到 loss 关于 softmax 输出行 $P_i$ 的上游梯度：
+
+$$dP_i=\nabla_{P_i}\mathcal J\in\mathbb R^{N_k}$$
+
+softmax backward 要计算 loss 关于输入 score 行 $S_i$ 的梯度：
+
+$$dS_i=\nabla_{S_i}\mathcal J\in\mathbb R^{N_k}$$
+
+也就是说，它的局部接口是：
 
 ```text
-parallel for query_tile a:
-    dQ_a = 0                                  # (Bq, d) 片上 accumulator
-    for key_tile b:
-        S_ab = recompute(Q_a, K_b, mask)
+forward:   S_i  --> softmax --> P_i
+backward:  dS_i <-- backward(P_i, dP_i) <-- dP_i
+```
+
+同一行的所有 $P_{iu}$ 都共享一个分母，所以改变一个输入 $S_{ij}$ 会影响这一行的全部输出概率。下面从 softmax 定义开始推导这种耦合关系。
+
+先把第 $i$ 行的 softmax 分母记为：
+
+$$Z_i=\sum_{r=1}^{N_k}\exp(S_{ir})$$
+
+于是第 $u$ 个输出概率为：
+
+$$P_{iu}=\frac{\exp(S_{iu})}{Z_i}$$
+
+这里故意使用两个不同的下标：
+
+- $u$ 表示正在求导的 softmax **输出分量** $P_{iu}$；
+- $j$ 表示被改变的 softmax **输入分量** $S_{ij}$。
+
+为了统一表示 $u=j$ 和 $u\ne j$ 两种情况，定义 Kronecker delta：
+
+$$\delta_{uj}=\begin{cases}1,&u=j\\0,&u\ne j\end{cases}$$
+
+先分别计算分子和分母关于 $S_{ij}$ 的导数。分子只有在 $u=j$ 时依赖 $S_{ij}$：
+
+$$\frac{\partial\exp(S_{iu})}{\partial S_{ij}}=\delta_{uj}\exp(S_{iu})$$
+
+分母 $Z_i$ 包含整行所有指数项，但只有第 $j$ 项依赖 $S_{ij}$：
+
+$$\frac{\partial Z_i}{\partial S_{ij}}=\exp(S_{ij})$$
+
+现在对 $P_{iu}=\exp(S_{iu})/Z_i$ 使用商法则。商法则的一般形式是：
+
+$$\frac{\partial(a/b)}{\partial x}=\frac{(\partial a/\partial x)b-a(\partial b/\partial x)}{b^2}$$
+
+在这里，$a=\exp(S_{iu})$、$b=Z_i$、$x=S_{ij}$。把刚才得到的两个导数逐项代入：
+
+$$\frac{\partial P_{iu}}{\partial S_{ij}}=\frac{\delta_{uj}\exp(S_{iu})Z_i-\exp(S_{iu})\exp(S_{ij})}{Z_i^2}$$
+
+先把右侧的两个分式拆开：
+
+$$\frac{\partial P_{iu}}{\partial S_{ij}}=\frac{\delta_{uj}\exp(S_{iu})Z_i}{Z_i^2}-\frac{\exp(S_{iu})\exp(S_{ij})}{Z_i^2}$$
+
+第一项约掉一个 $Z_i$，第二项把 $Z_i^2$ 拆成 $Z_iZ_i$：
+
+$$\frac{\partial P_{iu}}{\partial S_{ij}}=\delta_{uj}\frac{\exp(S_{iu})}{Z_i}-\frac{\exp(S_{iu})}{Z_i}\frac{\exp(S_{ij})}{Z_i}$$
+
+根据 $P_{iu}=\exp(S_{iu})/Z_i$ 和 $P_{ij}=\exp(S_{ij})/Z_i$，逐项替换：
+
+$$\frac{\partial P_{iu}}{\partial S_{ij}}=\delta_{uj}P_{iu}-P_{iu}P_{ij}$$
+
+最后提取公因子 $P_{iu}$：
+
+$$\frac{\partial P_{iu}}{\partial S_{ij}}=\delta_{uj}P_{iu}-P_{iu}P_{ij}=P_{iu}(\delta_{uj}-P_{ij})$$
+
+分成两种情况看更直观：
+
+1. 当 $u=j$ 时，$\delta_{uj}=1$，所以 $\partial P_{ij}/\partial S_{ij}=P_{ij}(1-P_{ij})$。增大 $S_{ij}$ 会增大它自己的概率；
+2. 当 $u\ne j$ 时，$\delta_{uj}=0$，所以 $\partial P_{iu}/\partial S_{ij}=P_{iu}(0-P_{ij})=-P_{iu}P_{ij}$。增大 $S_{ij}$ 会增大公共分母，从而压低其他概率。
+
+#### 9.2.4 沿所有路径应用链式法则
+
+现在固定一个输入 score $S_{ij}$，目标是计算：
+
+$$dS_{ij}=\frac{\partial\mathcal J}{\partial S_{ij}}$$
+
+$S_{ij}$ 会同时影响这一行的全部输出 $P_{i1},\ldots,P_{iN_k}$。按照多变量链式法则，需要把经过每个 $P_{iu}$ 的路径贡献相加：
+
+$$dS_{ij}=\sum_{u=1}^{N_k}\frac{\partial\mathcal J}{\partial P_{iu}}\frac{\partial P_{iu}}{\partial S_{ij}}$$
+
+根据 $dP_{iu}=\partial\mathcal J/\partial P_{iu}$：
+
+$$dS_{ij}=\sum_{u=1}^{N_k}dP_{iu}\frac{\partial P_{iu}}{\partial S_{ij}}$$
+
+代入上一小节得到的 softmax 偏导数：
+
+$$dS_{ij}=\sum_{u=1}^{N_k}dP_{iu}P_{iu}(\delta_{uj}-P_{ij})$$
+
+把括号中的两项拆开。$P_{ij}$ 与求和下标 $u$ 无关，因此可以移到第二个求和符号外：
+
+$$dS_{ij}=\sum_{u=1}^{N_k}dP_{iu}P_{iu}\delta_{uj}-P_{ij}\sum_{u=1}^{N_k}dP_{iu}P_{iu}$$
+
+第一项中的 $\delta_{uj}$ 只在 $u=j$ 时等于 1，其余项全部为 0，所以第一个求和只留下 $u=j$ 这一项：
+
+$$dS_{ij}=dP_{ij}P_{ij}-P_{ij}\sum_{u=1}^{N_k}dP_{iu}P_{iu}$$
+
+最后提取公因子 $P_{ij}$：
+
+$$dS_{ij}=P_{ij}\left(dP_{ij}-\sum_{u=1}^{N_k}P_{iu}dP_{iu}\right)$$
+
+定义该行共享的标量：
+
+$$D_i=P_i^\top dP_i=\sum_{u=1}^{N_k}P_{iu}dP_{iu}$$
+
+就得到逐元素形式的 softmax backward：
+
+$$dS_{ij}=P_{ij}(dP_{ij}-D_i)$$
+
+把一行中的全部 $j$ 合在一起，可写成向量形式：
+
+$$dS_i=P_i\circ(dP_i-D_i\mathbf 1)$$
+
+到这里已经得到了实现 softmax backward 所需的全部公式，不需要先理解或构造 Jacobian。对应代码是：
+
+```python
+def softmax_backward(grad_p, p):
+    softmax_correction = (p * grad_p).sum(dim=-1, keepdim=True)
+    return p * (grad_p - softmax_correction)
+```
+
+其中，参数 `p` 对应 $P$，参数 `grad_p` 对应已经由后续算子传回的 $dP$。函数不负责计算 $dP$，而是接收 $dP$ 并返回 $dS$。
+
+所以这两行代码就是逐元素公式 $dS_{ij}=P_{ij}(dP_{ij}-D_i)$ 的批量实现。
+
+单行长度为 $N_k$ 时，时间复杂度为 $O(N_k)$。
+
+一个重要的正确性检查是：
+
+$$\sum_{j=1}^{N_k}dS_{ij}=\sum_{j=1}^{N_k}P_{ij}(dP_{ij}-D_i)=D_i-D_i\sum_{j=1}^{N_k}P_{ij}=0$$
+
+这是因为给所有 logits 同时加一个常数不会改变 softmax：
+
+$$\operatorname{softmax}(S_i+c\mathbf 1)=\operatorname{softmax}(S_i)$$
+
+#### 9.2.5 可选补充：Jacobian 与 VJP 的矩阵写法
+
+前面的标量推导已经足以理解和实现 backward。本节只说明这些标量公式为什么经常被简写成 $dS_i=J_i^\top dP_i$。
+
+Jacobian 并不是一种新的运算，它只是把 9.2.3 节求出的所有偏导数排成一个表格。定义：
+
+$$J_i=\frac{\partial P_i}{\partial S_i}\in\mathbb R^{N_k\times N_k}$$
+
+这个矩阵的行下标对应输出，列下标对应输入。因此，第 $u$ 行、第 $j$ 列存放：
+
+$$\left(J_i\right)_{uj}=\frac{\partial P_{iu}}{\partial S_{ij}}$$
+
+9.2.3 节已经分别得到：
+
+- 对角线位置 $u=j$ 的元素是 $P_{ij}(1-P_{ij})$；
+- 非对角线位置 $u\ne j$ 的元素是 $-P_{iu}P_{ij}$。
+
+$\operatorname{diag}(P_i)$ 表示把向量 $P_i$ 的元素依次放到主对角线上，并把其他位置全部填成 0。假设这一行只有三个概率：
+
+$$P_i=\begin{bmatrix}P_{i1}\\P_{i2}\\P_{i3}\end{bmatrix}\quad\Longrightarrow\quad\operatorname{diag}(P_i)=\begin{bmatrix}P_{i1}&0&0\\0&P_{i2}&0\\0&0&P_{i3}\end{bmatrix}$$
+
+因此，$\operatorname{diag}(P_i)$ 的第 $(u,j)$ 个元素为：
+
+$$[\operatorname{diag}(P_i)]_{uj}=\begin{cases}P_{iu},&u=j\\0,&u\ne j\end{cases}=\delta_{uj}P_{iu}$$
+
+另一方面，外积 $P_iP_i^\top$ 的第 $(u,j)$ 个元素是 $P_{iu}P_{ij}$。两者相减得到：
+
+$$\delta_{uj}P_{iu}-P_{iu}P_{ij}=P_{iu}(\delta_{uj}-P_{ij})=\frac{\partial P_{iu}}{\partial S_{ij}}$$
+
+所以整张 Jacobian 表可以简写为：
+
+$$J_i=\operatorname{diag}(P_i)-P_iP_i^\top$$
+
+下面验证 $J_i^\top dP_i$ 与前面的标量链式法则相同。$J_i^\top$ 的 shape 是 $(N_k,N_k)$，$dP_i$ 的 shape 是 $(N_k,1)$，所以乘积 $J_i^\top dP_i$ 是一个包含 $N_k$ 个元素的列向量。
+
+要计算这个结果向量的第 $j$ 个元素，需要取 $J_i^\top$ 的第 $j$ 行，与 $dP_i$ 做点积：
+
+$$[J_i^\top dP_i]_j=\sum_{u=1}^{N_k}(J_i^\top)_{ju}dP_{iu}$$
+
+矩阵转置会交换行列下标：
+
+$$(J_i^\top)_{ju}=(J_i)_{uj}$$
+
+而 Jacobian 的第 $(u,j)$ 个元素已经定义为：
+
+$$(J_i)_{uj}=\frac{\partial P_{iu}}{\partial S_{ij}}$$
+
+把这两个等式依次代入矩阵乘法：
+
+$$[J_i^\top dP_i]_j=\sum_{u=1}^{N_k}(J_i)_{uj}dP_{iu}=\sum_{u=1}^{N_k}\frac{\partial P_{iu}}{\partial S_{ij}}dP_{iu}=dS_{ij}$$
+
+这个等式对每个 $j$ 都成立，所以：
+
+$$dS_i=J_i^\top dP_i$$
+
+这就是 softmax 的 vector-Jacobian product（VJP）。实际实现不会构造 $N_k\times N_k$ 的 $J_i$，因为 9.2.4 节的逐元素公式只需要 $O(N_k)$ 时间和空间。
+
+#### 9.2.6 继续传播到 $Q$ 和 $K$
+
+前两步已经依次得到 $dP$ 和 $dS$。最后经过 $S=QK^\top/\sqrt d$：
+
+$$dQ=\frac{dSK}{\sqrt d},\qquad dK=\frac{dS^\top Q}{\sqrt d}$$
+
+至此，普通 attention backward 的完整计算顺序是：
+
+1. 从 $dO,P,V$ 得到 $dV,dP$；
+2. 从 $P,dP$ 得到每行的 $D$ 和 $dS$；
+3. 从 $dS,Q,K$ 得到 $dQ,dK$。
+
+下一节开始讨论 FlashAttention 面临的矛盾：这些公式需要 $P$，但 forward 为了节省 HBM 恰恰没有保存完整 $P$。[Handout：L1039-L1053](./cs336_assignment2_systems_extracted.md#L1039-L1053)
+
+### 9.3 第一个关键：用 $L$ 按 tile 重建 $P$
+
+普通 backward 需要 $P$，但 FlashAttention forward 没有把完整 $P$ 写入 HBM。它只额外保存每个 query 行的 log-sum-exp：
+
+$$L_i=\log\left(\sum_{u=1}^{N_k}\exp(S_{iu})\right)$$
+
+本节要回答：
+
+> 为什么重新算出一个局部 score tile 后，只读取每行一个 $L_i$，就能恢复这个 tile 在全局 softmax 中的真实概率？
+
+#### 9.3.1 局部 softmax 为什么不正确
+
+假设当前只重算了索引为 $b$ 的 key tile 所对应的 key 集合 $\mathcal T_b$。如果直接在 tile 内做 softmax，得到的是：
+
+$$\widehat P_{ic}^{(b)}=\frac{\exp(S_{ic})}{\sum_{u\in\mathcal T_b}\exp(S_{iu})}$$
+
+但真实 attention probability 的分母覆盖全部 $N_k$ 个 keys：
+
+$$P_{ic}=\frac{\exp(S_{ic})}{\sum_{u=1}^{N_k}\exp(S_{iu})}$$
+
+一般情况下两个分母不同，所以每个 tile 各自做 local softmax 后不能拼成完整 $P$。backward 必须使用 forward 已经算出的全局行归一化信息。
+
+#### 9.3.2 $L_i$ 保存了完整分母
+
+由 $L_i$ 的定义：
+
+$$\exp(L_i)=\sum_{u=1}^{N_k}\exp(S_{iu})$$
+
+代回 softmax 定义：
+
+$$P_{ij}=\frac{\exp(S_{ij})}{\exp(L_i)}=\exp(S_{ij}-L_i)$$
+
+因此恢复一个概率元素只需要：
+
+1. 用单个 query 向量 $q_i$ 和 key 向量 $k_j$ 重算 $S_{ij}$；
+2. 读取该 query 行的全局 $L_i$；
+3. 计算 $\exp(S_{ij}-L_i)$。
+
+$L_i$ 之所以只需一个标量，是因为同一 query 行的所有 softmax 元素共享同一个分母。
+
+forward 的 online softmax 最终已有：
+
+$$L_i=m_i+\log\ell_i$$
+
+所以保存 $L_i$ 不需要额外扫描完整 score 行，只需在 forward 结束时把已有的 running maximum 和分母状态合并。
+
+#### 9.3.3 按 tile 重建的具体步骤
+
+对 query tile $Q^{(a)}\in\mathbb R^{B_q\times d}$ 和 key tile $K^{(b)}\in\mathbb R^{B_k\times d}$：
+
+从这里开始严格区分两类下标：
+
+- $i,j$ 表示单个 query/key 的行号，例如 $q_i,k_j,S_{ij}$；
+- $a,b$ 表示从 0 开始的 tile 索引，即 $a\in\{0,\ldots,T_q-1\}$、$b\in\{0,\ldots,T_k-1\}$；
+- $Q^{(a)}$ 表示索引为 $a$ 的 query tile；
+- $K^{(b)},V^{(b)}$ 表示索引为 $b$ 的 key/value tile；
+- 括号上标 $(a),(b)$ 只是分块标签，**不表示乘方**；
+- $S^{(a,b)},P^{(a,b)}$ 表示 query tile $a$ 与 key tile $b$ 共同形成的 $(B_q,B_k)$ tile。
+
+这样，单个向量 $q_i,k_j,v_j$ 与包含多行向量的 tile $Q^{(a)},K^{(b)},V^{(b)}$ 不会混淆。
+
+1. 重算当前 score tile：
+
+$$S^{(a,b)}=\frac{Q^{(a)}(K^{(b)})^\top}{\sqrt d}+M^{(a,b)}$$
+
+2. 加载 query tile $a$ 中各行对应的 $L^{(a)}\in\mathbb R^{B_q}$；
+3. 将 $L^{(a)}$ 广播到当前 tile 的 $B_k$ 列并恢复：
+
+$$P^{(a,b)}=\exp\left(S^{(a,b)}-L^{(a)}[:,None]\right)\in\mathbb R^{B_q\times B_k}$$
+
+这里的 $P^{(a,b)}$ 是完整概率矩阵 $P$ 的真实切片。它不同于 forward 中相对当前 running maximum 构造的临时未归一化量 $\widetilde P^{(a,b)}$。
+
+#### 9.3.4 Mask 和指数底数必须与 forward 一致
+
+重算 $S^{(a,b)}$ 时必须恢复与 forward 完全相同的：
+
+- score scale；
+- causal mask；
+- 非整除边界 mask；
+- 指数底数和对应缩放。
+
+若某位置在 forward 被 mask，则 backward 重建时也必须令其 $P_{ij}=0$，否则该位置会错误地向 $dV$ 和 $dS$ 传播梯度。
+
+如果实现内部使用 `exp2`，$S$ 与保存的 $L$ 必须处于同一底数体系。对外若约定 $L$ 为自然 log-sum-exp，则写回或读取时必须做一致换算。
+
+#### 9.3.5 从内存角度看为什么值得
+
+完整 $P$ 有 $N_qN_k$ 个元素，而 $L$ 只有 $N_q$ 个元素：
+
+$$O(N_qN_k)\text{ 个保存元素}\quad\longrightarrow\quad O(N_q)\text{ 个行统计量}$$
+
+backward 当前只物化一个 $B_q\times B_k$ 的 $P^{(a,b)}$ tile，用完即可丢弃。代价是重新执行 $Q^{(a)}(K^{(b)})^\top$，也就是用额外 FLOPs 换取更少 HBM 容量和 I/O。
+
+现在已经解决了“当前 $P$ tile 从哪里来”。下一节还要解决另一个全局依赖：普通 softmax backward 中的 $D_i=\sum_jP_{ij}dP_{ij}$ 跨越整行 keys，不能从单个 tile 独立算出。
+
+### 9.4 第二个关键：用 $D$ 消除跨 tile 的行归约
+
+上一节已经解决了“当前 $P$ tile 从哪里来”，但 softmax backward 还有一个看似无法局部计算的量：
+
+$$D_i=\sum_{j=1}^{N_k}P_{ij}dP_{ij}$$
+
+这里的 key 特指 attention 输入矩阵 $K$ 中的 key 向量 $k_1,\ldots,k_{N_k}$。对固定 query $q_i$，$P_{ij}$ 是它分配给 key $k_j$ 的概率，所以 $P$ 的第 $j$ 列与第 $j$ 个 key 一一对应。于是，$D_i$ 沿 $j$ 求和，就是沿 $P$ 的列轴，也就是沿全部 key 位置求和。
+
+但是 tiled backward 每次只加载一段连续的 key 向量。这里让 tile 索引 $b$ 从 0 开始，而本节标量公式中的 key 行号仍按数学惯例从 1 开始。索引为 $b$ 的 key tile 对应：
+
+$$\mathcal T_b=\{bB_k+1,\ldots,\min((b+1)B_k,N_k)\},\qquad b=0,\ldots,T_k-1$$
+
+若当前 program 只持有 $\mathcal T_b$ 中的 keys，它也只能访问 $P_i$ 和 $dP_i$ 在这些列上的元素，因此最多只能得到部分和：
+
+$$D_i^{(b)}=\sum_{u\in\mathcal T_b}P_{iu}dP_{iu}$$
+
+完整结果需要把全部 $T_k$ 个 key tiles 的部分和再次相加：
+
+$$D_i=\sum_{b=0}^{T_k-1}D_i^{(b)}$$
+
+因此一般有 $D_i^{(b)}\ne D_i$。不能把单个 tile 的部分和直接代入 $dS_{iu}=P_{iu}(dP_{iu}-D_i)$；那会把全局 softmax 错误地当成 tile 内 softmax。
+
+#### 9.4.1 先从 $dP$ 的元素公式出发
+
+由 $O=PV$ 的矩阵乘 backward：
+
+$$dP=dOV^\top$$
+
+所以第 $i$ 个 query 与第 $j$ 个 key/value 对应的元素为：
+
+$$dP_{ij}=\sum_{c=1}^{d}dO_{ic}V_{jc}$$
+
+这里 $c$ 遍历 value/output 的特征维。将它代入 $D_i$：
+
+$$D_i=\sum_{j=1}^{N_k}P_{ij}\left(\sum_{c=1}^{d}dO_{ic}V_{jc}\right)$$
+
+先使用乘法对加法的分配律，把外层的 $P_{ij}$ 乘进内层求和：
+
+$$D_i=\sum_{j=1}^{N_k}\sum_{c=1}^{d}P_{ij}dO_{ic}V_{jc}$$
+
+这表示要把所有 $(j,c)$ 组合对应的项 $P_{ij}dO_{ic}V_{jc}$ 相加。因为两个求和都是有限求和，先遍历 $j$ 再遍历 $c$，与先遍历 $c$ 再遍历 $j$ 会访问完全相同的一组 $(j,c)$，所以可以交换顺序：
+
+$$D_i=\sum_{c=1}^{d}\sum_{j=1}^{N_k}P_{ij}dO_{ic}V_{jc}$$
+
+现在固定外层的 $i,c$。$dO_{ic}$ 只由 query 行 $i$ 和特征位置 $c$ 决定，不随内层求和变量 $j$ 改变，因此可以把它提到关于 $j$ 的求和外：
+
+$$D_i=\sum_{c=1}^{d}dO_{ic}\left(\sum_{j=1}^{N_k}P_{ij}V_{jc}\right)$$
+
+forward 的输出元素恰好满足：
+
+$$O_{ic}=\sum_{j=1}^{N_k}P_{ij}V_{jc}$$
+
+因此：
+
+$$D_i=\sum_{c=1}^{d}O_{ic}dO_{ic}=\langle O_i,dO_i\rangle$$
+
+对所有 query 行同时计算，就是：
+
+$$D=\operatorname{rowsum}(O\circ dO)\in\mathbb R^{N_q}$$
+
+这个等式不是近似，也不是 FlashAttention 特有的新梯度公式；它只是把 $D_i=\sum_jP_{ij}dP_{ij}$ 中的 $dP=dOV^\top$ 展开，再利用了 forward 已有的 $O=PV$。
+
+#### 9.4.2 为什么改写后适合 tiled backward
+
+原定义沿 key 维归约，需要先得到整行 $P_i$ 和 $dP_i$。改写后的表达式只沿长度为 $d$ 的特征维归约，而且只依赖：
+
+- forward 输出 $O\in\mathbb R^{N_q\times d}$；
+- backward 入口收到的 $dO\in\mathbb R^{N_q\times d}$。
+
+因此可以在进入主要 backward kernel 前，用一次 $O(N_qd)$ 的预处理算出全部 $D$，无需额外遍历 $N_qN_k$ 个 score 元素：
+
+```python
+D = (O.float() * dO.float()).sum(dim=-1)
+```
+
+实际实现通常让乘法和归约在 FP32 中进行，避免长度为 $d$ 的求和过早丢失精度。将 $D$ 按 query tile 切成 $D^{(a)}\in\mathbb R^{B_q}$ 后，任意一对 query/key tiles 都能独立计算正确的：
+
+$$dS^{(a,b)}=P^{(a,b)}\circ\left(dP^{(a,b)}-D^{(a)}[:,None]\right)$$
+
+这里广播到每一列的是 $D^{(a)}$ 中各 query 行的**完整 $D_i$**，不是当前 key tile 的部分和。若某个位置被 mask，则重建出的 $P_{ij}=0$，相应的 $dS_{ij}$ 也自然为 0。
+
+至此，单个 backward tile 所需的两个全局 softmax 信息都已变成每个 query 行一个标量：
+
+| 行统计量 | 来自哪里 | 在 backward 中解决什么问题 |
+|---|---|---|
+| $L_i$ | forward 的 log-sum-exp | 从重算的 $S_{ij}$ 恢复全局概率 $P_{ij}$ |
+| $D_i$ | backward 开始时的 $\langle O_i,dO_i\rangle$ | 从局部 $P,dP$ tile 得到正确的 $dS$ tile |
+
+handout 的 tiled backward 也先计算 $D=\operatorname{rowsum}(O\circ dO)$，再把对应的 $D^{(a)}$ 用于每个 $dS^{(a,b)}$。[Handout：L1242-L1280](./cs336_assignment2_systems_extracted.md#L1242-L1280)
+
+### 9.5 核心：所有二次矩阵都只按 tile 产生和消费
+
+FA backward 的主旨不只是“不保存 $P$”，而是：**逻辑上具有 $(N_q,N_k)$ shape 的 $S,P,dP,dS$ 都不在 HBM 中物化成完整矩阵。** 对每一对 query/key tiles $(a,b)$，它们按照依赖顺序以 $(B_q,B_k)$ 小块产生，被后续计算立即消费，然后丢弃。
+
+| 逻辑矩阵 | 完整 shape | 当前 tile 怎样得到 | 当前 tile 立即服务于什么 |
+|---|---:|---|---|
+| $S$ | $(N_q,N_k)$ | $Q^{(a)}(K^{(b)})^\top/\sqrt d+M^{(a,b)}$ | 用 $L^{(a)}$ 重建 $P^{(a,b)}$ |
+| $P$ | $(N_q,N_k)$ | $\exp(S^{(a,b)}-L^{(a)}[:,None])$ | 计算 $\Delta dV^{(b)}$ 和 $dS^{(a,b)}$ |
+| $dP$ | $(N_q,N_k)$ | $dO^{(a)}(V^{(b)})^\top$ | 计算 $dS^{(a,b)}$ |
+| $dS$ | $(N_q,N_k)$ | $P^{(a,b)}\circ(dP^{(a,b)}-D^{(a)}[:,None])$ | 计算 $\Delta dQ^{(a)}$ 和 $\Delta dK^{(b)}$ |
+
+因此，数学上的完整依赖链虽然是：
+
+$$S\longrightarrow P,\qquad dO\longrightarrow dP\longrightarrow dS\longrightarrow dQ,dK,\qquad P,dO\longrightarrow dV$$
+
+实现时却反复执行下面的局部流水线：
+
+```text
+生成 S_tile
+  -> 重建 P_tile
+  -> 计算 dP_tile
+  -> 计算 dS_tile
+  -> 累加到 dQ/dK/dV 的输出 tile
+  -> 丢弃 S_tile、P_tile、dP_tile、dS_tile
+```
+
+最终必须写回 HBM 的是 $dQ,dK,dV$，它们的总元素数为 $N_qd+2N_kd$，只随序列长度线性增长。不会写回 HBM 的完整中间矩阵是 $S,P,dP,dS$，每一个原本都有 $N_qN_k$ 个元素。
+
+下面固定索引为 $a$ 的 query tile 和索引为 $b$ 的 key/value tile，逐步展开这一对 tiles 的计算；至于不同 programs 如何分工和归约，将在 9.7 节说明。
+
+#### 9.5.1 进入 tile 前已经有哪些数据
+
+当前计算读取：
+
+| 数据 | shape | 作用 |
+|---|---:|---|
+| $Q^{(a)},dO^{(a)}$ | $(B_q,d)$ | 当前 query tile 与其输出梯度 |
+| $K^{(b)},V^{(b)}$ | $(B_k,d)$ | 当前 key/value tile |
+| $L^{(a)},D^{(a)}$ | $(B_q,)$ | 当前 query tile 中每一行的两个全局标量 |
+| $M^{(a,b)}$ | $(B_q,B_k)$ 或隐式生成 | causal 与边界 mask |
+
+$L^{(a)},D^{(a)}$ 的 shape 都只有 $(B_q,)$。在公式中写成 `[:,None]`，表示沿当前 tile 的 $B_k$ 列广播，并不复制出一个持久的大矩阵。
+
+#### 9.5.2 先重建 $S$ 与 $P$
+
+$$S^{(a,b)}=\frac{Q^{(a)}(K^{(b)})^\top}{\sqrt d}+M^{(a,b)}\in\mathbb R^{B_q\times B_k}$$
+
+$$P^{(a,b)}=\exp\left(S^{(a,b)}-L^{(a)}[:,None]\right)\in\mathbb R^{B_q\times B_k}$$
+
+这里必须复现 forward 的 scale、mask 和指数底数。全不可见的 future tile 可以直接跳过；与 causal 对角线相交的 tile 则必须逐元素应用 mask。
+
+#### 9.5.3 $dP$ 也按同一张 tile 网格计算
+
+完整的 $dP=dOV^\top$ 确实是一个 $(N_q,N_k)$ 矩阵，但 FlashAttention 不会先把它完整算出并写入 HBM。它与 $S$、$P$ 使用相同的二维分块方式：query tile 索引为 $a$，key/value tile 索引为 $b$，当前切片记为 $dP^{(a,b)}$。
+
+先看单个元素。对于 query 行 $r$ 和 key/value 行 $c$：
+
+$$dP_{rc}=\sum_{t=1}^{d}dO_{rt}V_{ct}$$
+
+这里的求和只发生在长度为 $d$ 的特征维 $t$ 上，不需要读取其他 query 行或其他 key/value 行。因此，要计算 $(a,b)$ 位置的整个 $dP$ tile，只需当前的 $dO^{(a)}$ 和 $V^{(b)}$：
+
+$$dP^{(a,b)}=dO^{(a)}(V^{(b)})^\top\in\mathbb R^{B_q\times B_k}$$
+
+也就是说，逻辑上存在完整矩阵 $dP$，实现中却只生成当前的 $B_q\times B_k$ 切片。这个切片保留在当前 program 的片上临时状态中，不写回 HBM。
+
+#### 9.5.4 生成 $dP$ 后立即计算同位置的 $dS$
+
+当前 program 已经拥有：
+
+- 由 $S^{(a,b)}$ 和 $L^{(a)}$ 重建的 $P^{(a,b)}$；
+- 刚计算出的 $dP^{(a,b)}$；
+- backward 开始时预先计算的完整行统计量 $D^{(a)}$。
+
+因此可以立即逐元素计算同一个位置的 $dS$ tile：
+
+$$dS^{(a,b)}=P^{(a,b)}\circ\left(dP^{(a,b)}-D^{(a)}[:,None]\right)\in\mathbb R^{B_q\times B_k}$$
+
+对应的数据流是：
+
+```python
+dP_tile = dO_tile @ transpose(V_tile)
+dS_tile = P_tile * (dP_tile - D_tile[:, None])
+```
+
+$dP^{(a,b)}$ 产生后立刻被 $dS^{(a,b)}$ 消费，之后即可与 $S^{(a,b)}$、$P^{(a,b)}$ 一起丢弃。因此 $dP$ 虽然在数学上有 $N_qN_k$ 个元素，任意时刻实际存活的仍只有当前 $B_qB_k$ 个元素。
+
+这一步之所以能完全在 tile 内完成，关键是 $D^{(a)}$ 中保存的是每个 query 行的完整 $D_i=\langle O_i,dO_i\rangle$。若临时改用当前 tile 的 `sum(P_tile * dP_tile)`，得到的只是 key 维归约的一部分，不是全局 softmax 的梯度。
+
+#### 9.5.5 消费 $P$ 和 $dS$ tile
+
+$dS$ 不是 attention backward 的最终输出。它是 loss 对内部 score 矩阵 $S$ 的梯度，作用是把梯度继续传回产生 $S$ 的两个输入 $Q$ 和 $K$。完整依赖链是：
+
+```text
+dO -> dP -> dS -> dQ
+              \-> dK
+
+dO + P -------> dV
+```
+
+先看 $dS$ 为什么能计算 $dQ$ 和 $dK$。单个 score 元素来自：
+
+$$S_{rc}=\frac{q_r^\top k_c}{\sqrt d}$$
+
+固定 query $q_r$ 时，每个 key $k_c$ 都通过 $S_{rc}$ 向它贡献梯度。将全部 key 位置的贡献相加：
+
+$$dq_r=\frac{1}{\sqrt d}\sum_{c=1}^{N_k}dS_{rc}k_c$$
+
+固定 key $k_c$ 时，每个 query $q_r$ 都通过 $S_{rc}$ 向它贡献梯度。将全部 query 位置的贡献相加：
+
+$$dk_c=\frac{1}{\sqrt d}\sum_{r=1}^{N_q}dS_{rc}q_r$$
+
+因此，当前 $(a,b)$ tile 的 $dS^{(a,b)}$ 分别产生：
+
+$$\Delta dQ^{(a)}=\frac{dS^{(a,b)}K^{(b)}}{\sqrt d}\in\mathbb R^{B_q\times d}$$
+
+$$\Delta dK^{(b)}=\frac{(dS^{(a,b)})^\top Q^{(a)}}{\sqrt d}\in\mathbb R^{B_k\times d}$$
+
+其中 $\Delta$ 强调这只是一个 tile 提供的局部贡献：$dQ^{(a)}$ 还要累加其他 key tiles 的贡献，$dK^{(b)}$ 还要累加其他 query tiles 的贡献。
+
+另一条支路不经过 $dS$。由 $O=PV$，当前 $P$ tile 直接对 $dV^{(b)}$ 产生：
+
+$$\Delta dV^{(b)}=(P^{(a,b)})^\top dO^{(a)}\in\mathbb R^{B_k\times d}$$
+
+当前 tile 对 $dQ,dK,dV$ 的贡献都累加完成后，$dS^{(a,b)}$ 和 $P^{(a,b)}$ 就完成了使命，可以直接丢弃，不需要写回 HBM。
+
+把这一对 tiles 的局部数据流连起来就是：
+
+```text
+Q_a, K_b, mask   ->  S_ab
+S_ab, L_a        ->  P_ab
+dO_a, V_b        ->  dP_ab
+P_ab, dP_ab, D_a ->  dS_ab
+
+P_ab, dO_a       ->  contribution to dV_b
+dS_ab, Q_a       ->  contribution to dK_b
+dS_ab, K_b       ->  contribution to dQ_a
+```
+
+伪代码标识符中的 `_a`、`_b` 分别对应数学记号的 tile 上标 $(a)$、$(b)$。$S^{(a,b)},P^{(a,b)},dP^{(a,b)},dS^{(a,b)}$ 都只在处理当前 tile 时存在。剩下的工程问题是：不同 tile 会共同贡献同一个输出梯度，应当由谁负责累加这些贡献？
+
+### 9.6 保存、预计算、重算与丢弃：张量生命周期
+
+先按时间边界区分四类数据：
+
+1. **跨越 forward/backward 保存**：backward 以后还要读取，forward 结束时不能释放；
+2. **backward 入口预计算**：收到 $dO$ 后算一次，供所有 tile 使用；
+3. **tile 内重算**：只在处理当前 tile 时短暂存在；
+4. **输出梯度 accumulator**：一个 program 在片上累加，完成后写回 HBM。
+
+完整列表如下：
+
+| 数据 | shape | 生命周期与用途 |
+|---|---:|---|
+| $Q$ | $(N_q,d)$ | 跨 forward/backward 保存；重算 $S$，并计算 $dK$ |
+| $K,V$ | $(N_k,d)$ | 跨 forward/backward 保存；重算 $S$，并计算 $dQ,dP$ |
+| $O$ | $(N_q,d)$ | 跨 forward/backward 保存；与 $dO$ 共同计算 $D$ |
+| $L$ | $(N_q,)$ | 跨 forward/backward 保存；按 tile 重建 $P$ |
+| scale、causal 等参数 | 标量或小型元数据 | 跨边界保存；保证重算与 forward 语义一致 |
+| $dO$ | $(N_q,d)$ | 上游在 backward 入口传入 |
+| $D$ | $(N_q,)$ | backward 入口由 $\operatorname{rowsum}(O\circ dO)$ 预计算 |
+| $S^{(a,b)},P^{(a,b)}$ | $(B_q,B_k)$ | tile 内重算，用完丢弃 |
+| $dP^{(a,b)},dS^{(a,b)}$ | $(B_q,B_k)$ | tile 内产生和消费，用完丢弃 |
+| $dQ^{(a)}$ accumulator | $(B_q,d)$ | query-owner program 私有 |
+| $dK^{(b)},dV^{(b)}$ accumulators | $(B_k,d)$ | key-owner program 私有 |
+
+需要特别区分“逻辑 shape”和“实际物化”：
+
+- $S,P,dP,dS$ 在数学上都有 $(N_q,N_k)$ 的完整定义；
+- kernel 不为其中任何一个分配完整的 HBM buffer；
+- kernel 每次只产生对应位置的 $(B_q,B_k)$ tile，并在片上完成从 $S$ 到 $P$、从 $dP$ 到 $dS$、再到输出梯度贡献的计算；
+- 最终只有线性规模的 $dQ,dK,dV$ 作为 backward 输出写回 HBM。
+
+这里“保存 $Q,K,V,O$”通常表示 autograd 保持已有 Tensor storage 存活，不代表一定复制一份。$O$ 虽然是 forward 的输出，但 backward 计算 $D$ 时仍需要读取它，因此也必须保证对应值没有被释放或非法原地修改。
+
+忽略少量元数据，跨越 forward/backward 边界的主要元素数为：
+
+$$N_qd+2N_kd+N_qd+N_q=2N_qd+2N_kd+N_q=O((N_q+N_k)d)$$
+
+普通实现若额外保存完整 $P$，还会增加 $N_qN_k$ 个元素。FlashAttention 用长度为 $N_q$ 的 $L$ 替代了这个二次项；$D$ 是 backward 开始后才产生的另一个长度为 $N_q$ 的向量。
+
+任意时刻，score/probability 级别的活跃中间量只有一个或少数几个 $B_qB_k$ tile，而不是完整的 $N_qN_k$ 矩阵。代价是 backward 重新执行矩阵乘和指数运算。FA1 的核心取舍正是：在片上重算当前 tile，通常比 forward 把完整 $P$ 写入 HBM、backward 再读回来更划算。[FA1 §3.1 Recomputation](https://papers.neurips.cc/paper_files/paper/2022/file/67d57c32e20fd0a7a302cb81d36e40d5-Paper-Conference.pdf)
+
+若 forward 包含 dropout，backward 还必须重现同一 dropout mask。常见做法是保存随机数种子或 counter，而不是保存完整 $N_q\times N_k$ mask；本文和当前 handout 的核心算法不展开这部分。
+
+### 9.7 为什么课程版 tiled backward 使用两遍调度
+
+9.5 已经说明，一个 $(a,b)$ tile 会同时产生 $\Delta dQ^{(a)}$、$\Delta dK^{(b)}$ 和 $\Delta dV^{(b)}$。数学上可以在一次遍历中算出它们，工程上却还要决定：哪个 program 最终拥有并写回每个输出 tile？
+
+#### 9.7.1 三个梯度的归约方向不同
+
+对固定的 query 行 $i$：
+
+$$dQ_i=\frac{1}{\sqrt d}\sum_{j=1}^{N_k}dS_{ij}K_j$$
+
+$dQ_i$ 必须汇总所有 keys 的贡献，所以最自然的是固定 query tile，遍历全部 key tiles。
+
+对固定的 key/value 行 $j$：
+
+$$dK_j=\frac{1}{\sqrt d}\sum_{i=1}^{N_q}dS_{ij}Q_i$$
+
+$$dV_j=\sum_{i=1}^{N_q}P_{ij}dO_i$$
+
+$dK_j,dV_j$ 必须汇总所有 queries 的贡献，所以最自然的是固定 key tile，遍历全部 query tiles。
+
+由此得到两种互补的输出所有权：
+
+| program 拥有的输出 tile | 内层遍历 | 能在片上完成的完整归约 |
+|---|---|---|
+| $dQ^{(a)}$ | 所有 key tiles $b$ | 沿 key 维归约 |
+| $dK^{(b)},dV^{(b)}$ | 所有 query tiles $a$ | 沿 query 维归约 |
+
+两遍的存储行为可以直接对照：
+
+| pass | program 固定并持有的输出 accumulator | 内层每轮临时生成 | 循环结束时写回 |
+|---|---|---|---|
+| key-owner | $dK^{(b)},dV^{(b)}$，大小均为 $(B_k,d)$ | $S^{(a,b)},P^{(a,b)},dP^{(a,b)},dS^{(a,b)}$ | 当前 $dK^{(b)},dV^{(b)}$ |
+| query-owner | $dQ^{(a)}$，大小为 $(B_q,d)$ | $S^{(a,b)},P^{(a,b)},dP^{(a,b)},dS^{(a,b)}$ | 当前 $dQ^{(a)}$ |
+
+两遍都只让当前 $(B_q,B_k)$ 中间 tiles 短暂存活。区别不是“哪一遍物化哪个大矩阵”，而是“哪一遍负责把哪个线性规模的输出梯度 tile 完整归约并写回”。
+
+#### 9.7.2 为什么一个遍历方向不能无代价地写完三者
+
+假设只使用 query-owner programs。每个 program 可以独占 $dQ^{(a)}$，但所有 query programs 都会向同一个 $dK^{(b)},dV^{(b)}$ 写部分和。反过来，只使用 key-owner programs 时，多个 programs 又会同时向同一个 $dQ^{(a)}$ 写部分和。
+
+不同 GPU thread blocks 不能直接共享一个片上 accumulator。单遍并非数学上不可能，但通常需要以下至少一种机制：
+
+- 对全局输出做 atomic add；
+- 先写出大量 partial gradients，再启动额外 kernel 归约；
+- 引入更复杂的跨 program 同步与工作划分。
+
+课程算法选择两遍，是为了让每个输出 tile 都只有一个 owner：该 program 在片上完成全部归约，最后只写回一次。
+
+#### 9.7.3 第一遍：key-owner 计算 $dK,dV$
+
+```python
+parallel for key_tile b:
+    dK_b = zeros((Bk, d), fp32)
+    dV_b = zeros((Bk, d), fp32)
+
+    for query_tile a:
+        S_ab = recompute_score(Q_a, K_b, mask)
         P_ab = exp(S_ab - L_a[:, None])
         dP_ab = dO_a @ transpose(V_b)
         dS_ab = P_ab * (dP_ab - D_a[:, None])
+
+        dV_b += transpose(P_ab) @ dO_a
+        dK_b += transpose(dS_ab) @ Q_a / sqrt(d)
+
+    store dK_b, dV_b
+```
+
+不同 key tiles 之间可以并行。每个 program 遍历全部 query tiles 后，已经得到自己所负责 $dK^{(b)},dV^{(b)}$ 的完整结果，不需要其它 programs 再修改它们。
+
+#### 9.7.4 第二遍：query-owner 计算 $dQ$
+
+```python
+parallel for query_tile a:
+    dQ_a = zeros((Bq, d), fp32)
+
+    for key_tile b:
+        S_ab = recompute_score(Q_a, K_b, mask)
+        P_ab = exp(S_ab - L_a[:, None])
+        dP_ab = dO_a @ transpose(V_b)
+        dS_ab = P_ab * (dP_ab - D_a[:, None])
+
         dQ_a += dS_ab @ K_b / sqrt(d)
+
     store dQ_a
 ```
 
-同一 $(a,b)$ tile 的 $S,P,dP,dS$ 在两遍中各重算一次——这个重复是**有意**的：它换来清晰的输出所有权（每个梯度 tile 只有一个 owner），从而避免把完整 $P,dP,dS$ 或大量 partial gradient 写入 HBM，也避免 thread block 间的慢速 atomics。
+不同 query tiles 之间可以并行。每个 program 遍历全部 key tiles 后，一次写回自己负责的 $dQ^{(a)}$。
 
-#### 2.8.8 工业实现：共识不变量与可变策略
+同一个 $(a,b)$ tile 对应的 $S^{(a,b)},P^{(a,b)},dP^{(a,b)},dS^{(a,b)}$ 在两遍中各算一次。这个重复是有意的：它换来了清晰的输出所有权，并避免把完整 $P,dP,dS$ 或大量 partial gradients 写入 HBM。课程的可选 Triton backward 正是用两次重建 $P$ 来避免 thread blocks 之间的同步和慢速 atomics。[Handout：L1242-L1280](./cs336_assignment2_systems_extracted.md#L1242-L1280)
 
-课程的「两遍」首先是一种**归约与所有权模型**，不等于所有 FlashAttention backward 都启动两个独立 kernel。读生产代码（如 Triton 官方 fused-attention、Dao-AILab CUDA 实现）时，应追踪下面这条**不变量**，而把 kernel 数量、是否重复重算、是否用 atomic/partial buffer 视为实现与运行时 dispatch 的结果：
+#### 9.7.5 工业实现：算法共识不等于两个独立 kernel
 
-| 层次 | 稳定不变量 | 可变的工程选择 |
-| --- | --- | --- |
-| 二次中间量 | $S,P,dP,dS$ 不在 HBM 完整物化，只在当前 tile 内重算、融合、消费 | tile shape、精度转换、寄存器/shared 布局 |
-| 行统计量 | backward 先得 $D_i=\langle O_i,dO_i\rangle$（代码常叫 `delta`/`softmax_d`） | 独立 preprocess kernel，或融进主 kernel 某阶段 |
-| 工作划分 | $dK,dV$ 沿 query 归约、$dQ$ 沿 key 归约 | 两个 kernel、同一 program 两段扫描，或 key-owner 主 kernel 加 $dQ$ 的 partial/atomic 累加 |
-| 重算 | 用保存的 $L$ 与重算 score 恢复局部 $P$，随即形成 $dP,dS$ 送入梯度 GEMM | 为两个 owner 各重算一次，或一次重算同时服务 $dQ,dK,dV$ |
+课程的“两遍”首先是一种**归约与所有权模型**，不能直接理解为所有 FlashAttention backward 都会启动两个彼此独立、完整重算所有 tiles 的主 kernel。当前一手实现体现出的稳定共识与可变策略如下：
 
-此外，最外层框架（如 PyTorch SDPA）还会按 dtype、head dim、causal、硬件后端再做一层 dispatch，并可能回退到 memory-efficient 或 math 后端；因此从一次 API 调用并不能反推出固定的 backward kernel 拆分。GQA/MQA 还会在 KV head 的 group 维上再加一层求和归约。
+| 层次 | 稳定内容 | 可能变化的工程选择 |
+|---|---|---|
+| 中间量 | 不在 HBM 中完整物化 $S,P,dP,dS$；只在当前 tile 内重算、融合并消费 | tile shape、精度转换、寄存器/shared-memory 布局 |
+| 行统计量 | backward 先得到 $D_i=\langle O_i,dO_i\rangle$（代码中也常叫 `Delta` 或 `softmax_d`） | 独立 preprocess kernel，或融合进主 kernel 的特定阶段 |
+| 工作划分 | $dK,dV$ 需要沿 query 方向归约，$dQ$ 需要沿 key 方向归约 | 两个 kernel、同一 program 内两段扫描，或 key-owner 主 kernel 加 `dQ` partial/atomic accumulation |
+| 重算 | 用保存的 log-sum-exp 与重算 score 恢复局部 $P$，立即形成 $dP,dS$ 并送入梯度 GEMM | 为两个 owner 各重算一次，或一次重算同时服务 $dQ,dK,dV$ |
+
+这些共同点可以直接从 Triton 官方教程看到：preprocess kernel 先计算 `delta = sum(O * dO)`；`_attn_bwd_dkdv` 与 `_attn_bwd_dq` 都在循环内重算 `p`，随即计算 `dp`、`ds` 和目标梯度，没有全局 `S/P/dP/dS` buffer。[Triton preprocess：L249-L262](https://github.com/triton-lang/triton/blob/85609ca2481c7a98b87e305a6104e26bdb66fa8d/python/tutorials/06-fused-attention.py#L249-L262) [Triton $dK/dV$：L265-L315](https://github.com/triton-lang/triton/blob/85609ca2481c7a98b87e305a6104e26bdb66fa8d/python/tutorials/06-fused-attention.py#L265-L315) [Triton $dQ$：L318-L363](https://github.com/triton-lang/triton/blob/85609ca2481c7a98b87e305a6104e26bdb66fa8d/python/tutorials/06-fused-attention.py#L318-L363)
+
+**Triton 官方教程的具体选择。** `_attn_bwd` 在同一个 program 中先固定 key tile 调用 `_attn_bwd_dkdv`，写回 $dK,dV$，再固定 query tile 调用 `_attn_bwd_dq`，写回 $dQ$；wrapper 只启动一次这个 main kernel。因此它有两种逻辑扫描方向，但不是两个独立的 main-kernel launch，而且两段会分别重建所需的 $P,dP,dS$。[Triton main kernel：L366-L500](https://github.com/triton-lang/triton/blob/85609ca2481c7a98b87e305a6104e26bdb66fa8d/python/tutorials/06-fused-attention.py#L366-L500) [Triton wrapper：L575-L614](https://github.com/triton-lang/triton/blob/85609ca2481c7a98b87e305a6104e26bdb66fa8d/python/tutorials/06-fused-attention.py#L575-L614)
+
+**Dao-AILab CUDA 实现的具体选择。** 当前 seq-k-parallel 路径先以独立 kernel 计算 $D$，随后用 key-block 并行的组合 kernel 在一次 tile 重算后同时消费局部 $P,dS$：$dK,dV$ 留在该 key owner 中归约，$dQ$ 则写入 FP32 `dQaccum`，最后由转换 kernel 归约并转换 dtype。[Dao launch：L52-L125](https://github.com/Dao-AILab/flash-attention/blob/fb97d25ea8dd6586f6a184a21491d1e23a3a1428/csrc/flash_attn/src/flash_bwd_launch_template.h#L52-L125) [Dao tile 计算：L520-L595](https://github.com/Dao-AILab/flash-attention/blob/fb97d25ea8dd6586f6a184a21491d1e23a3a1428/csrc/flash_attn/src/flash_bwd_kernel.h#L520-L595) [Dao 梯度消费与 `atomicAdd`：L635-L690](https://github.com/Dao-AILab/flash-attention/blob/fb97d25ea8dd6586f6a184a21491d1e23a3a1428/csrc/flash_attn/src/flash_bwd_kernel.h#L635-L690) 非确定性路径可对共享的 `dQaccum` 做 atomic add；确定性路径改用分离的累加区再归约，所以官方接口明确说明 deterministic backward 稍慢且占用更多内存。[Dao README：L243-L292](https://github.com/Dao-AILab/flash-attention/blob/fb97d25ea8dd6586f6a184a21491d1e23a3a1428/README.md#L243-L292)
+
+**Dispatch 也是算法的一部分。** Dao CUDA 路径按 dtype、head dimension 和 causal 标志选择模板，再按序列是否整齐、local mask、ALiBi、softcap 等条件继续特化；其公开支持范围还随 NVIDIA/AMD backend 和架构而异。[Dao 顶层 backward dispatch：L790-L798](https://github.com/Dao-AILab/flash-attention/blob/fb97d25ea8dd6586f6a184a21491d1e23a3a1428/csrc/flash_attn/flash_api.cpp#L790-L798) [Dao mask/shape 特化：L91-L115](https://github.com/Dao-AILab/flash-attention/blob/fb97d25ea8dd6586f6a184a21491d1e23a3a1428/csrc/flash_attn/src/flash_bwd_launch_template.h#L91-L115) [Dao 硬件与 head-dim 支持：L136-L166](https://github.com/Dao-AILab/flash-attention/blob/fb97d25ea8dd6586f6a184a21491d1e23a3a1428/README.md#L136-L166) 对 MQA/GQA，CUDA wrapper 先按 query-head 产生展开的 $dK,dV$，再沿共享同一 KV head 的 group 维求和，这又增加了一层归约。[Dao GQA 检查与临时量：L858-L970](https://github.com/Dao-AILab/flash-attention/blob/fb97d25ea8dd6586f6a184a21491d1e23a3a1428/csrc/flash_attn/flash_api.cpp#L858-L970) [Dao GQA 归约：L1001-L1005](https://github.com/Dao-AILab/flash-attention/blob/fb97d25ea8dd6586f6a184a21491d1e23a3a1428/csrc/flash_attn/flash_api.cpp#L1001-L1005)
+
+最外层框架还会再次 dispatch。PyTorch `scaled_dot_product_attention` 会根据输入与运行环境在可用的 cuDNN、FlashAttention、memory-efficient 和 math 等 backend 中选择；各 fused backend 有各自限制，可用 `sdpa_kernel` 显式约束或设置 backend 优先级，GQA 的可用 backend 也受限制。因此从一次 PyTorch API 调用不能反推出固定的 backward kernel 拆分。[PyTorch SDPA](https://docs.pytorch.org/docs/stable/generated/torch.nn.functional.scaled_dot_product_attention.html) [PyTorch `sdpa_kernel`](https://docs.pytorch.org/docs/stable/generated/torch.nn.attention.sdpa_kernel.html)
+
+所以，读生产代码时应追踪的是“不物化二次中间量、预计算 $D$、两种归约方向、tile 内重算与融合”这条不变量；kernel 数量、是否重复重算、是否使用 atomic/partial buffer，以及最终选中哪个 backend，都是实现和运行时 dispatch 的结果。
+
+#### 9.7.6 这项取舍改变了什么
+
+- **算术量**：两遍都重算 score 和 $P$，常数因子增加，但总体仍是 $\Theta(N_qN_kd)$。
+- **跨边界保存量**：保持为 $O((N_q+N_k)d)$，没有完整 $P$ 的 $O(N_qN_k)$ 二次项。
+- **tile 临时量**：每个 program 只持有 $O(B_qB_k)$ 的 score/probability 级别中间状态，以及自己的线性规模 accumulator。
+- **可并行性**：第一遍可在 key tiles 间并行，第二遍可在 query tiles 间并行。
+- **同步**：每个输出 tile 由唯一 program 写回，不依赖大规模 atomics。
+
+这不是“计算越少越好”的方案，而是用 GPU 相对便宜的重算换取更少的 HBM 流量和更简单的同步。
+
+### 9.8 从 forward 到 backward 的完整顺序
+
+现在可以按时间顺序串起整章：
+
+1. **Forward 计算输出。** 按 tile 运行 online softmax，得到 $O$，同时为每个 query 行得到 $L_i=\operatorname{logsumexp}(S_i)$。
+2. **保存线性规模状态。** 保持 $Q,K,V,O,L$ 及重算所需的 scale、causal 等参数存活，不保存完整 $S$ 或 $P$。
+3. **接收上游梯度。** 后续网络把 $dO$ 传入 attention backward。
+4. **预计算 $D$。** 用 $D=\operatorname{rowsum}(O\circ dO)$ 得到每个 query 行的 softmax-backward 标量。
+5. **执行 key-owner pass。** 每个 program 固定一个 key tile，遍历所有 query tiles；每次用 $L$ 重建 $P$、用 $D$ 计算 $dS$，最终写出该 tile 的 $dK,dV$。
+6. **执行 query-owner pass。** 每个 program 固定一个 query tile，遍历所有 key tiles；再次重建 $P,dP,dS$，最终写出该 tile 的 $dQ$。
+7. **返回梯度。** autograd 将 $dQ,dK,dV$ 继续传给更早的算子。
+
+对第 9.5-9.7 节描述的 **tiled backward 实现**，从存储位置看，整个过程可以归纳为：
+
+| 存储类别 | 数据 |
+|---|---|
+| HBM 中的输入、保存量和输出 | $Q,K,V,O,L,dO,D,dQ,dK,dV$ |
+| program 内短暂存在的 tile | $S^{(a,b)},P^{(a,b)},dP^{(a,b)},dS^{(a,b)}$ |
+| 从不在 HBM 中完整物化 | $S,P,dP,dS$ |
+
+因此，tiled FA backward 的核心不是只省掉某一个 $P$ 矩阵，而是让反向传播所需的全部二次规模中间量 $S,P,dP,dS$ 都遵循“按 tile 生成、立即消费、随即丢弃”。最终结果 $dQ,dK,dV$ 仍被完整写回，但它们只有 $O((N_q+N_k)d)$ 个元素。
+
+可以把其中两个最容易混淆的标量记成：
+
+- $L_i$ 回答“这一行的 $P$ 怎么重建”；
+- $D_i$ 回答“这一行的 $dS$ 怎么计算”。
+
+对每一个 $(a,b)$ tile，都可以用下面四问检查推导是否闭合：
+
+1. $S^{(a,b)}$ 是否用与 forward 相同的 scale 和 mask 重算？
+2. $P^{(a,b)}$ 是否使用 query-tile 行统计量 $L^{(a)}$，而不是 tile 内 softmax？
+3. $dS^{(a,b)}$ 是否使用 $D^{(a)}$ 中各 query 行的完整标量 $D_i=\langle O_i,dO_i\rangle$，而不是 tile 部分和？
+4. 当前 program 是否完整拥有它要写回的梯度 tile，避免未处理的跨 program 归约？
+
+#### 9.8.1 课程必做的普通 PyTorch backward 不是内存高效版本
+
+当前作业的必做 backward 允许先用普通 PyTorch 函数配合 `torch.compile` 实现，不要求一开始就手写 Triton backward。[Handout：L1222-L1230](./cs336_assignment2_systems_extracted.md#L1222-L1230)
+
+这里的“普通 PyTorch”是指直接调用 `matmul`、`exp`、逐元素运算和 `sum` 等高层 Tensor 算子。例如它可以一次性计算：
+
+```python
+scores = Q @ K.transpose(-2, -1) * scale
+probs = torch.exp(scores - L[..., None])
+grad_probs = grad_output @ V.transpose(-2, -1)
+grad_scores = probs * (grad_probs - D[..., None])
+```
+
+在语义上，`scores`、`probs`、`grad_probs` 和 `grad_scores` 分别对应完整的 $S,P,dP,dS$，shape 都是 $(N_q,N_k)$；self-attention 中就是通常所说的 $S^2$ 级别。eager PyTorch 可以为它们分配完整 Tensor。`torch.compile` 可能融合部分逐元素操作、缩短中间量生命周期或复用 buffer，但课程接口并不保证编译器会把整段计算自动改写成 FlashAttention 式 tiling，因此不能据此宣称消除了 $O(N_qN_k)$ backward workspace。
+
+两种实现的边界如下：
+
+| 实现 | 是否从 forward 保存完整 $P$ | backward 执行时是否可能物化完整 $S,P,dP,dS$ | 主要目的 |
+|---|---|---|---|
+| 必做 PyTorch + `torch.compile` | 否；使用 $L$ 重建 $P$ | 是；可能产生 $(N_q,N_k)$ Tensor | 先验证 backward 公式和 autograd 接口 |
+| 可选 tiled Triton / 生产型 FlashAttention | 否 | 否；只保留当前 $(B_q,B_k)$ tiles | 同时获得正确性与线性规模 HBM 中间存储 |
+
+因此必须区分两句话：
+
+1. **必做 PyTorch 版本没有跨越 forward/backward 边界保存完整 $P$**；
+2. **但它仍可能在 backward 内部重新物化完整 $S,P,dP,dS$**。
+
+第 9.5-9.7 节描述的是第二种真正 tiled 的 backward。它是课程的可选扩展，也是前文“不在 HBM 中物化二次中间量”这一结论所针对的实现。
 
 ---
 
@@ -543,4 +1269,31 @@ query tile（或 CTA）之间完全独立，可任意并行；单 tile 内的 QK
 
 ## 11. 结论
 
-本报告给出了 FlashAttention forward 的完整原理推导（ online softmax 的三状态更新与归纳证明、分块 forward、causal/边界 mask、数值稳定性、logsumexp 保存），以及 backward 的完整数学原理（softmax backward 的商法则推导、用 $L$ 重建 $P$、用 $D=\langle O,dO\rangle$ 消除跨 tile 行归约、二次中间量的 tile 内生命周期与两遍调度所有权模型；backward 为原理级、尚未实现）。在实现侧，以 GTX 1060 上的 FP32 CUDA 基线为起点，经 warp shuffle 归约（v1）、共享 K/V tile 与分块 softmax（v2）、寄存器微矩阵与受控展开（v3）、$64\times64$ SIMT tile 与分阶段预取（v4）、范数上界固定指数基准与 split attention（v5）五步可独立测量的优化，将主形状单次 forward 由 $2922.3$ ms 降至 $21.6$ ms（约 $135\times$），并在成对计时中稳定低于 PyTorch memory-efficient 后端的约 $60\%$。整条路线的方法论价值在于：每一步都以可证伪假设与资源模型驱动，严格区分「结构成立 / 指标支持 / 延迟改善」，并对失败路径与性能边界保持诚实记录。
+**原理层面**，本报告给出了 FlashAttention forward 的完整推导：online softmax 的三状态更新与归纳证明、分块 forward、causal/边界 mask、数值稳定性清单、logsumexp 的保存动机；并完整给出 backward 的数学原理——softmax backward 的商法则逐元素推导与 VJP 写法、用 $L$ 按 tile 重建 $P$、用 $D=\langle O,dO\rangle$ 消除跨 tile 行归约、二次中间量的 tile 内生命周期与两遍调度所有权模型（backward 为原理级，尚未进入代码实现）。
+
+**实现层面**，以 GTX 1060 上的 FP32 CUDA 基线为起点，经 warp shuffle 归约（v1）、共享 K/V tile 与分块 softmax（v2）、寄存器微矩阵与受控展开（v3）、$64\times64$ SIMT tile 与分阶段预取（v4）、范数上界固定指数基准与 split attention（v5）五步可独立测量的优化，将主形状单次 forward 由 $2922.3$ ms 降至 $21.6$ ms（约 $135\times$），并在成对计时中稳定低于 PyTorch memory-efficient 后端（耗时约为其六成）。
+
+**方法论层面**，整条路线的价值在于：每一步都以可证伪假设与资源模型驱动，严格区分「结构成立 / 指标支持 / 延迟改善」三类判定，并对失败路径与性能边界保持诚实记录——高占用非目标、逻辑流量不等于硬件事务、stall 占比不是时间账本、源码 scope 不代替物理寄存器证据等教训贯穿始终。
+
+---
+
+## 12. 参考文献
+
+### 论文
+
+1. Tri Dao, Daniel Y. Fu, Stefano Ermon, Atri Rudra, Christopher Ré. **FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness.** NeurIPS 2022. <https://arxiv.org/abs/2205.14135>
+2. Tri Dao. **FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning.** 2023. <https://arxiv.org/abs/2307.08691>
+3. Maxim Milakov, Natalia Gimelshein. **Online normalizer calculation for softmax.** 2018. <https://arxiv.org/abs/1805.02867>
+
+### 工具、库与官方文档
+
+4. NVIDIA. **CUTLASS**（SIMT GEMM 的 thread-level MMA、split-K 并行归约、双层 pipelining）与 **CuTe DSL**. <https://github.com/NVIDIA/cutlass>
+5. OpenAI. **Triton**（fused-attention 教程、autotune、block pointer 语义）. <https://triton-lang.org>
+6. PyTorch. **`torch.nn.functional.scaled_dot_product_attention`** 与 **`torch.nn.attention.sdpa_kernel`**（后端选择与数值说明）. <https://docs.pytorch.org/docs/stable/generated/torch.nn.functional.scaled_dot_product_attention.html>
+7. NVIDIA. **CUDA C++ Programming Guide / Best Practices Guide / Pascal Tuning Guide / PTX ISA**（warp shuffle、`ex2.approx`、shared bank、指令调度等）. <https://docs.nvidia.com/cuda/>
+8. Scott Gray. **MaxAs — Maxwell SGEMM**（寄存器 bank、operand reuse、swirl 遍历与控制码）. <https://github.com/NervanaSystems/maxas/wiki/SGEMM>
+
+### 仓库内部一手资料
+
+9. 本仓库讲义：[03_02 FlashAttention-2 Forward textbook](../notes/03_02_flash_attention_2_beginner_textbook.md)、[03_03 Backward 与实现验证](../notes/03_03_flash_attention_2_backward.md)。
+10. 各版本设计与实测归档：[docs/cuda-fa2/measurements](docs/cuda-fa2/measurements)（v0–v5 的 optimization-design、perf、manifest 与原始计数器/计时证据）。
