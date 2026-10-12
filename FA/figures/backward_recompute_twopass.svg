@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" font-family="-apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif">
+  <defs>
+    <marker id="a4" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#475569"/>
+    </marker>
+  </defs>
+  <rect width="960" height="440" fill="#ffffff"/>
+  <text x="480" y="30" text-anchor="middle" font-size="19" font-weight="700" fill="#0f172a">Backward 原理：保存什么、重算什么（原理级，尚未实现）</text>
+
+  <!-- forward saved -->
+  <rect x="30" y="60" width="250" height="150" rx="10" fill="#f0fdf4" stroke="#4ade80"/>
+  <text x="155" y="84" text-anchor="middle" font-size="13.5" font-weight="700" fill="#166534">forward 仅保存线性规模量</text>
+  <text x="50" y="112" font-size="12.5" fill="#334155">Q, K, V, O   —  O((Nq+Nk)d)</text>
+  <text x="50" y="138" font-size="12.5" fill="#334155">L = m + log ℓ   —  O(Nq)</text>
+  <rect x="50" y="152" width="210" height="44" rx="6" fill="#dcfce7"/>
+  <text x="155" y="170" text-anchor="middle" font-size="11.5" fill="#166534">不保存完整 P (省去 O(NqNk))</text>
+  <text x="155" y="188" text-anchor="middle" font-size="11.5" fill="#166534">backward 按 tile 重建</text>
+
+  <!-- entry precompute D -->
+  <rect x="30" y="240" width="250" height="130" rx="10" fill="#eff6ff" stroke="#60a5fa"/>
+  <text x="155" y="264" text-anchor="middle" font-size="13.5" font-weight="700" fill="#1e40af">backward 入口预计算 D</text>
+  <text x="50" y="294" font-size="13" fill="#334155">收到上游梯度 dO</text>
+  <text x="50" y="322" font-size="13" fill="#b45309" font-weight="700">D = rowsum(O ∘ dO)</text>
+  <text x="50" y="346" font-size="11.5" fill="#64748b">= ⟨Oᵢ, dOᵢ⟩，一次 O(Nqd)</text>
+  <text x="50" y="362" font-size="11.5" fill="#64748b">消除 Dᵢ=ΣP·dP 的跨 tile 行归约</text>
+
+  <!-- per tile recompute -->
+  <rect x="320" y="90" width="320" height="300" rx="10" fill="#fffbeb" stroke="#f59e0b"/>
+  <text x="480" y="114" text-anchor="middle" font-size="13.5" font-weight="700" fill="#92400e">每对 (a,b) tile：重算 → 消费 → 丢弃</text>
+  <text x="340" y="146" font-size="12.5" fill="#334155">① S⁽ᵃᵇ⁾ = Q⁽ᵃ⁾K⁽ᵇ⁾ᵀ/√d + M</text>
+  <text x="340" y="174" font-size="12.5" fill="#dc2626" font-weight="700">② P⁽ᵃᵇ⁾ = exp(S⁽ᵃᵇ⁾ − L⁽ᵃ⁾)  (用 L 重建)</text>
+  <text x="340" y="202" font-size="12.5" fill="#334155">③ dP⁽ᵃᵇ⁾ = dO⁽ᵃ⁾ V⁽ᵇ⁾ᵀ</text>
+  <text x="340" y="230" font-size="12.5" fill="#dc2626" font-weight="700">④ dS⁽ᵃᵇ⁾ = P ∘ (dP − D⁽ᵃ⁾)  (用 D)</text>
+  <rect x="340" y="248" width="280" height="128" rx="6" fill="#fff" stroke="#cbd5e1"/>
+  <text x="480" y="268" text-anchor="middle" font-size="12" font-weight="700" fill="#334155">对输出梯度的局部贡献</text>
+  <text x="356" y="292" font-size="12" fill="#334155">ΔdV⁽ᵇ⁾ = P⁽ᵃᵇ⁾ᵀ dO⁽ᵃ⁾</text>
+  <text x="356" y="316" font-size="12" fill="#334155">ΔdQ⁽ᵃ⁾ = dS⁽ᵃᵇ⁾ K⁽ᵇ⁾ / √d</text>
+  <text x="356" y="340" font-size="12" fill="#334155">ΔdK⁽ᵇ⁾ = dS⁽ᵃᵇ⁾ᵀ Q⁽ᵃ⁾ / √d</text>
+  <text x="480" y="364" text-anchor="middle" font-size="11" fill="#dc2626">S,P,dP,dS 均片上 Bq×Bk，不入 HBM</text>
+
+  <!-- two pass ownership -->
+  <rect x="680" y="90" width="250" height="300" rx="10" fill="#faf5ff" stroke="#a855f7"/>
+  <text x="805" y="114" text-anchor="middle" font-size="13.5" font-weight="700" fill="#6b21a8">两遍调度：唯一 owner</text>
+  <text x="700" y="140" font-size="11.5" fill="#64748b">三梯度归约方向不同</text>
+
+  <rect x="700" y="152" width="210" height="92" rx="8" fill="#f5f3ff" stroke="#c4b5fd"/>
+  <text x="805" y="174" text-anchor="middle" font-size="12.5" font-weight="700" fill="#6b21a8">第一遍 · key-owner</text>
+  <text x="716" y="196" font-size="11.5" fill="#334155">固定 K⁽ᵇ⁾，遍历所有 Q 块</text>
+  <text x="716" y="216" font-size="11.5" fill="#334155">沿 query 维归约</text>
+  <text x="716" y="236" font-size="12" fill="#7c3aed" font-weight="700">→ 写回 dK⁽ᵇ⁾, dV⁽ᵇ⁾</text>
+
+  <rect x="700" y="256" width="210" height="88" rx="8" fill="#f5f3ff" stroke="#c4b5fd"/>
+  <text x="805" y="278" text-anchor="middle" font-size="12.5" font-weight="700" fill="#6b21a8">第二遍 · query-owner</text>
+  <text x="716" y="300" font-size="11.5" fill="#334155">固定 Q⁽ᵃ⁾，遍历所有 K 块</text>
+  <text x="716" y="320" font-size="11.5" fill="#334155">沿 key 维归约</text>
+  <text x="716" y="340" font-size="12" fill="#7c3aed" font-weight="700">→ 写回 dQ⁽ᵃ⁾</text>
+
+  <text x="805" y="366" text-anchor="middle" font-size="10.5" fill="#64748b">各重算一次 P，换清晰所有权</text>
+  <text x="805" y="382" text-anchor="middle" font-size="10.5" fill="#64748b">避免 atomic / partial 写回</text>
+
+  <line x1="280" y1="135" x2="316" y2="135" stroke="#475569" stroke-width="1.6" marker-end="url(#a4)"/>
+  <line x1="280" y1="305" x2="316" y2="250" stroke="#475569" stroke-width="1.6" marker-end="url(#a4)"/>
+  <line x1="640" y1="230" x2="676" y2="230" stroke="#475569" stroke-width="1.6" marker-end="url(#a4)"/>
+</svg>

@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 360" font-family="-apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif">
+  <defs>
+    <marker id="a7" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#475569"/>
+    </marker>
+  </defs>
+  <rect width="940" height="360" fill="#ffffff"/>
+  <text x="470" y="30" text-anchor="middle" font-size="19" font-weight="700" fill="#0f172a">V5 两项核心机制的流程（公式与推导见正文 §9.2–§9.3）</text>
+
+  <!-- step 1 -->
+  <rect x="24" y="60" width="210" height="118" rx="10" fill="#eff6ff" stroke="#60a5fa"/>
+  <text x="129" y="86" text-anchor="middle" font-size="13.5" font-weight="700" fill="#1e40af">① 打包时求范数上界</text>
+  <text x="129" y="112" text-anchor="middle" font-size="12" fill="#334155">由 Cauchy–Schwarz</text>
+  <text x="129" y="132" text-anchor="middle" font-size="12" fill="#334155">得每行 ‖Q‖、‖K‖、|V| 上界</text>
+  <text x="129" y="156" text-anchor="middle" font-size="11.5" fill="#64748b">准备 kernel，O(Nd)</text>
+
+  <!-- step 2 -->
+  <rect x="266" y="60" width="210" height="118" rx="10" fill="#faf5ff" stroke="#a855f7"/>
+  <text x="371" y="86" text-anchor="middle" font-size="13.5" font-weight="700" fill="#6b21a8">② 判定能否固定基准</text>
+  <text x="371" y="112" text-anchor="middle" font-size="12" fill="#334155">范围安全 → 全程 b=0</text>
+  <text x="371" y="132" text-anchor="middle" font-size="12" fill="#334155">省去每 tile 最大值/α/重缩放</text>
+  <text x="371" y="156" text-anchor="middle" font-size="11.5" fill="#991b1b">超范围 → online softmax 回退</text>
+
+  <!-- step 3 -->
+  <rect x="508" y="60" width="210" height="118" rx="10" fill="#f0fdf4" stroke="#4ade80"/>
+  <text x="613" y="86" text-anchor="middle" font-size="13.5" font-weight="700" fill="#166534">③ 按 key 区间切 split</text>
+  <text x="613" y="112" text-anchor="middle" font-size="12" fill="#334155">各 split 独立算</text>
+  <text x="613" y="132" text-anchor="middle" font-size="12" fill="#334155">未归一化分子 / 分母</text>
+  <text x="613" y="156" text-anchor="middle" font-size="11.5" fill="#64748b">提高 CTA 调度粒度</text>
+
+  <!-- step 4 -->
+  <rect x="750" y="60" width="166" height="118" rx="10" fill="#fffbeb" stroke="#f59e0b"/>
+  <text x="833" y="86" text-anchor="middle" font-size="13.5" font-weight="700" fill="#92400e">④ 线性归并</text>
+  <text x="833" y="112" text-anchor="middle" font-size="12" fill="#334155">共同基准 →</text>
+  <text x="833" y="132" text-anchor="middle" font-size="12" fill="#334155">直接相加，无需重缩放</text>
+  <text x="833" y="156" text-anchor="middle" font-size="11.5" fill="#64748b">最后除一次</text>
+
+  <line x1="234" y1="119" x2="264" y2="119" stroke="#475569" stroke-width="1.8" marker-end="url(#a7)"/>
+  <line x1="476" y1="119" x2="506" y2="119" stroke="#475569" stroke-width="1.8" marker-end="url(#a7)"/>
+  <line x1="718" y1="119" x2="748" y2="119" stroke="#475569" stroke-width="1.8" marker-end="url(#a7)"/>
+
+  <!-- key range split illustration -->
+  <text x="470" y="214" text-anchor="middle" font-size="12.5" font-weight="700" fill="#166534">key 维按 split 切成互不重叠、可独立并行的区间（N≥512 用 5 份）</text>
+  <g transform="translate(212,228)">
+    <rect x="0" y="0" width="100" height="30" rx="4" fill="#86efac"/><text x="50" y="20" text-anchor="middle" font-size="11" fill="#14532d">split 0</text>
+    <rect x="104" y="0" width="100" height="30" rx="4" fill="#86efac"/><text x="154" y="20" text-anchor="middle" font-size="11" fill="#14532d">split 1</text>
+    <rect x="208" y="0" width="100" height="30" rx="4" fill="#86efac"/><text x="258" y="20" text-anchor="middle" font-size="11" fill="#14532d">split 2</text>
+    <rect x="312" y="0" width="100" height="30" rx="4" fill="#86efac"/><text x="362" y="20" text-anchor="middle" font-size="11" fill="#14532d">split 3</text>
+    <rect x="416" y="0" width="100" height="30" rx="4" fill="#86efac"/><text x="466" y="20" text-anchor="middle" font-size="11" fill="#14532d">split 4</text>
+  </g>
+
+  <!-- bottom notes -->
+  <rect x="24" y="286" width="892" height="56" rx="8" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text x="40" y="308" font-size="11.5" fill="#475569">· 固定基准的依据：softmax 平移不变性 + 范数上界保证概率全为 normal FP32（可表示性证明见 §9.2）</text>
+  <text x="40" y="330" font-size="11.5" fill="#475569">· 线性归并的依据：各 split 共享同一指数基准 b，故未归一化状态可直接相加、无需逐 split 重缩放（见 §9.3）</text>
+</svg>

@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 420" font-family="-apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif">
+  <rect width="920" height="420" fill="#ffffff"/>
+  <text x="460" y="30" text-anchor="middle" font-size="19" font-weight="700" fill="#0f172a">V0 → V1：把通信范围从 CTA 收缩到 warp</text>
+
+  <!-- V0 -->
+  <rect x="24" y="56" width="420" height="330" rx="10" fill="#fef2f2" stroke="#fca5a5"/>
+  <text x="234" y="82" text-anchor="middle" font-size="15" font-weight="700" fill="#991b1b">V0：4 个 warp 协作 1 行</text>
+  <!-- one CTA -->
+  <rect x="50" y="100" width="368" height="140" rx="8" fill="#fff" stroke="#cbd5e1"/>
+  <text x="234" y="122" text-anchor="middle" font-size="12.5" font-weight="700" fill="#334155">1 CTA = 128 线程 → 1 query 行</text>
+  <rect x="66" y="134" width="80" height="30" rx="4" fill="#fecaca"/><text x="106" y="154" text-anchor="middle" font-size="11" fill="#7f1d1d">warp 0</text>
+  <rect x="152" y="134" width="80" height="30" rx="4" fill="#fecaca"/><text x="192" y="154" text-anchor="middle" font-size="11" fill="#7f1d1d">warp 1</text>
+  <rect x="238" y="134" width="80" height="30" rx="4" fill="#fecaca"/><text x="278" y="154" text-anchor="middle" font-size="11" fill="#7f1d1d">warp 2</text>
+  <rect x="324" y="134" width="80" height="30" rx="4" fill="#fecaca"/><text x="364" y="154" text-anchor="middle" font-size="11" fill="#7f1d1d">warp 3</text>
+  <!-- shared reduction -->
+  <rect x="120" y="186" width="228" height="38" rx="6" fill="#fee2e2" stroke="#f87171"/>
+  <text x="234" y="210" text-anchor="middle" font-size="11.5" fill="#991b1b">shared 树形归约 + CTA 屏障</text>
+  <line x1="106" y1="164" x2="200" y2="184" stroke="#dc2626" stroke-width="1.3"/>
+  <line x1="192" y1="164" x2="225" y2="184" stroke="#dc2626" stroke-width="1.3"/>
+  <line x1="278" y1="164" x2="255" y2="184" stroke="#dc2626" stroke-width="1.3"/>
+  <line x1="364" y1="164" x2="270" y2="184" stroke="#dc2626" stroke-width="1.3"/>
+
+  <rect x="50" y="256" width="368" height="112" rx="8" fill="#fff" stroke="#cbd5e1"/>
+  <text x="66" y="280" font-size="12" fill="#7f1d1d">· 每 query-key 对 10 次 CTA 屏障</text>
+  <text x="66" y="304" font-size="12" fill="#7f1d1d">· d=64 时仅前 64 线程有有效维度</text>
+  <text x="66" y="328" font-size="12" fill="#7f1d1d">· 同步 stall 45.3%，occupancy 99.8%</text>
+  <text x="66" y="352" font-size="12" fill="#991b1b" font-weight="700">计算粒度 ≪ 通信粒度</text>
+
+  <!-- arrow -->
+  <text x="460" y="226" text-anchor="middle" font-size="28" fill="#64748b">→</text>
+
+  <!-- V1 -->
+  <rect x="478" y="56" width="420" height="330" rx="10" fill="#f0fdf4" stroke="#86efac"/>
+  <text x="688" y="82" text-anchor="middle" font-size="15" font-weight="700" fill="#166534">V1：4 个 warp 各处理 1 行</text>
+  <rect x="504" y="100" width="368" height="140" rx="8" fill="#fff" stroke="#cbd5e1"/>
+  <text x="688" y="122" text-anchor="middle" font-size="12.5" font-weight="700" fill="#334155">1 CTA = 4 warp → 4 独立 query 行</text>
+  <rect x="520" y="134" width="80" height="72" rx="4" fill="#bbf7d0"/><text x="560" y="166" text-anchor="middle" font-size="11" fill="#14532d">warp 0</text><text x="560" y="184" text-anchor="middle" font-size="10" fill="#166534">query 0</text>
+  <rect x="606" y="134" width="80" height="72" rx="4" fill="#bbf7d0"/><text x="646" y="166" text-anchor="middle" font-size="11" fill="#14532d">warp 1</text><text x="646" y="184" text-anchor="middle" font-size="10" fill="#166534">query 1</text>
+  <rect x="692" y="134" width="80" height="72" rx="4" fill="#bbf7d0"/><text x="732" y="166" text-anchor="middle" font-size="11" fill="#14532d">warp 2</text><text x="732" y="184" text-anchor="middle" font-size="10" fill="#166534">query 2</text>
+  <rect x="778" y="134" width="80" height="72" rx="4" fill="#bbf7d0"/><text x="818" y="166" text-anchor="middle" font-size="11" fill="#14532d">warp 3</text><text x="818" y="184" text-anchor="middle" font-size="10" fill="#166534">query 3</text>
+  <text x="688" y="224" text-anchor="middle" font-size="11" fill="#166534">warp 内 5 级 shuffle 归约（lane λ 持 D_λ 维）</text>
+
+  <rect x="504" y="256" width="368" height="112" rx="8" fill="#fff" stroke="#cbd5e1"/>
+  <text x="520" y="280" font-size="12" fill="#14532d">· CTA 屏障归零，无 shared 归约</text>
+  <text x="520" y="304" font-size="12" fill="#14532d">· 输出行独立 → 无跨 warp 生产消费边</text>
+  <text x="520" y="328" font-size="12" fill="#14532d">· grid 缩为 ⌈S/4⌉</text>
+  <text x="520" y="352" font-size="12" fill="#166534" font-weight="700">348 ms，相对 v0 快 8.39×</text>
+</svg>
